@@ -366,9 +366,6 @@ class _QuranNavigationBottomSheetState
                             color: surahNum == _currentSurah
                                 ? colorScheme.primary
                                 : colorScheme.onSurface,
-                            fontWeight: surahNum == _currentSurah
-                                ? FontWeight.w600
-                                : FontWeight.normal,
                           ),
                           textDirection: TextDirection.rtl,
                           overflow: TextOverflow.ellipsis,
