@@ -2,7 +2,7 @@ name: my_quran
 description: A minimal app to read the Quran.
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-version: 1.0.0
+version: 1.0.0+1
 
 environment:
   sdk: ^3.9.2
@@ -19,6 +19,7 @@ dependencies:
   shared_preferences: ^2.5.3
 
 dev_dependencies:
+  flutter_launcher_icons: ^0.14.4
   flutter_test:
     sdk: flutter
   very_good_analysis: ^10.0.0
@@ -29,8 +30,8 @@ flutter:
 
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
   assets:
+      - assets/
       - assets/fonts/
       - assets/quran.json
       - assets/search_index.json
