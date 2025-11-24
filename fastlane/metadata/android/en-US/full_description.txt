@@ -1,0 +1,4 @@
+- 🚀 Lightweight: around 17MB with no additional download size.
+- 📴 100% Offline: No internet connection required. The entire Quran and search index are embedded.
+- 🔍 Powerful Search: Instant offline search with diacritic-insensitivity (handles Tashkeel) and multi-word support.
+- ⚙️ Customization: Dynamic font sizing, Dark/Light mode support, and bookmarking system.

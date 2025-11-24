@@ -298,11 +298,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
               showModalBottomSheet(
                 context: context,
                 showDragHandle: true,
-                builder: (_) => SettingsBottomSheet(
-                  fontFamily: widget.fontFamily,
-                  onFontFamilyChange: widget.onFontFamilyChange,
-                  onThemeToggle: widget.onThemeToggle,
-                ),
+                builder: (_) => const SettingsBottomSheet(),
               );
             },
             icon: const Icon(Icons.settings_outlined),

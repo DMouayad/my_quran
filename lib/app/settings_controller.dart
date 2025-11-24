@@ -9,7 +9,7 @@ class SettingsController extends ChangeNotifier {
   final SettingsService settingsService;
 
   String _language = 'ar';
-  FontFamily _fontFamily = FontFamily.scheherazade;
+  FontFamily _fontFamily = FontFamily.rustam;
   ThemeMode _theme = ThemeMode.system;
 
   String get language => _language;
@@ -43,10 +43,8 @@ class SettingsController extends ChangeNotifier {
 
   Future<void> init() async {
     _theme = await settingsService.loadTheme();
-    _fontFamily = await settingsService.loadFontFamily();
     debugPrint('✅ Loaded settings');
     debugPrint('📏 Theme: $_theme');
-    debugPrint('📏 Font family: $_fontFamily');
     notifyListeners();
   }
 }

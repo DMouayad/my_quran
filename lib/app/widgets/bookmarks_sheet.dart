@@ -89,37 +89,6 @@ class _BookmarksSheetState extends State<BookmarksSheet> {
     }
   }
 
-  void _confirmDeleteAll() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('حذف جميع العلامات'),
-        content: const Text('هل أنت متأكد من حذف جميع العلامات المرجعية؟'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
-          ),
-          TextButton(
-            onPressed: () async {
-              for (final bookmark in _bookmarkService.bookmarks) {
-                await _bookmarkService.removeBookmark(bookmark.id);
-              }
-              setState(() {});
-              if (mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('تم حذف جميع العلامات')),
-                );
-              }
-            },
-            child: const Text('حذف'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showAddNoteDialog(VerseBookmark bookmark) {
     final controller = TextEditingController(text: bookmark.note ?? '');
 
