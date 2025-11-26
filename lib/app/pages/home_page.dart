@@ -306,138 +306,144 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
         ],
       ),
 
-      body: Stack(
-        children: [
-          // --- 3. The List (Bottom Layer) ---
-          Positioned.fill(
-            child: ScrollablePositionedList.builder(
-              itemCount: Quran.totalPagesCount,
-              itemScrollController: _itemScrollController,
-              itemPositionsListener: _itemPositionsListener,
-              initialScrollIndex: (widget.initialPosition?.pageNumber ?? 1) - 1,
+      body: SafeArea(
+        top: false,
+        child: Stack(
+          children: [
+            // --- 3. The List (Bottom Layer) ---
+            Positioned.fill(
+              child: ScrollablePositionedList.builder(
+                itemCount: Quran.totalPagesCount,
+                itemScrollController: _itemScrollController,
+                itemPositionsListener: _itemPositionsListener,
+                initialScrollIndex:
+                    (widget.initialPosition?.pageNumber ?? 1) - 1,
 
-              // CRITICAL: Padding must equal Total Header Height + some buffer
-              // This pushes the first page down so it's visible initially,
-              // but when you scroll, it moves UP behind the glass headers.
-              padding: EdgeInsets.only(
-                top: totalTopHeaderHeight + 10,
-                bottom: 100, // Space for bottom bar
-              ),
+                // CRITICAL: Padding must equal Total Header Height + some buffer
+                // This pushes the first page down so it's visible initially,
+                // but when you scroll, it moves UP behind the glass headers.
+                padding: EdgeInsets.only(
+                  top: totalTopHeaderHeight + 10,
+                  bottom: 100, // Space for bottom bar
+                ),
 
-              itemBuilder: (context, index) => QuranPageWidget(
-                pageNumber: index + 1,
-                key: ValueKey(index + 1),
-                highlightedVerse: _highlightedVerse,
-                onVerseTap: _onVerseTapped,
+                itemBuilder: (context, index) => QuranPageWidget(
+                  pageNumber: index + 1,
+                  key: ValueKey(index + 1),
+                  highlightedVerse: _highlightedVerse,
+                  onVerseTap: _onVerseTapped,
+                ),
               ),
             ),
-          ),
 
-          // --- 2. The Pinned Info Header (Middle Layer) ---
-          // We position this EXACTLY below the AppBar
-          Positioned(
-            top: statusBarHeight + appBarHeight, // Push down by AppBar height
-            left: 0,
-            right: 0,
-            height: infoHeaderHeight,
-            child: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: DefaultTextStyle(
-                  style: TextStyle(
-                    fontFamily: FontFamily.arabicNumbersFontFamily.name,
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                  child: Container(
-                    decoration: glassDecoration,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: ValueListenableBuilder<ReadingPosition>(
-                      valueListenable: _currentPositionNotifier,
-                      builder: (context, position, _) {
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${_getArabicNumber(position.surahNumber)} - '
-                              '${Quran.instance.getSurahNameArabic(position.surahNumber)}',
-                            ),
-                            Text(
-                              _getArabicNumber(position.pageNumber),
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Theme.of(context).colorScheme.primary,
+            // --- 2. The Pinned Info Header (Middle Layer) ---
+            // We position this EXACTLY below the AppBar
+            Positioned(
+              top: statusBarHeight + appBarHeight, // Push down by AppBar height
+              left: 0,
+              right: 0,
+              height: infoHeaderHeight,
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: DefaultTextStyle(
+                    style: TextStyle(
+                      fontFamily: FontFamily.arabicNumbersFontFamily.name,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                    child: Container(
+                      decoration: glassDecoration,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: ValueListenableBuilder<ReadingPosition>(
+                        valueListenable: _currentPositionNotifier,
+                        builder: (context, position, _) {
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${_getArabicNumber(position.surahNumber)} - '
+                                '${Quran.instance.getSurahNameArabic(position.surahNumber)}',
                               ),
-                            ),
-                            Text('جزء ${_getArabicNumber(position.juzNumber)}'),
-                          ],
-                        );
-                      },
+                              Text(
+                                _getArabicNumber(position.pageNumber),
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                              Text(
+                                'جزء ${_getArabicNumber(position.juzNumber)}',
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          // --- 4. Floating Bottom Bar (Top Layer) ---
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: FloatingBottomBar(
-              key: _bottomBarKey,
-              onBookmarks: () => showModalBottomSheet(
-                context: context,
-                showDragHandle: true,
-                builder: (_) => BookmarksSheet(
-                  onNavigateToPage:
-                      ({
-                        required int page,
-                        required int surah,
-                        required int verse,
-                      }) => _jumpToPage(
-                        page,
-                        highlightSurah: surah,
-                        highlightVerse: verse,
-                      ),
+            // --- 4. Floating Bottom Bar (Top Layer) ---
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: FloatingBottomBar(
+                key: _bottomBarKey,
+                onBookmarks: () => showModalBottomSheet(
+                  context: context,
+                  showDragHandle: true,
+                  builder: (_) => BookmarksSheet(
+                    onNavigateToPage:
+                        ({
+                          required int page,
+                          required int surah,
+                          required int verse,
+                        }) => _jumpToPage(
+                          page,
+                          highlightSurah: surah,
+                          highlightVerse: verse,
+                        ),
+                  ),
                 ),
-              ),
-              onSearch: () => showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                useSafeArea: true,
-                showDragHandle: true,
-                builder: (_) => QuranSearchBottomSheet(
-                  onNavigateToPage: (int page, {int? surah, int? verse}) =>
-                      _jumpToPage(
-                        page,
-                        highlightSurah: surah,
-                        highlightVerse: verse,
-                      ),
+                onSearch: () => showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  useSafeArea: true,
+                  showDragHandle: true,
+                  builder: (_) => QuranSearchBottomSheet(
+                    onNavigateToPage: (int page, {int? surah, int? verse}) =>
+                        _jumpToPage(
+                          page,
+                          highlightSurah: surah,
+                          highlightVerse: verse,
+                        ),
+                  ),
                 ),
-              ),
-              onNavigate: () => showModalBottomSheet(
-                context: context,
-                showDragHandle: true,
-                builder: (_) => QuranNavigationBottomSheet(
-                  initialPage: _currentPositionNotifier.value.pageNumber,
-                  onNavigate:
-                      ({
-                        required int page,
-                        required int surah,
-                        required int verse,
-                      }) => _jumpToPage(
-                        page,
-                        highlightSurah: surah,
-                        highlightVerse: verse,
-                      ),
+                onNavigate: () => showModalBottomSheet(
+                  context: context,
+                  showDragHandle: true,
+                  builder: (_) => QuranNavigationBottomSheet(
+                    initialPage: _currentPositionNotifier.value.pageNumber,
+                    onNavigate:
+                        ({
+                          required int page,
+                          required int surah,
+                          required int verse,
+                        }) => _jumpToPage(
+                          page,
+                          highlightSurah: surah,
+                          highlightVerse: verse,
+                        ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
