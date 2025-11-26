@@ -14,6 +14,7 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+
 android {
     namespace = "com.dmouayad.my_quran"
     compileSdkVersion = "android-36"
@@ -55,7 +56,25 @@ android {
             
             isMinifyEnabled = true
             isShrinkResources = true
+            isDebuggable = false
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+        
+             applicationVariants.all {
+                outputs.configureEach {
+                    val abiVersionCodes = mapOf(
+                        "x86_64" to 1,
+                        "armeabi-v7a" to 2,
+                        "arm64-v8a" to 3
+                    )
+
+                    val abi = filters.find { it.filterType == com.android.build.OutputFile.ABI }?.identifier
+
+                    if (abi != null && abiVersionCodes.containsKey(abi)) {
+                        (this as com.android.build.gradle.internal.api.ApkVariantOutputImpl).versionCodeOverride =
+                            this.versionCode * 1000 + abiVersionCodes[abi]!!
+                    }
+                }
+            }
         }
     }
 
