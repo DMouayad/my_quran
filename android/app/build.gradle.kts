@@ -63,25 +63,26 @@ android {
             // See:
             // * https://developer.android.com/build/gradle-tips
             // * https://developer.android.com/studio/build/configure-apk-splits
+
+            val flutterVersionCode = flutter.versionCode ?: 1
+    
+            val abiVersionCodes = mapOf(
+                "x86_64" to 0,
+                "armeabi-v7a" to 1,
+                "arm64-v8a" to 2
+            )
             applicationVariants.all {
                 outputs.configureEach {
-                    val abiVersionCodes = mapOf(
-                        "x86_64" to 1,
-                        "armeabi-v7a" to 2,
-                        "arm64-v8a" to 3
-                    )
-
                     val abi = filters.find { it.filterType == com.android.build.OutputFile.ABI }?.identifier
 
                     if (abi != null && abiVersionCodes.containsKey(abi)) {
                         (this as com.android.build.gradle.internal.api.ApkVariantOutputImpl).versionCodeOverride =
-                            this.versionCode * 10 + abiVersionCodes[abi]!!
+                            flutterVersionCode * 10 + abiVersionCodes[abi]!!
                     }
                 }
             }
         }
     }
-
 }
 
 flutter {
