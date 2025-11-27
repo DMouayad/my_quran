@@ -54,6 +54,6 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           # Only uploading the APKs now
-          artifacts: "build/app/outputs/flutter-apk/*.apk"
+          artifacts: "build/app/outputs/apk/release/*.apk"
           token: ${{ secrets.GITHUB_TOKEN }}
           generateReleaseNotes: true

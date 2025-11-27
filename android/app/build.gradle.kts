@@ -1,6 +1,10 @@
 import java.util.Properties
 import java.io.FileInputStream
 
+import com.android.build.gradle.api.ApplicationVariant
+import com.android.build.gradle.api.BaseVariantOutput
+import com.android.build.gradle.internal.api.ApkVariantOutputImpl
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -65,34 +69,47 @@ android {
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
             
-            // F-droid splits APKs by ABI, and requires different versionCode for each ABI.
-            // For each version X.Y.Z+A in pubspec where A is the version code,
-            // the versionCode must be A*10+abi_version_code.
-            // See:
-            // * https://developer.android.com/build/gradle-tips
-            // * https://developer.android.com/studio/build/configure-apk-splits
-
-            val flutterVersionCode = flutter.versionCode ?: 1
-    
-            val abiVersionCodes = mapOf(
-                "x86_64" to 0,
-                "armeabi-v7a" to 1,
-                "arm64-v8a" to 2
-            )
-            applicationVariants.all {
-                outputs.configureEach {
-                    val abi = filters.find { it.filterType == com.android.build.OutputFile.ABI }?.identifier
-
-                    if (abi != null && abiVersionCodes.containsKey(abi)) {
-                        (this as com.android.build.gradle.internal.api.ApkVariantOutputImpl).versionCodeOverride =
-                            flutterVersionCode * 10 + abiVersionCodes[abi]!!
-                    }
-                }
-            }
+            
         }
     }
+
+    applicationVariants.all(ApplicationVariantAction())
 }
+
 
 flutter {
     source = "../.."
+}
+
+class ApplicationVariantAction : Action<ApplicationVariant> {
+    override fun execute(variant: ApplicationVariant) {
+        variant.outputs.all(VariantOutputAction(variant))
+    }
+
+    class VariantOutputAction(private val variant: ApplicationVariant) : Action<BaseVariantOutput> {
+        override fun execute(output: BaseVariantOutput) {
+
+            if (output is ApkVariantOutputImpl) {
+                val abi =
+                    output.getFilter(com.android.build.api.variant.FilterConfiguration.FilterType.ABI.name)
+                val abiVersionCode =
+                    when (abi) {
+                        "x86_64" -> 1
+                        "armeabi-v7a" -> 2
+                        "arm64-v8a" -> 3
+                        else -> 0
+                    }
+                val versionCode = variant.versionCode * 10 + abiVersionCode
+                output.versionCodeOverride = versionCode
+
+                val flavor = variant.flavorName
+                val builtType = variant.buildType.name
+                val versionName = variant.versionName
+                val architecture = abi ?: "universal"
+
+                output.outputFileName =
+                    "MyQuran-v${versionName}-${architecture}-${versionCode}-${builtType}.apk"
+            }
+        }
+    }
 }
