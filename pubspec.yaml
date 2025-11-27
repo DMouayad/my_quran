@@ -2,7 +2,7 @@ name: my_quran
 description: A minimal app to read the Quran.
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-version: 1.0.1+2
+version: 1.0.0+1
 
 environment:
   sdk: ^3.9.2
