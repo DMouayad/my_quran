@@ -47,7 +47,7 @@ jobs:
       # --- BUILD (APK) ---
       
       - name: Build Split APKs
-        run: flutter build apk --release --split-per-abi --obfuscate --split-debug-info=./debug-info
+        run: flutter build apk --release --split-per-abi
 
       # --- PUBLISH ---
       - name: Create Release
