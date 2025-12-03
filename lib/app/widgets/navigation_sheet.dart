@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:my_quran/app/models.dart';
-import 'package:quran/quran.dart';
 import 'dart:async';
+import 'package:flutter/material.dart';
+
+import 'package:my_quran/app/models.dart';
+import 'package:my_quran/quran/quran.dart';
 
 class QuranNavigationBottomSheet extends StatefulWidget {
   const QuranNavigationBottomSheet({

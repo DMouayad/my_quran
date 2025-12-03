@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
-import 'package:quran/quran.dart';
+import 'package:my_quran/quran/quran.dart';
 
 class BookmarksSheet extends StatefulWidget {
   const BookmarksSheet({required this.onNavigateToPage, super.key});

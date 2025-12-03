@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
 import 'package:my_quran/app/search/processor.dart';
-
-import 'package:quran/quran.dart';
-
+import 'package:my_quran/quran/quran.dart';
 import 'package:my_quran/app/search/models.dart';
 import 'package:my_quran/app/services/search_service.dart';
 

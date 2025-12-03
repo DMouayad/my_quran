@@ -162,7 +162,6 @@ class FloatingBottomBarState extends State<FloatingBottomBar>
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: colorScheme.primary.withOpacity(0.3),
-                    width: 1,
                   ),
                 )
               : null,

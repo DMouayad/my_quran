@@ -12,7 +12,7 @@ import 'package:my_quran/app/services/reading_position_service.dart';
 import 'package:my_quran/app/services/search_service.dart';
 import 'package:my_quran/app/services/settings_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
-import 'package:quran/quran.dart';
+import 'package:my_quran/quran/quran.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,7 +68,6 @@ class MyApp extends StatelessWidget {
             ),
           ),
           theme: ThemeData(
-            scaffoldBackgroundColor: const Color(0xFFF8FAFC),
             fontFamily: settingsController.fontFamily.name,
             colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
           ),

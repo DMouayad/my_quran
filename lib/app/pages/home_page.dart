@@ -4,7 +4,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'package:quran/quran.dart';
 
 import 'package:my_quran/app/font_size_controller.dart';
 import 'package:my_quran/app/widgets/font_settings_sheet.dart';
@@ -16,6 +15,7 @@ import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/widgets/floating_bottom_bar.dart';
 import 'package:my_quran/app/widgets/navigation_sheet.dart';
 import 'package:my_quran/app/widgets/search_sheet.dart';
+import 'package:my_quran/quran/quran.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -614,8 +614,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
         setState(() => _scaleFactor = 1.0);
       },
       // 2. Hit Testing Callbacks
-      onTapUp: (details) =>
-          _handleGlobalTap(details.localPosition, isLongPress: false),
+      onTapUp: (details) => _handleGlobalTap(details.localPosition),
       onLongPressStart: (details) =>
           _handleGlobalTap(details.localPosition, isLongPress: true),
 

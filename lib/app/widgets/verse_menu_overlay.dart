@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:quran/quran.dart';
+import 'package:my_quran/quran/quran.dart';
 
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';

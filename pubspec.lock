@@ -269,13 +269,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.3"
-  quran:
-    dependency: "direct main"
-    description:
-      path: "packages/quran-1.4.1"
-      relative: true
-    source: path
-    version: "1.4.1"
   scrollable_positioned_list:
     dependency: "direct main"
     description:
