@@ -25,10 +25,15 @@ class ArabicTextProcessor {
 
   // Tokenize Arabic text into words
   static List<String> tokenize(String text) {
+    if (text.isEmpty) return [];
+
     // Remove punctuation and extra spaces
     // then split by whitespace and filter empty
     return text
-        .replaceAll(RegExp(r'[۞۩،؛؟\.\,\!\?\:\;]'), ' ')
+        .replaceAll(
+          RegExp(r'[\p{P}\p{S}\p{N}\-\(\)\[\]\{\}]+', unicode: true),
+          ' ',
+        )
         .split(RegExp(r'\s+'))
         .where((word) => word.isNotEmpty)
         .toList();
