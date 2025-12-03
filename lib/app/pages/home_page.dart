@@ -6,14 +6,12 @@ import 'package:flutter/services.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'package:my_quran/app/font_size_controller.dart';
-import 'package:my_quran/app/widgets/font_settings_sheet.dart';
-import 'package:my_quran/app/widgets/settings_sheet.dart';
-import 'package:my_quran/app/widgets/bookmarks_sheet.dart';
 import 'package:my_quran/app/services/reading_position_service.dart';
-import 'package:my_quran/app/widgets/verse_menu_overlay.dart';
 import 'package:my_quran/app/models.dart';
-import 'package:my_quran/app/widgets/floating_bottom_bar.dart';
+import 'package:my_quran/app/widgets/font_settings_sheet.dart';
 import 'package:my_quran/app/widgets/navigation_sheet.dart';
+import 'package:my_quran/app/widgets/bookmarks_sheet.dart';
+import 'package:my_quran/app/widgets/verse_menu_overlay.dart';
 import 'package:my_quran/app/widgets/search_sheet.dart';
 import 'package:my_quran/quran/quran.dart';
 
@@ -41,16 +39,10 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final ItemScrollController _itemScrollController = ItemScrollController();
   final ItemPositionsListener _itemPositionsListener =
       ItemPositionsListener.create();
-  final GlobalKey<FloatingBottomBarState> _bottomBarKey = GlobalKey();
 
-  // State
   // This allows Search/Bookmarks to control what is highlighted
   ({int surah, int verse})? _highlightedVerse;
   late final ValueNotifier<ReadingPosition> _currentPositionNotifier;
-
-  // Scroll Logic Helper Variables
-  double _lastLeadingEdge = 0;
-  int _lastFirstIndex = 0;
 
   @override
   void initState() {
@@ -87,7 +79,6 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
-  /// IMPROVEMENT 1: Smarter Scroll Detection
   void _onScrollUpdate() {
     final positions = _itemPositionsListener.itemPositions.value;
     if (positions.isEmpty) return;
@@ -98,38 +89,11 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     final firstItem = sortedPositions.first;
 
-    // --- A. Bottom Bar Sensitivity ---
-    // itemLeadingEdge is 0 when top of item is at top of viewport.
-    // It becomes negative as we scroll down.
-    final currentLeadingEdge = firstItem.itemLeadingEdge;
-    final currentFirstIndex = firstItem.index;
-
-    // Detect direction based on both index change and pixel offset within item
-    bool isScrollingDown = false;
-    if (currentFirstIndex > _lastFirstIndex) {
-      isScrollingDown = true;
-    } else if (currentFirstIndex == _lastFirstIndex) {
-      // Same item, check offset (allow small tolerance for jitter)
-      if (currentLeadingEdge < _lastLeadingEdge - 0.01) isScrollingDown = true;
-    }
-
-    if (isScrollingDown) {
-      _bottomBarKey.currentState?.hide();
-    } else if (currentLeadingEdge > _lastLeadingEdge + 0.01 ||
-        currentFirstIndex < _lastFirstIndex) {
-      _bottomBarKey.currentState?.show();
-    }
-
-    _lastLeadingEdge = currentLeadingEdge;
-    _lastFirstIndex = currentFirstIndex;
-
-    // --- B. Header Page Detection ---
-    // We want the page that occupies the "reading line" (e.g. top 20% of screen).
-    // If Page 1 is almost scrolled off (trailing edge < 0.2), show Page 2.
-
+    // --- Header Page Detection ---
+    // We want the page that occupies the "reading line".
     ItemPosition bestCandidate = firstItem;
     for (final pos in sortedPositions) {
-      // If this item covers the top 15% of the screen or starts within the screen
+      // If this item covers the top 15% of the screen
       if (pos.itemTrailingEdge > 0.15) {
         bestCandidate = pos;
         break;
@@ -150,7 +114,6 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
       final firstSurah = pageData.first;
       final surahNum = firstSurah['surah'] as int;
       final verseNum = firstSurah['start'] as int;
-      // Optimization: Calculate Juz only when page changes
       final juz = Quran.instance.getJuzNumber(surahNum, verseNum);
       _currentPositionNotifier.value = ReadingPosition(
         pageNumber: pageNumber,
@@ -177,7 +140,6 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
 
     _updateReadingPosition(pageNumber);
-    _bottomBarKey.currentState?.show();
 
     final index = (pageNumber - 1).clamp(0, Quran.totalPagesCount - 1);
 
@@ -245,7 +207,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     // 1. Calculate Heights
     final double statusBarHeight = MediaQuery.of(context).padding.top;
     const double appBarHeight = kToolbarHeight; // Standard 56.0
-    const double infoHeaderHeight = 50; // Height of our Surah/Page strip
+    const double infoHeaderHeight = 44; // Height of our Surah/Page strip
 
     // Total height obscuring the top
     final double totalTopHeaderHeight =
@@ -260,15 +222,86 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
         ),
       ),
     );
-
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       extendBodyBehindAppBar: true, // Critical for glass effect
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: colorScheme.secondaryContainer,
+        foregroundColor: colorScheme.secondary,
+        onPressed: () => showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          constraints: const BoxConstraints(maxHeight: 600),
+          builder: (_) => QuranNavigationBottomSheet2(
+            initialPage: _currentPositionNotifier.value.pageNumber,
+            onNavigate:
+                ({required int page, required int surah, required int verse}) =>
+                    _jumpToPage(
+                      page,
+                      highlightSurah: surah,
+                      highlightVerse: verse,
+                    ),
+          ),
+        ),
+        child: const Icon(Icons.menu_book_outlined),
+      ),
       // --- 1. The Glass App Bar ---
       appBar: AppBar(
         systemOverlayStyle: isDarkMode
             ? SystemUiOverlayStyle.light
             : SystemUiOverlayStyle.dark,
-        title: const Text('القرآن الكريم', style: TextStyle(fontSize: 18)),
+        titleSpacing: 4,
+        title: Row(
+          spacing: 5,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () => showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                useSafeArea: true,
+                showDragHandle: true,
+                builder: (_) => QuranSearchBottomSheet(
+                  onNavigateToPage: (int page, {int? surah, int? verse}) =>
+                      _jumpToPage(
+                        page,
+                        highlightSurah: surah,
+                        highlightVerse: verse,
+                      ),
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.bookmark_border),
+              onPressed: () => showModalBottomSheet(
+                context: context,
+                showDragHandle: true,
+                builder: (_) => BookmarksSheet(
+                  onNavigateToPage:
+                      ({
+                        required int page,
+                        required int surah,
+                        required int verse,
+                      }) => _jumpToPage(
+                        page,
+                        highlightSurah: surah,
+                        highlightVerse: verse,
+                      ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                'قرآني',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  color: context.colorScheme.secondary,
+                ),
+              ),
+            ),
+          ],
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         flexibleSpace: ClipRect(
@@ -279,29 +312,16 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
         ),
         actions: [
           IconButton(
-            iconSize: 20,
             onPressed: () => MinimalFontSizeControl.show(context),
-            icon: const Icon(Icons.format_size),
+            icon: const Icon(Icons.format_size_outlined),
           ),
           IconButton(
-            iconSize: 20,
             onPressed: widget.onThemeToggle,
             icon: Icon(switch (widget.themeMode) {
-              ThemeMode.dark => Icons.dark_mode_sharp,
-              ThemeMode.light => Icons.light_mode_sharp,
-              ThemeMode.system => Icons.brightness_auto,
+              ThemeMode.dark => Icons.dark_mode_outlined,
+              ThemeMode.light => Icons.light_mode_outlined,
+              ThemeMode.system => Icons.brightness_auto_outlined,
             }),
-          ),
-          IconButton(
-            iconSize: 20,
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                showDragHandle: true,
-                builder: (_) => const SettingsBottomSheet(),
-              );
-            },
-            icon: const Icon(Icons.settings_outlined),
           ),
         ],
       ),
@@ -318,15 +338,8 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 itemPositionsListener: _itemPositionsListener,
                 initialScrollIndex:
                     (widget.initialPosition?.pageNumber ?? 1) - 1,
-
-                // CRITICAL: Padding must equal Total Header Height + some buffer
-                // This pushes the first page down so it's visible initially,
-                // but when you scroll, it moves UP behind the glass headers.
-                padding: EdgeInsets.only(
-                  top: totalTopHeaderHeight + 10,
-                  bottom: 100, // Space for bottom bar
-                ),
-
+                // This pushes the first page down so it's visible initially
+                padding: EdgeInsets.only(top: totalTopHeaderHeight + 10),
                 itemBuilder: (context, index) => QuranPageWidget(
                   pageNumber: index + 1,
                   key: ValueKey(index + 1),
@@ -381,63 +394,6 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         },
                       ),
                     ),
-                  ),
-                ),
-              ),
-            ),
-
-            // --- 4. Floating Bottom Bar (Top Layer) ---
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: FloatingBottomBar(
-                key: _bottomBarKey,
-                onBookmarks: () => showModalBottomSheet(
-                  context: context,
-                  showDragHandle: true,
-                  builder: (_) => BookmarksSheet(
-                    onNavigateToPage:
-                        ({
-                          required int page,
-                          required int surah,
-                          required int verse,
-                        }) => _jumpToPage(
-                          page,
-                          highlightSurah: surah,
-                          highlightVerse: verse,
-                        ),
-                  ),
-                ),
-                onSearch: () => showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  useSafeArea: true,
-                  showDragHandle: true,
-                  builder: (_) => QuranSearchBottomSheet(
-                    onNavigateToPage: (int page, {int? surah, int? verse}) =>
-                        _jumpToPage(
-                          page,
-                          highlightSurah: surah,
-                          highlightVerse: verse,
-                        ),
-                  ),
-                ),
-                onNavigate: () => showModalBottomSheet(
-                  context: context,
-                  showDragHandle: true,
-                  builder: (_) => QuranNavigationBottomSheet(
-                    initialPage: _currentPositionNotifier.value.pageNumber,
-                    onNavigate:
-                        ({
-                          required int page,
-                          required int surah,
-                          required int verse,
-                        }) => _jumpToPage(
-                          page,
-                          highlightSurah: surah,
-                          highlightVerse: verse,
-                        ),
                   ),
                 ),
               ),
@@ -623,19 +579,21 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: pageDataModel.surahs.map((surah) {
-            return Column(
-              children: [
-                if (surah.verses.any((v) => v.number == 1)) ...[
-                  _buildHeader(surah),
-                  if (surah.hasBasmala) _buildBasmala(),
+          children: [
+            ...pageDataModel.surahs.map((surah) {
+              return Column(
+                children: [
+                  if (surah.verses.any((v) => v.number == 1)) ...[
+                    _buildHeader(surah),
+                    if (surah.hasBasmala) _buildBasmala(),
+                  ],
+                  // 3. THE RICH TEXT
+                  _buildRichText(surah, baseFontSize, symbolFontSize),
                 ],
-                // 3. THE RICH TEXT
-                _buildRichText(surah, baseFontSize, symbolFontSize),
-                const Divider(height: 32),
-              ],
-            );
-          }).toList(),
+              );
+            }),
+            const Divider(height: 32, thickness: 2),
+          ],
         ),
       ),
     );
@@ -670,22 +628,21 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
   Widget _buildHeader(SurahInPage surah) {
     final surahHeaderFontSize =
         _fontSizeController.surahHeaderFontSize * _scaleFactor;
-
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12, top: 4),
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(8),
+        color: colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(2),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Text(
             'ترتيبها\n (${_getArabicNumber(surah.surahNumber)})',
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: FontFamily.arabicNumbersFontFamily.name,
             ),
@@ -695,11 +652,13 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: surahHeaderFontSize,
-              fontWeight: FontWeight.bold,
+              height: 1.5,
+              color: colorScheme.onSecondaryContainer,
             ),
           ),
           Text(
             'آياتها\n (${_getArabicNumber(surah.verses.length)})',
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: FontFamily.arabicNumbersFontFamily.name,
             ),
@@ -716,7 +675,11 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
       padding: const EdgeInsets.only(bottom: 24),
       child: Text(
         Quran.basmala,
-        style: TextStyle(fontSize: fontSize),
+        style: TextStyle(
+          fontSize: fontSize,
+          letterSpacing: 0,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
         textAlign: TextAlign.center,
       ),
     );
@@ -816,6 +779,7 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
             color: Theme.of(context).colorScheme.primary,
             fontSize: widget.symbolSize,
             fontWeight: FontWeight.w600,
+            height: 2.2,
             backgroundColor: isSelected
                 ? highlightedTextStyle.backgroundColor
                 : null,

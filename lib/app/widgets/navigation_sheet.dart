@@ -1,15 +1,18 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/quran/quran.dart';
 
-class QuranNavigationBottomSheet extends StatefulWidget {
-  const QuranNavigationBottomSheet({
+class QuranNavigationBottomSheet2 extends StatefulWidget {
+  const QuranNavigationBottomSheet2({
     required this.initialPage,
     required this.onNavigate,
     super.key,
   });
+
   final int initialPage;
   final void Function({
     required int page,
@@ -19,12 +22,12 @@ class QuranNavigationBottomSheet extends StatefulWidget {
   onNavigate;
 
   @override
-  State<QuranNavigationBottomSheet> createState() =>
-      _QuranNavigationBottomSheetState();
+  State<QuranNavigationBottomSheet2> createState() =>
+      _QuranNavigationBottomSheet2State();
 }
 
-class _QuranNavigationBottomSheetState
-    extends State<QuranNavigationBottomSheet> {
+class _QuranNavigationBottomSheet2State
+    extends State<QuranNavigationBottomSheet2> {
   late FixedExtentScrollController _pageController;
   late FixedExtentScrollController _surahController;
   late FixedExtentScrollController _juzController;
@@ -36,33 +39,14 @@ class _QuranNavigationBottomSheetState
   int _currentVerse = 1;
 
   bool _isUpdating = false;
-
-  // Debounce timers for each picker
-  Timer? _pageDebounce;
-  Timer? _surahDebounce;
-  Timer? _juzDebounce;
-  Timer? _verseDebounce;
-
-  final Duration _debounceDuration = const Duration(milliseconds: 300);
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-
     _currentPage = widget.initialPage;
+    _initDataFromPage(_currentPage);
 
-    // Get initial position data
-    final pageData = Quran.instance.getPageData(_currentPage);
-    if (pageData.firstOrNull case {
-      'surah': final int surahNum,
-      'start': final int verseNum,
-    }) {
-      _currentSurah = surahNum;
-      _currentVerse = verseNum;
-      _currentJuz = Quran.instance.getJuzNumber(_currentSurah, _currentVerse);
-    }
-
-    // Initialize controllers
     _pageController = FixedExtentScrollController(
       initialItem: _currentPage - 1,
     );
@@ -75,13 +59,19 @@ class _QuranNavigationBottomSheetState
     );
   }
 
+  void _initDataFromPage(int page) {
+    final pageData = Quran.instance.getPageData(page);
+    if (pageData.isNotEmpty) {
+      final firstEntry = pageData.first;
+      _currentSurah = firstEntry['surah'] as int;
+      _currentVerse = firstEntry['start'] as int;
+      _currentJuz = Quran.instance.getJuzNumber(_currentSurah, _currentVerse);
+    }
+  }
+
   @override
   void dispose() {
-    _pageDebounce?.cancel();
-    _surahDebounce?.cancel();
-    _juzDebounce?.cancel();
-    _verseDebounce?.cancel();
-
+    _debounce?.cancel();
     _pageController.dispose();
     _surahController.dispose();
     _juzController.dispose();
@@ -89,345 +79,193 @@ class _QuranNavigationBottomSheetState
     super.dispose();
   }
 
-  void _onPageChanged(int index) {
+  // --- LOGIC (Same as before, just keeping it sync) ---
+
+  void _triggerUpdate(VoidCallback updateFn) {
     if (_isUpdating) return;
 
-    final pageNum = index + 1;
-    setState(() {
-      _currentPage = pageNum;
-    });
+    HapticFeedback.selectionClick(); // Subtle click
+    setState(() {}); // Rebuild to update highlight text color immediately
 
-    // Cancel previous debounce
-    _pageDebounce?.cancel();
-
-    // Start new debounce
-    _pageDebounce = Timer(_debounceDuration, () {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
       if (!mounted) return;
-      _updateFromPage(pageNum);
+      setState(() => _isUpdating = true);
+
+      updateFn();
+
+      // Unlock after animations roughly finish
+      Future.delayed(const Duration(milliseconds: 350), () {
+        if (mounted) setState(() => _isUpdating = false);
+      });
     });
   }
 
-  void _updateFromPage(int pageNum) {
-    _isUpdating = true;
-
-    final pageData = Quran.instance.getPageData(pageNum);
-    if (pageData.firstOrNull case {
-      'surah': final int surahNum,
-      'start': final int verseNum,
-    }) {
-      final juzNum = Quran.instance.getJuzNumber(surahNum, verseNum);
-
-      setState(() {
-        _currentSurah = surahNum;
-        _currentVerse = verseNum;
-        _currentJuz = juzNum;
-      });
-
-      // Animate other controllers
-      _surahController.animateToItem(
-        surahNum - 1,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-      _juzController.animateToItem(
-        juzNum - 1,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-      _verseController.animateToItem(
-        verseNum - 1,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
-
-    // Reset flag after a delay to allow animations to complete
-    Future.delayed(const Duration(milliseconds: 400), () {
-      _isUpdating = false;
+  void _onPageChanged(int index) {
+    final page = index + 1;
+    _currentPage = page;
+    _triggerUpdate(() {
+      _initDataFromPage(page);
+      _animateAll();
     });
   }
 
   void _onSurahChanged(int index) {
-    if (_isUpdating) return;
-
-    final surahNum = index + 1;
-    setState(() {
-      _currentSurah = surahNum;
-    });
-
-    // Cancel previous debounce
-    _surahDebounce?.cancel();
-
-    // Start new debounce
-    _surahDebounce = Timer(_debounceDuration, () {
-      if (!mounted) return;
-      _updateFromSurah(surahNum);
-    });
-  }
-
-  void _updateFromSurah(int surahNum) {
-    _isUpdating = true;
-
-    setState(() {
-      _currentVerse = 1; // Reset to first verse
-    });
-
-    // Get page for this surah
-    final pageNum = Quran.instance.getPageNumber(surahNum, 1);
-    final juzNum = Quran.instance.getJuzNumber(surahNum, 1);
-
-    setState(() {
-      _currentPage = pageNum;
-      _currentJuz = juzNum;
-    });
-
-    // Animate other controllers
-    _pageController.animateToItem(
-      pageNum - 1,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-    _juzController.animateToItem(
-      juzNum - 1,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-    _verseController.animateToItem(
-      0, // First verse
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-
-    Future.delayed(const Duration(milliseconds: 400), () {
-      _isUpdating = false;
+    final surah = index + 1;
+    _currentSurah = surah;
+    _triggerUpdate(() {
+      _currentVerse = 1;
+      _currentPage = Quran.instance.getPageNumber(surah, 1);
+      _currentJuz = Quran.instance.getJuzNumber(surah, 1);
+      _animateAll();
     });
   }
 
   void _onJuzChanged(int index) {
-    if (_isUpdating) return;
-
-    final juzNum = index + 1;
-    setState(() {
-      _currentJuz = juzNum;
-    });
-
-    // Cancel previous debounce
-    _juzDebounce?.cancel();
-
-    // Start new debounce
-    _juzDebounce = Timer(_debounceDuration, () {
-      if (!mounted) return;
-      _updateFromJuz(juzNum);
-    });
-  }
-
-  void _updateFromJuz(int juzNum) {
-    _isUpdating = true;
-
-    // Get first verse of this juz
-    final juzData = _getFirstVerseOfJuz(juzNum);
-    final surahNum = juzData['surah']!;
-    final verseNum = juzData['verse']!;
-    final pageNum = Quran.instance.getPageNumber(surahNum, verseNum);
-
-    setState(() {
-      _currentSurah = surahNum;
-      _currentVerse = verseNum;
-      _currentPage = pageNum;
-    });
-
-    // Animate other controllers
-    _pageController.animateToItem(
-      pageNum - 1,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-    _surahController.animateToItem(
-      surahNum - 1,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-    _verseController.animateToItem(
-      verseNum - 1,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-
-    Future.delayed(const Duration(milliseconds: 400), () {
-      _isUpdating = false;
+    final juz = index + 1;
+    _currentJuz = juz;
+    _triggerUpdate(() {
+      final surahs = Quran.instance.getSurahAndVersesFromJuz(juz);
+      _currentSurah = surahs.keys.first;
+      _currentVerse = surahs[_currentSurah]!.first;
+      _currentPage = Quran.instance.getPageNumber(_currentSurah, _currentVerse);
+      _animateAll();
     });
   }
 
   void _onVerseChanged(int index) {
-    if (_isUpdating) return;
+    final verse = index + 1;
+    _currentVerse = verse;
+    _triggerUpdate(() {
+      _currentPage = Quran.instance.getPageNumber(_currentSurah, verse);
+      _currentJuz = Quran.instance.getJuzNumber(_currentSurah, verse);
+      _animateAll(skipVerse: true);
+    });
+  }
 
-    final verseNum = index + 1;
-    final verseCount = Quran.instance.getVerseCount(_currentSurah);
-
-    if (verseNum > verseCount) {
-      return;
+  void _animateAll({bool skipVerse = false}) {
+    _pageController.jumpToItem(_currentPage - 1);
+    _surahController.jumpToItem(_currentSurah - 1);
+    _juzController.jumpToItem(_currentJuz - 1);
+    if (!skipVerse) {
+      final max = Quran.instance.getVerseCount(_currentSurah);
+      _verseController.jumpToItem((_currentVerse - 1).clamp(0, max - 1));
     }
-
-    setState(() {
-      _currentVerse = verseNum;
-    });
-
-    // Cancel previous debounce
-    _verseDebounce?.cancel();
-
-    // Start new debounce
-    _verseDebounce = Timer(_debounceDuration, () {
-      if (!mounted) return;
-      _updateFromVerse(verseNum);
-    });
   }
 
-  void _updateFromVerse(int verseNum) {
-    _isUpdating = true;
-
-    // Get page for this verse
-    final pageNum = Quran.instance.getPageNumber(_currentSurah, verseNum);
-    final juzNum = Quran.instance.getJuzNumber(_currentSurah, verseNum);
-
-    setState(() {
-      _currentPage = pageNum;
-      _currentJuz = juzNum;
-    });
-
-    // Animate other controllers
-    _pageController.animateToItem(
-      pageNum - 1,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-    _juzController.animateToItem(
-      juzNum - 1,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-
-    Future.delayed(const Duration(milliseconds: 400), () {
-      _isUpdating = false;
-    });
-  }
-
-  Map<String, int> _getFirstVerseOfJuz(int juzNum) {
-    final firstJuzSurah = Quran.instance
-        .getSurahAndVersesFromJuz(juzNum)
-        .entries
-        .first;
-    return {'surah': firstJuzSurah.key, 'verse': firstJuzSurah.value.first};
-  }
+  // --- UI BUILD ---
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       child: Column(
         children: [
-          // Pickers
+          const SizedBox(height: 12),
+          // Minimal Drag Handle
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: colorScheme.outlineVariant,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // --- PICKERS AREA ---
           Expanded(
-            child: Row(
+            child: Stack(
               children: [
-                // Page picker
-                Expanded(
-                  child: _buildPicker(
-                    controller: _pageController,
-                    itemCount: Quran.totalPagesCount,
-                    onSelectedItemChanged: _onPageChanged,
-                    builder: (index) {
-                      final pageNum = index + 1;
-                      return _buildNumberWidget(
-                        context,
-                        pageNum,
-                        pageNum == _currentPage,
-                      );
-                    },
-                    label: 'الصفحة',
+                // 1. The Highlight Bar (Behind the selected item)
+                Center(
+                  child: Container(
+                    height: 44,
+                    margin: const EdgeInsets.fromLTRB(10, 26, 10, 0),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHigh,
+                    ),
                   ),
                 ),
 
-                // Surah picker
-                Expanded(
-                  flex: 2,
-                  child: _buildPicker(
-                    controller: _surahController,
-                    itemCount: 114,
-                    onSelectedItemChanged: _onSurahChanged,
-                    builder: (index) {
-                      final surahNum = index + 1;
-                      return Center(
-                        child: Text(
-                          Quran.instance.getSurahNameArabic(surahNum),
-                          style: TextStyle(
-                            fontSize: 22,
-                            color: surahNum == _currentSurah
-                                ? colorScheme.primary
-                                : colorScheme.onSurface,
+                // 2. The Flat Pickers
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildFlatWheel(
+                        controller: _pageController,
+                        count: Quran.totalPagesCount,
+                        label: 'الصفحة',
+                        onChanged: _onPageChanged,
+                        itemBuilder: (i) => _buildItem(i + 1),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2, // Surah gets more space
+                      child: _buildFlatWheel(
+                        controller: _surahController,
+                        count: Quran.totalSurahCount,
+                        label: 'السورة',
+                        onChanged: _onSurahChanged,
+                        itemBuilder: (i) => Center(
+                          child: Text(
+                            Quran.instance.getSurahNameArabic(i + 1),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: (i + 1) == _currentSurah
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurface.withOpacity(0.7),
+                              fontWeight: (i + 1) == _currentSurah
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
                           ),
-                          textDirection: TextDirection.rtl,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      );
-                    },
-                    label: 'السورة',
-                  ),
-                ),
-
-                // Juz picker
-                Expanded(
-                  child: _buildPicker(
-                    controller: _juzController,
-                    itemCount: 30,
-                    onSelectedItemChanged: _onJuzChanged,
-                    builder: (index) {
-                      final juzNum = index + 1;
-                      return _buildNumberWidget(
-                        context,
-                        juzNum,
-                        juzNum == _currentJuz,
-                      );
-                    },
-                    label: 'الجزء',
-                  ),
-                ),
-
-                // Verse picker
-                Expanded(
-                  child: _buildPicker(
-                    controller: _verseController,
-                    itemCount: Quran.instance.getVerseCount(_currentSurah),
-                    onSelectedItemChanged: _onVerseChanged,
-                    builder: (index) {
-                      final verseNum = index + 1;
-                      return _buildNumberWidget(
-                        context,
-                        verseNum,
-                        verseNum == _currentVerse,
-                      );
-                    },
-                    label: 'الآية',
-                  ),
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildFlatWheel(
+                        controller: _juzController,
+                        count: Quran.totalJuzCount,
+                        label: 'الجزء',
+                        onChanged: _onJuzChanged,
+                        itemBuilder: (i) => _buildItem(i + 1),
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildFlatWheel(
+                        controller: _verseController,
+                        count: Quran.instance.getVerseCount(_currentSurah),
+                        label: 'الآية',
+                        onChanged: _onVerseChanged,
+                        itemBuilder: (i) => _buildItem(i + 1),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          // Action buttons
+
+          // --- BOTTOM ACTIONS ---
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
             child: Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: const Text('إلغاء'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 Expanded(
+                  flex: 2,
                   child: FilledButton(
                     onPressed: () {
                       widget.onNavigate(
@@ -448,70 +286,57 @@ class _QuranNavigationBottomSheetState
     );
   }
 
-  Widget _buildNumberWidget(BuildContext context, int number, bool isCurrent) {
+  Widget _buildFlatWheel({
+    required FixedExtentScrollController controller,
+    required int count,
+    required String label,
+    required ValueChanged<int> onChanged,
+    required Widget Function(int) itemBuilder,
+  }) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.secondary,
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListWheelScrollView.useDelegate(
+            controller: controller,
+            itemExtent: 44, // Matches highlight bar height
+            physics: const FixedExtentScrollPhysics(),
+            changeReportingBehavior: ChangeReportingBehavior.onScrollEnd,
+            diameterRatio: 100, // Huge diameter = appears straight
+            perspective: 0.0001, // Near zero perspective = no 3D tilt
+            // -----------------------
+            onSelectedItemChanged: onChanged,
+            childDelegate: ListWheelChildBuilderDelegate(
+              builder: (context, index) {
+                if (index < 0 || index >= count) return null;
+                return itemBuilder(index);
+              },
+              childCount: count,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildItem(int number) {
     final colorScheme = Theme.of(context).colorScheme;
     return Text(
       _toArabicNumber(number),
       style: TextStyle(
-        fontSize: 22,
-        fontFamily: FontFamily.defaultFontFamily.name,
-        color: isCurrent ? colorScheme.primary : colorScheme.onSurface,
-        fontWeight: isCurrent ? FontWeight.w600 : FontWeight.normal,
+        fontSize: 20,
+        color: colorScheme.onSurface,
+        fontFamily: FontFamily.arabicNumbersFontFamily.name,
       ),
-    );
-  }
-
-  Widget _buildPicker({
-    required FixedExtentScrollController controller,
-    required int itemCount,
-    required ValueChanged<int> onSelectedItemChanged,
-    required Widget Function(int index) builder,
-    required String label,
-  }) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: Stack(
-            children: [
-              // Selection indicator
-              Center(
-                child: Container(
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainer,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              // Picker
-              ListWheelScrollView.useDelegate(
-                controller: controller,
-                itemExtent: 40,
-                perspective: 0.0000004,
-                diameterRatio: 1.2,
-                physics: const FixedExtentScrollPhysics(),
-                onSelectedItemChanged: onSelectedItemChanged,
-                childDelegate: ListWheelChildBuilderDelegate(
-                  builder: (context, index) {
-                    if (index < 0 || index >= itemCount) return null;
-                    return builder(index);
-                  },
-                  childCount: itemCount,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 

@@ -29,9 +29,7 @@ class MinimalFontSizeControl extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             decoration: BoxDecoration(
-              color: colorScheme.surface.withOpacity(
-                0.96,
-              ), // Almost opaque for crispness
+              color: colorScheme.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: colorScheme.outlineVariant.withOpacity(0.2),
