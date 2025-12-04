@@ -5,6 +5,21 @@ permissions:
 
 on:
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'The tag name for the release (e.g., v1.0.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Set to true for a pre-release'
+        required: false
+        type: boolean
+        default: false
+      draft:
+        description: 'Set to true to create a draft release'
+        required: false
+        type: boolean
+        default: false
   push:
     tags:
       - 'v*'
@@ -85,6 +100,9 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
+          tag: ${{ github.event.inputs.tag_name }}
+          prerelease: ${{ github.event.inputs.prerelease }}
+          draft: ${{ github.event.inputs.draft }}
           artifacts: "build/app/outputs/apk/release/*.apk"
           token: ${{ secrets.GITHUB_TOKEN }}
           generateReleaseNotes: true
