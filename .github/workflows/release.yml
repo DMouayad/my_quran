@@ -18,6 +18,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Checkout reproducible-apk-tools
+        uses: actions/checkout@v4
+        with:
+          repository: obfusk/reproducible-apk-tools
+          ref: v0.3.0
+          path: reproducible-apk-tools
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -51,10 +63,36 @@ jobs:
           echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
           echo "storeFile=upload-keystore.jks" >> android/key.properties
 
-      # --- BUILD (APK) ---
-      
-      - name: Build Split APKs
-        run: flutter build apk --release --split-per-abi
+      # --- BUILD APKs ---
+      - name: Build armeabi-v7a APK
+        run: flutter build apk --release --split-per-abi --target-platform="android-arm"
+
+      - name: Zipalign armeabi-v7a APK
+        run: |
+          cd build/app/outputs/apk/release
+          mv app-armeabi-v7a-release.apk app-armeabi-v7a-release-unaligned.apk
+          python3 ${{ github.workspace }}/reproducible-apk-tools/zipalign.py \
+            --page-size 16 \
+            --pad-like-apksigner \
+            --replace \
+            app-armeabi-v7a-release-unaligned.apk \
+            app-armeabi-v7a-release.apk
+          rm app-armeabi-v7a-release-unaligned.apk
+
+      - name: Build arm64-v8a APK
+        run: flutter build apk --release --split-per-abi --target-platform="android-arm64"
+
+      - name: Zipalign arm64-v8a APK
+        run: |
+          cd build/app/outputs/apk/release
+          mv app-arm64-v8a-release.apk app-arm64-v8a-release-unaligned.apk
+          python3 ${{ github.workspace }}/reproducible-apk-tools/zipalign.py \
+            --page-size 16 \
+            --pad-like-apksigner \
+            --replace \
+            app-arm64-v8a-release-unaligned.apk \
+            app-arm64-v8a-release.apk
+          rm app-arm64-v8a-release-unaligned.apk
 
       # --- PUBLISH ---
       - name: Create Release
