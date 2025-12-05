@@ -390,22 +390,40 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       child: ValueListenableBuilder<ReadingPosition>(
                         valueListenable: _currentPositionNotifier,
                         builder: (context, position, _) {
-                          return Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          return Stack(
+                            alignment: Alignment.center,
                             children: [
-                              Text(
-                                '${_getArabicNumber(position.surahNumber)} - '
-                                '${Quran.instance.getSurahNameArabic(position.surahNumber)}',
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '${_getArabicNumber(position.surahNumber)} - '
+                                    '${Quran.instance.getSurahNameArabic(position.surahNumber)}',
+                                  ),
+
+                                  Text(
+                                    'جزء ${_getArabicNumber(position.juzNumber)}',
+                                  ),
+                                ],
                               ),
-                              Text(
-                                _getArabicNumber(position.pageNumber),
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  color: Theme.of(context).colorScheme.primary,
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 200),
+                                  child: Text(
+                                    _getArabicNumber(position.pageNumber),
+                                    key: ValueKey(position.pageNumber),
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                'جزء ${_getArabicNumber(position.juzNumber)}',
                               ),
                             ],
                           );
