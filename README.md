@@ -2,30 +2,25 @@
 
   <!-- LOGO -->
   <img src="fastlane/metadata/android/en-US/images/icon.png" alt="Logo" width="120" height="120">
-  
+
+  <br>
+
   #  My Quran | قرآني
 
-  **A distraction-free, privacy-focused, and high-performance Quran application.**
-  
-  **تطبيق قرآن كريم خفيف، مفتوح المصدر، يركز على سهولة الاستخدام والأداء العالي.**
-  <br>
-  
   <!-- BADGES -->
   ![Version](https://img.shields.io/github/v/release/dmouayad/my_quran?style=flat&labelColor=CCE8E4&color=0F766E&label=Latest%20Version)
   [![Github downloads](https://img.shields.io/github/downloads/dmouayad/my_quran/total.svg?style=flat&labelColor=CCE8E4&color=0F766E)](https://github.com/dmouayad/my_quran/releases/)
-  ![Flutter](https://img.shields.io/badge/Built%20with-Flutter-0F766E?style=flat&labelColor=CCE8E4&logo=flutter&logoColor=0F766E)
-  ![License](https://img.shields.io/github/license/dmouayad/my_quran?style=flat&labelColor=CCE8E4&color=0F766E)
 
-  <br>
-
+  A distraction-free, privacy-focused, and high-performance Quran application.
+  <br><br>
   <!-- DOWNLOAD BUTTONS -->
-  <a href="https://github.com/dmouayad/my_quran/releases/latest">
-    <img src="https://img.shields.io/badge/Download-APK-0F766E?style=for-the-badge&logo=android&logoColor=white" height="230">
-  </a>
-  &nbsp;
-  <a href="https://f-droid.org/packages/com.dmouayad.my_quran/">
-    <img src="https://img.shields.io/badge/Get%20it%20on-F--Droid-0F766E?style=for-the-badge&logo=f-droid&logoColor=white" height="230">
-  </a>
+  <div align="center">
+
+  [<img src="assets/readme_assets/get_iod.svg" alt="Get it on IzzyOnDroid" width="24%" align="center">](https://apt.izzysoft.de/fdroid/index/apk/com.dmouayad.my_quran)
+  <!-- [<img src="assets/readme_assets/get_fdroid.svg" alt="Get it on F-Droid" width="24%" align="center">](https://f-droid.org/packages/com.dmouayad.my_quran) -->
+  [<img src="assets/readme_assets/get_github.svg" alt="Get it on GitHub" width="24%" align="center">](https://github.com/dmouayad/my_quran/releases)
+
+  </div>
 </div>
 
 ---
@@ -50,6 +45,10 @@
 ---
 
 ## 🛠 Technical Highlights
+
+![Flutter](https://img.shields.io/badge/Built%20with-Flutter-0F766E?style=flat&labelColor=CCE8E4&logo=flutter&logoColor=0F766E)
+![Reproducible](https://shields.rbtlog.dev/simple/com.dmouayad.my_quran)
+
 
 *   **Architecture:** Pure Flutter (No heavy state management libraries), using `ValueNotifier` and `ScrollablePositionedList` for maximum performance.
 *   **Data:** The Quran text is stored as compressed JSON (`assets/quran.json`) loaded into memory via Isolates.

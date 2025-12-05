@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="260"
+   height="80"
+   viewBox="0 0 260 80"
+   fill="none"
+   version="1.1"
+   id="svg4"
+   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
+   sodipodi:docname="get_fdroid.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs4">
+    <rect
+       x="78.55587"
+       y="21.772038"
+       width="163.5845"
+       height="37.65974"
+       id="rect5" />
+    <rect
+       x="82.674904"
+       y="15.593487"
+       width="160.64233"
+       height="54.13588"
+       id="rect4" />
+    <rect
+       x="545.27075"
+       y="129.38628"
+       width="170.53992"
+       height="37.730087"
+       id="rect5878" />
+    <rect
+       x="79.480141"
+       y="243.98555"
+       width="98.107262"
+       height="19.632467"
+       id="rect5297" />
+    <rect
+       x="545.27075"
+       y="129.38628"
+       width="132.63116"
+       height="41.711376"
+       id="rect5878-3" />
+    <rect
+       x="79.480141"
+       y="243.98555"
+       width="97.836517"
+       height="25.859533"
+       id="rect5297-6" />
+  </defs>
+  <sodipodi:namedview
+     inkscape:zoom="3.398855"
+     inkscape:cx="129.16115"
+     inkscape:cy="33.393599"
+     inkscape:window-width="1920"
+     inkscape:window-height="1051"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg4"
+     pagecolor="#b0b0b0"
+     id="namedview1"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050" />
+  <rect
+     width="260"
+     height="80"
+     rx="10"
+     id="rect"
+     style="fill:#0F766E;fill-opacity:1;stroke-width:1.99236"
+     x="0"
+     y="0" />
+  <g
+     id="g5"
+     transform="matrix(2.5041405,0,0,2.5041462,-11.823012,-11.437342)"
+     style="stroke-width:0.691938;stroke-dasharray:none">
+    <g
+       id="g1"
+       transform="translate(0.3833401,0.51114024)"
+       style="stroke-width:0.691938;stroke-dasharray:none">
+      <path
+         fill-rule="evenodd"
+         clip-rule="evenodd"
+         d="m 11.871378,10.927641 c -0.182752,-0.185994 -0.479052,-0.185994 -0.661806,0 -0.182752,0.185995 -0.182752,0.487548 0,0.673543 l 1.639686,1.668763 c -0.06354,0.152389 -0.09868,0.320018 -0.09868,0.496047 v 2.540117 c 0,0.701384 0.558625,1.270011 1.24788,1.270011 h 11.8552 c 0.689256,0 1.247976,-0.568627 1.247976,-1.270011 v -2.540117 c 0,-0.175443 -0.03493,-0.342583 -0.09819,-0.494583 l 1.64122,-1.670227 c 0.182753,-0.185995 0.182753,-0.487548 0,-0.673543 -0.182753,-0.185994 -0.479149,-0.185994 -0.661902,0 l -1.64026,1.669447 c -0.150118,-0.06515 -0.315306,-0.101104 -0.488843,-0.101104 H 13.998467 c -0.172961,0 -0.337668,0.03575 -0.487403,0.100421 z m 5.55888,4.108363 c 0,0.70148 -0.558719,1.270107 -1.247976,1.270107 -0.689161,0 -1.247882,-0.568627 -1.247882,-1.270107 0,-0.701382 0.558721,-1.27001 1.247882,-1.27001 0.689257,0 1.247976,0.568628 1.247976,1.27001 z m 7.487473,0 c 0,0.70148 -0.558719,1.270107 -1.247881,1.270107 -0.689256,0 -1.247976,-0.568627 -1.247976,-1.270107 0,-0.701382 0.55872,-1.27001 1.247976,-1.27001 0.689162,0 1.247881,0.568628 1.247881,1.27001 z"
+         fill="#B7F1BA"
+         id="path1"
+         style="fill:none;fill-opacity:1;stroke:#CDF261;stroke-width:0.691938;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         fill-rule="evenodd"
+         clip-rule="evenodd"
+         d="m 19.95365,26.766862 c 1.390708,0 2.518129,-1.147415 2.518129,-2.562787 0,-1.415259 -1.127421,-2.562672 -2.518129,-2.562672 -1.140699,0 -2.104215,0.771887 -2.413765,1.830546 h 1.167371 c 0.248793,-0.437701 0.713838,-0.732242 1.246394,-0.732242 0.794738,0 1.438961,0.655648 1.438961,1.464368 0,0.808835 -0.644223,1.464481 -1.438961,1.464481 -0.532556,0 -0.997601,-0.294538 -1.246394,-0.73224 h -1.167371 c 0.30955,1.058543 1.273066,1.830546 2.413765,1.830546 z"
+         fill="#B7F1BA"
+         id="path2"
+         style="fill:#FFF;fill-opacity:1;stroke-width:0.691938;stroke-dasharray:none"
+         sodipodi:nodetypes="sssccsssccs" />
+      <path
+         fill-rule="evenodd"
+         clip-rule="evenodd"
+         d="M 12.750586,27.997855 V 20.3775 c 0,-0.701382 0.558625,-1.27001 1.24788,-1.27001 h 11.8552 c 0.689256,0 1.247976,0.568628 1.247976,1.27001 v 7.620355 c 0,0.701383 -0.55872,1.270011 -1.247976,1.270011 h -11.8552 c -0.689255,0 -1.24788,-0.568628 -1.24788,-1.270011 z m 10.920225,-3.810227 c 0,2.104343 -1.676062,3.810227 -3.743737,3.810227 -2.067578,0 -3.743737,-1.705884 -3.743737,-3.810227 0,-2.104244 1.676159,-3.810128 3.743737,-3.810128 2.067675,0 3.743737,1.705884 3.743737,3.810128 z"
+         fill="#B7F1BA"
+         id="path3"
+         style="fill:none;fill-opacity:1;stroke:#FFF;stroke-width:0.691938;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+  </g>
+ 
+ <text x="85" y="32" 
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
+        font-weight="500" 
+        font-size="15" 
+        fill="#A7F3D0">
+    Get it on
+  </text>
+  
+  <text x="84" y="58" 
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
+        font-weight="600" 
+        font-size="24" 
+        fill="#FFFFFF">
+    F-Droid
+  </text>
+
+</svg>
