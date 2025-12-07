@@ -11,6 +11,7 @@
   ![Version](https://img.shields.io/github/v/release/dmouayad/my_quran?style=flat&labelColor=CCE8E4&color=0F766E&label=Latest%20Version)
   [![Project's License](https://img.shields.io/github/license/dmouayad/my_quran?style=flat&labelColor=CCE8E4&color=0F766E)](./LICENSE)
   ![Flutter](https://img.shields.io/badge/Built%20with-Flutter-0F766E?style=flat&labelColor=CCE8E4&logo=flutter&logoColor=0F766E)
+  [![style: very good analysis](https://img.shields.io/badge/style-very_good_analysis-0F766E.svg?labelColor=CCE8E4)](https://pub.dev/packages/very_good_analysis)
   
   <!-- DOWNLOAD BUTTONS -->
   <div align="center">
@@ -37,7 +38,9 @@
 | **Lightweight**<br> optimized size (~17MB) using JSON assets and code splitting. | **خفيف جداً**<br> حجم صغير بفضل تقنيات ضغط البيانات، لا يستهلك مساحة الهاتف. |
 | **100% Offline**<br> No internet required. No tracking. No analytics. | **يعمل بدون إنترنت**<br> خصوصية تامة، لا يوجد تتبع، ولا يحتاج اتصال بالشبكة. |
 | **Search**<br> Advanced search that ignores Diacritics (Tashkeel) and supports multi-word queries. | **بحث ذكي**<br> محرك بحث فوري. |
-    
+
+---
+
 <div align="center">
   
 **تمّ بفضل الله**
