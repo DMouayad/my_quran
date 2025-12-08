@@ -1,3 +1,10 @@
+### v1.2.2
+
+- FEAT: migrate to `SharedPreferencesAsync`
+- FEAT: update home FAB and various styling
+- FEAT: animate and center page indicator
+- FIX: incorrect verse count in surah header
+
 ### v1.2.1
 
 - build: update the release workflow to support reproducible builds on F-Droid

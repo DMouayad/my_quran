@@ -1,0 +1,1 @@
+- Fix incorrect verse count in surah header
