@@ -6,15 +6,14 @@ import 'package:my_quran/app/models.dart';
 
 class ReadingPositionService {
   static const String _key = 'last_reading_position';
+  static final _prefs = SharedPreferencesAsync();
 
   static Future<void> savePosition(ReadingPosition position) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, jsonEncode(position.toJson()));
+    await _prefs.setString(_key, jsonEncode(position.toJson()));
   }
 
   static Future<ReadingPosition?> loadPosition() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_key);
+    final jsonString = await _prefs.getString(_key);
 
     if (jsonString != null) {
       return ReadingPosition.fromJson(
@@ -25,7 +24,6 @@ class ReadingPositionService {
   }
 
   static Future<void> clearPosition() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_key);
+    await _prefs.remove(_key);
   }
 }

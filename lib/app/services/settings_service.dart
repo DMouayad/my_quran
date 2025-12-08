@@ -5,25 +5,22 @@ import 'package:my_quran/app/models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsService {
+  final _prefs = SharedPreferencesAsync();
   Future<void> setLanguage(String language) async {
-    final sharedPrefs = await SharedPreferences.getInstance();
-    await sharedPrefs.setString('language', language);
+    await _prefs.setString('language', language);
   }
 
   Future<String> loadLanguage() async {
-    final sharedPrefs = await SharedPreferences.getInstance();
-    final language = sharedPrefs.getString('language') ?? 'ar';
+    final language = await _prefs.getString('language') ?? 'ar';
     return language;
   }
 
   Future<void> setFontFamily(FontFamily fontFamily) async {
-    final sharedPrefs = await SharedPreferences.getInstance();
-    await sharedPrefs.setInt('fontFamily', fontFamily.index);
+    await _prefs.setInt('fontFamily', fontFamily.index);
   }
 
   Future<FontFamily> loadFontFamily() async {
-    final sharedPrefs = await SharedPreferences.getInstance();
-    final index = sharedPrefs.getInt('fontFamily');
+    final index = await _prefs.getInt('fontFamily');
     if (index != null && index >= 0 && index < FontFamily.values.length) {
       return FontFamily.values[index];
     }
@@ -32,24 +29,20 @@ class SettingsService {
   }
 
   Future<void> setFontSize(int fontSize) async {
-    final sharedPrefs = await SharedPreferences.getInstance();
-    await sharedPrefs.setInt('fontSize', fontSize);
+    await _prefs.setInt('fontSize', fontSize);
   }
 
   Future<int> loadFontSize() async {
-    final sharedPrefs = await SharedPreferences.getInstance();
-    final fontSize = sharedPrefs.getInt('fontSize') ?? 18;
+    final fontSize = await _prefs.getInt('fontSize') ?? 18;
     return fontSize;
   }
 
   Future<void> setTheme(ThemeMode themeMode) async {
-    final sharedPrefs = await SharedPreferences.getInstance();
-    await sharedPrefs.setInt('theme', themeMode.index);
+    await _prefs.setInt('theme', themeMode.index);
   }
 
   Future<ThemeMode> loadTheme() async {
-    final sharedPrefs = await SharedPreferences.getInstance();
-    final themeIndex = sharedPrefs.getInt('theme') ?? 0;
+    final themeIndex = await _prefs.getInt('theme') ?? 0;
     return ThemeMode.values[themeIndex];
   }
 }

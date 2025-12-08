@@ -12,6 +12,7 @@ class BookmarkService {
 
   final List<VerseBookmark> _bookmarks = [];
   final Set<String> _bookmarkedVerseKeys = {}; // For quick lookup
+  final _prefs = SharedPreferencesAsync();
 
   List<VerseBookmark> get bookmarks => List.unmodifiable(_bookmarks);
 
@@ -20,8 +21,7 @@ class BookmarkService {
   }
 
   Future<void> _loadBookmarks() async {
-    final prefs = await SharedPreferences.getInstance();
-    final bookmarksJson = prefs.getString(_bookmarksKey);
+    final bookmarksJson = await _prefs.getString(_bookmarksKey);
 
     if (bookmarksJson != null) {
       final List<dynamic> decoded = jsonDecode(bookmarksJson) as List<dynamic>;
@@ -39,11 +39,10 @@ class BookmarkService {
   }
 
   Future<void> _saveBookmarks() async {
-    final prefs = await SharedPreferences.getInstance();
     final bookmarksJson = jsonEncode(
       _bookmarks.map((b) => b.toJson()).toList(),
     );
-    await prefs.setString(_bookmarksKey, bookmarksJson);
+    await _prefs.setString(_bookmarksKey, bookmarksJson);
   }
 
   bool isBookmarked(int surah, int verse) {

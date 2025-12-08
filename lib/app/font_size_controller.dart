@@ -22,9 +22,10 @@ class FontSizeController extends ChangeNotifier {
   double get surahHeaderFontSize => _fontSize - 1;
   double get pageNumberFontSize => _fontSize + 14;
 
+  final _prefs = SharedPreferencesAsync();
+
   Future<void> initialize() async {
-    final prefs = await SharedPreferences.getInstance();
-    _fontSize = prefs.getDouble(_fontSizeKey) ?? _defaultFontSize;
+    _fontSize = await _prefs.getDouble(_fontSizeKey) ?? _defaultFontSize;
     notifyListeners();
     debugPrint('📏 Font size loaded: $_fontSize');
   }
@@ -35,8 +36,7 @@ class FontSizeController extends ChangeNotifier {
       _fontSize = clampedSize;
       notifyListeners();
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setDouble(_fontSizeKey, _fontSize);
+      await _prefs.setDouble(_fontSizeKey, _fontSize);
       debugPrint('📏 Font size saved: $_fontSize');
     }
   }
