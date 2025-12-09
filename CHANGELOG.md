@@ -1,3 +1,7 @@
+### v1.2.3
+
+- FIX: reproducible build is failing due to Flutter SDK mismatch
+
 ### v1.2.2
 
 - FEAT: migrate to `SharedPreferencesAsync`
