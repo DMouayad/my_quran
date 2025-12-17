@@ -19,31 +19,39 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
   final TextEditingController _controller = TextEditingController();
   List<SearchResult> _results = [];
   bool _isSearching = false;
-
+  bool _isExactMatch = false;
   // Debounce timer to prevent search on every keystroke
   Timer? _debounce;
+  Set<String> _currentQueryTokens = {};
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
-
     _debounce = Timer(const Duration(milliseconds: 300), () {
-      if (query.trim().isEmpty) {
-        setState(() {
-          _results = [];
-          _isSearching = false;
-        });
-        return;
-      }
+      _performSearch(query);
+    });
+  }
 
-      setState(() => _isSearching = true);
-
-      // Run search
-      final results = SearchService.search(query);
-
+  void _performSearch(String query) {
+    if (query.trim().isEmpty) {
       setState(() {
-        _results = results;
+        _results = [];
         _isSearching = false;
+        _currentQueryTokens = {};
       });
+      return;
+    }
+
+    setState(() => _isSearching = true);
+
+    final rawTokens = ArabicTextProcessor.tokenize(query);
+    _currentQueryTokens = rawTokens.map(ArabicTextProcessor.normalize).toSet();
+
+    // Pass the toggle value to the service
+    final results = SearchService.search(query, exactMatch: _isExactMatch);
+
+    setState(() {
+      _results = results;
+      _isSearching = false;
     });
   }
 
@@ -86,18 +94,39 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
             ),
           ),
 
-          if (_results.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Text(
-                'عدد النتائج: ${_results.length}',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.onSurfaceVariant,
+          // FILTER CHIP (Exact Match Toggle)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+            child: Row(
+              children: [
+                FilterChip(
+                  label: const Text('إظهار النتائج المطابقة فقط'),
+                  selected: _isExactMatch,
+                  onSelected: (bool selected) {
+                    setState(() {
+                      _isExactMatch = selected;
+                    });
+                    // Re-run search immediately with new setting
+                    _performSearch(_controller.text);
+                  },
+                  selectedColor: colorScheme.primaryContainer,
+                  checkmarkColor: colorScheme.primary,
                 ),
-              ),
+
+                if (_results.isNotEmpty) ...[
+                  const Spacer(),
+                  Text(
+                    'عدد النتائج: ${_results.length}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ],
             ),
+          ),
           // --- Results List ---
           Expanded(
             child:
@@ -126,7 +155,9 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
                     itemBuilder: (context, index) {
                       final result = _results[index];
                       return SearchResultItem(
+                        queryTokens: _currentQueryTokens,
                         result: result,
+                        highlightExactMatchOnly: _isExactMatch,
                         query: _controller.text,
                         onTap: () {
                           // 1. Close Sheet
@@ -160,10 +191,14 @@ class SearchResultItem extends StatelessWidget {
     required this.result,
     required this.query,
     required this.onTap,
+    required this.queryTokens,
+    required this.highlightExactMatchOnly,
     super.key,
   });
 
   final SearchResult result;
+  final Set<String> queryTokens;
+  final bool highlightExactMatchOnly;
   final String query;
   final VoidCallback onTap;
 
@@ -222,6 +257,8 @@ class SearchResultItem extends StatelessWidget {
             _HighlightedText(
               text: fullText,
               query: query,
+              queryTokens: queryTokens,
+              highlightExactMatchOnly: highlightExactMatchOnly,
               highlightColor: colorScheme.primary,
               baseColor: colorScheme.onSurface,
             ),
@@ -238,21 +275,21 @@ class _HighlightedText extends StatelessWidget {
     required this.query,
     required this.highlightColor,
     required this.baseColor,
+    required this.queryTokens,
+    required this.highlightExactMatchOnly,
   });
   final String text;
   final String query;
   final Color highlightColor;
   final Color baseColor;
+  final Set<String> queryTokens;
+  final bool highlightExactMatchOnly;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    // 1. Tokenize the query to find what we are looking for
-    final queryWords = ArabicTextProcessor.tokenize(
-      query,
-    ).map(ArabicTextProcessor.normalize).toSet();
 
-    // 2. Tokenize the verse text (keep punctuation for display)
+    // Tokenize the verse text (keep punctuation for display)
     // We split by space to process word by word
     final List<String> verseWords = text.split(' ');
 
@@ -273,12 +310,16 @@ class _HighlightedText extends StatelessWidget {
           // but we DISPLAY the original 'word'
           final cleanWord = ArabicTextProcessor.normalize(word);
 
-          // Check partial match (Prefix match logic from search service)
           bool isMatch = false;
-          for (final q in queryWords) {
-            if (cleanWord.startsWith(q)) {
-              isMatch = true;
-              break;
+
+          if (highlightExactMatchOnly) {
+            isMatch = queryTokens.contains(cleanWord);
+          } else {
+            for (final q in queryTokens) {
+              if (cleanWord.startsWith(q)) {
+                isMatch = true;
+                break;
+              }
             }
           }
 

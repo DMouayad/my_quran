@@ -7,7 +7,6 @@ import 'package:my_quran/app/search/processor.dart';
 class SearchService {
   static List<String> _sortedKeys = [];
 
-  // FIX 1: Change type to Map<String, dynamic> to handle JSON safely
   static Map<String, dynamic> _indexData = {};
 
   static bool isReady = false;
@@ -22,7 +21,6 @@ class SearchService {
 
       _sortedKeys = (data['keys'] as List).cast<String>();
 
-      // FIX 2: Simple cast to Map<String, dynamic>
       _indexData = data['data'] as Map<String, dynamic>;
 
       isReady = true;
@@ -36,7 +34,7 @@ class SearchService {
     return jsonDecode(jsonString) as Map<String, dynamic>;
   }
 
-  static List<SearchResult> search(String rawQuery) {
+  static List<SearchResult> search(String rawQuery, {bool exactMatch = false}) {
     if (!isReady || rawQuery.trim().isEmpty) return [];
 
     final rawWords = ArabicTextProcessor.tokenize(rawQuery);
@@ -49,7 +47,10 @@ class SearchService {
     final List<Set<int>> matchesPerWord = [];
 
     for (final word in normalizedWords) {
-      final matchesForThisWord = _findMatchesForSingleToken(word);
+      final matchesForThisWord = _findMatchesForSingleToken(
+        word,
+        exactMatch: exactMatch,
+      );
       if (matchesForThisWord.isEmpty) return [];
       matchesPerWord.add(matchesForThisWord);
     }
@@ -73,34 +74,38 @@ class SearchService {
     return results;
   }
 
-  static Set<int> _findMatchesForSingleToken(String token) {
+  static Set<int> _findMatchesForSingleToken(
+    String token, {
+    bool exactMatch = false,
+  }) {
     final Set<int> results = {};
 
-    // Exact Match
+    // 1. Exact Match (Always check this)
     if (_indexData.containsKey(token)) {
-      // FIX 3: Cast the value to List here, at the moment of usage
       final list = _indexData[token] as List;
       results.addAll(list.cast<int>());
     }
 
-    // Prefix Match
-    for (final key in _sortedKeys) {
-      if (key.compareTo(token) < 0) continue;
-      if (!key.startsWith(token)) {
-        if (key.length >= token.length &&
-            key.substring(0, token.length).compareTo(token) > 0) {
-          break;
-        }
-        continue;
-      }
+    // 2. Prefix Match (Only if exactMatch is FALSE)
+    if (!exactMatch) {
+      for (final key in _sortedKeys) {
+        if (key.compareTo(token) < 0) continue;
 
-      if (_indexData.containsKey(key)) {
-        // FIX 4: Cast here as well
-        final list = _indexData[key] as List;
-        results.addAll(list.cast<int>());
+        if (!key.startsWith(token)) {
+          if (key.length >= token.length &&
+              key.substring(0, token.length).compareTo(token) > 0) {
+            break;
+          }
+          continue;
+        }
+
+        // Avoid adding the exact match twice
+        if (key != token && _indexData.containsKey(key)) {
+          final list = _indexData[key] as List;
+          results.addAll(list.cast<int>());
+        }
       }
     }
-
     return results;
   }
 }
