@@ -159,128 +159,130 @@ class _QuranNavigationBottomSheetState
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: 12),
-          // Minimal Drag Handle
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: colorScheme.outlineVariant,
-              borderRadius: BorderRadius.circular(2),
+    return SafeArea(
+      child: Container(
+        decoration: const BoxDecoration(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            // Minimal Drag Handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          // --- PICKERS AREA ---
-          Expanded(
-            child: Stack(
-              children: [
-                // 1. The Highlight Bar (Behind the selected item)
-                Center(
-                  child: Container(
-                    height: 44,
-                    margin: const EdgeInsets.only(top: 26),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHigh,
-                    ),
-                  ),
-                ),
-
-                // 2. The Flat Pickers
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildFlatWheel(
-                        controller: _pageController,
-                        count: Quran.totalPagesCount,
-                        label: 'الصفحة',
-                        onChanged: _onPageChanged,
-                        itemBuilder: (i) => _buildItem(i + 1),
+            // --- PICKERS AREA ---
+            Expanded(
+              child: Stack(
+                children: [
+                  // 1. The Highlight Bar (Behind the selected item)
+                  Center(
+                    child: Container(
+                      height: 44,
+                      margin: const EdgeInsets.only(top: 26),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHigh,
                       ),
                     ),
-                    Expanded(
-                      flex: 2, // Surah gets more space
-                      child: _buildFlatWheel(
-                        controller: _surahController,
-                        count: Quran.totalSurahCount,
-                        label: 'السورة',
-                        onChanged: _onSurahChanged,
-                        itemBuilder: (i) => Center(
-                          child: Text(
-                            Quran.instance.getSurahNameArabic(i + 1),
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: (i + 1) == _currentSurah
-                                  ? colorScheme.primary
-                                  : colorScheme.onSurface.withOpacity(0.7),
-                              fontWeight: (i + 1) == _currentSurah
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
+                  ),
+
+                  // 2. The Flat Pickers
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildFlatWheel(
+                          controller: _pageController,
+                          count: Quran.totalPagesCount,
+                          label: 'الصفحة',
+                          onChanged: _onPageChanged,
+                          itemBuilder: (i) => _buildItem(i + 1),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2, // Surah gets more space
+                        child: _buildFlatWheel(
+                          controller: _surahController,
+                          count: Quran.totalSurahCount,
+                          label: 'السورة',
+                          onChanged: _onSurahChanged,
+                          itemBuilder: (i) => Center(
+                            child: Text(
+                              Quran.instance.getSurahNameArabic(i + 1),
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: (i + 1) == _currentSurah
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurface.withOpacity(0.7),
+                                fontWeight: (i + 1) == _currentSurah
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: _buildFlatWheel(
-                        controller: _juzController,
-                        count: Quran.totalJuzCount,
-                        label: 'الجزء',
-                        onChanged: _onJuzChanged,
-                        itemBuilder: (i) => _buildItem(i + 1),
+                      Expanded(
+                        child: _buildFlatWheel(
+                          controller: _juzController,
+                          count: Quran.totalJuzCount,
+                          label: 'الجزء',
+                          onChanged: _onJuzChanged,
+                          itemBuilder: (i) => _buildItem(i + 1),
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: _buildFlatWheel(
-                        controller: _verseController,
-                        count: Quran.instance.getVerseCount(_currentSurah),
-                        label: 'الآية',
-                        onChanged: _onVerseChanged,
-                        itemBuilder: (i) => _buildItem(i + 1),
+                      Expanded(
+                        child: _buildFlatWheel(
+                          controller: _verseController,
+                          count: Quran.instance.getVerseCount(_currentSurah),
+                          label: 'الآية',
+                          onChanged: _onVerseChanged,
+                          itemBuilder: (i) => _buildItem(i + 1),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // --- BOTTOM ACTIONS ---
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('إلغاء'),
+            // --- BOTTOM ACTIONS ---
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('إلغاء'),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 2,
-                  child: FilledButton(
-                    onPressed: () {
-                      widget.onNavigate(
-                        page: _currentPage,
-                        surah: _currentSurah,
-                        verse: _currentVerse,
-                      );
-                      Navigator.pop(context);
-                    },
-                    child: const Text('انتقال'),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton(
+                      onPressed: () {
+                        widget.onNavigate(
+                          page: _currentPage,
+                          surah: _currentSurah,
+                          verse: _currentVerse,
+                        );
+                        Navigator.pop(context);
+                      },
+                      child: const Text('انتقال'),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

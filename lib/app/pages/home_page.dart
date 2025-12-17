@@ -232,6 +232,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
         onPressed: () => showModalBottomSheet(
           context: context,
           isScrollControlled: true,
+          useSafeArea: true,
           constraints: const BoxConstraints(maxHeight: 600),
           builder: (_) => QuranNavigationBottomSheet(
             initialPage: _currentPositionNotifier.value.pageNumber,

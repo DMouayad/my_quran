@@ -28,25 +28,27 @@ class _BookmarksSheetState extends State<BookmarksSheet> {
 
     return bookmarks.isEmpty
         ? _buildEmptyState(colorScheme)
-        : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: bookmarks.length,
-            itemBuilder: (context, index) {
-              final bookmark = bookmarks[index];
-              return _BookmarkCard(
-                bookmark: bookmark,
-                onTap: () {
-                  widget.onNavigateToPage(
-                    page: bookmark.pageNumber,
-                    surah: bookmark.surah,
-                    verse: bookmark.verse,
-                  );
-                  Navigator.pop(context);
-                },
-                onDelete: () => _deleteBookmark(bookmark.id),
-                onAddNote: () => _showAddNoteDialog(bookmark),
-              );
-            },
+        : SafeArea(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: bookmarks.length,
+              itemBuilder: (context, index) {
+                final bookmark = bookmarks[index];
+                return _BookmarkCard(
+                  bookmark: bookmark,
+                  onTap: () {
+                    widget.onNavigateToPage(
+                      page: bookmark.pageNumber,
+                      surah: bookmark.surah,
+                      verse: bookmark.verse,
+                    );
+                    Navigator.pop(context);
+                  },
+                  onDelete: () => _deleteBookmark(bookmark.id),
+                  onAddNote: () => _showAddNoteDialog(bookmark),
+                );
+              },
+            ),
           );
   }
 

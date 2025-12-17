@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import 'package:my_quran/app/font_size_controller.dart';
@@ -21,15 +19,14 @@ class MinimalFontSizeControl extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final fontController = FontSizeController();
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
           child: Container(
             decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHigh,
+              color: colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: colorScheme.outlineVariant.withOpacity(0.2),
