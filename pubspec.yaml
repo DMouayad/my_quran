@@ -36,7 +36,7 @@ flutter:
   fonts:
     - family: Scheherazade
       fonts: 
-        - asset: assets/fonts/ScheherazadeNew-Medium.ttf
+        - asset: assets/fonts/subset-ScheherazadeNew.ttf
     - family: Rustam
       fonts: 
         - asset: assets/fonts/rustam_quranR3HOQ.ttf
