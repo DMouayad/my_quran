@@ -761,8 +761,8 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
     final spans = <InlineSpan>[];
     final highlightedTextStyle = TextStyle(
       backgroundColor: isDarkMode
-          ? Theme.of(context).colorScheme.surfaceBright
-          : Theme.of(context).colorScheme.surfaceContainerHigh,
+          ? Theme.of(context).colorScheme.surfaceContainerHigh
+          : Theme.of(context).colorScheme.surfaceContainerHighest,
     );
     for (final verse in widget.surah.verses) {
       // 1. Text
@@ -797,13 +797,9 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
           text: symbol,
           style: TextStyle(
             fontFamily: FontFamily.arabicNumbersFontFamily.name,
-            color: Theme.of(context).colorScheme.primary,
+            color: context.colorScheme.primary,
             fontSize: widget.symbolSize,
-            fontWeight: FontWeight.w600,
-            height: 2.2,
-            backgroundColor: isSelected
-                ? highlightedTextStyle.backgroundColor
-                : null,
+            fontWeight: FontWeight.w500,
           ),
         ),
       );
