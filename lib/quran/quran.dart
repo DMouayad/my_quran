@@ -11,34 +11,6 @@ import 'package:my_quran/quran/data/page_data.dart';
 import 'package:my_quran/quran/data/sajdah_verses.dart';
 import 'package:my_quran/quran/data/surah_data.dart';
 
-///Supported audio reciters for CDN islamic.network
-///Defaults to [Reciter.arAlafasy] to preserve existing behavior.
-enum Reciter {
-  arAlafasy('ar.alafasy', 'Alafasy'),
-  arHusary('ar.husary', 'Husary'),
-  arAhmedAjamy('ar.ahmedajamy', 'Ahmed al-Ajamy'),
-  arHudhaify('ar.hudhaify', 'Hudhaify'),
-  arMaherMuaiqly('ar.mahermuaiqly', 'Maher Al Muaiqly'),
-  arMuhammadAyyoub('ar.muhammadayyoub', 'Muhammad Ayyoub'),
-  arMuhammadJibreel('ar.muhammadjibreel', 'Muhammad Jibreel'),
-  arMinshawi('ar.minshawi', 'Minshawi'),
-  arShaatree('ar.shaatree', 'Abu Bakr Ash-Shaatree');
-
-  final String code;
-  final String englishName;
-  const Reciter(this.code, this.englishName);
-}
-
-enum SurahSeparator {
-  none,
-  surahName,
-  surahNameArabic,
-  surahNameEnglish,
-  surahNameTurkish,
-  surahNameFrench,
-  surahNameRussian,
-}
-
 class Quran {
   Quran._();
   static final instance = Quran._();
@@ -294,73 +266,7 @@ class Quran {
     return pages;
   }
 
-  ///Takes [pageNumber], [verseEndSymbol], [SurahSeparator] & [customSurahSeparator] and returns the list of verses in that page
-  ///if [customSurahSeparator] is given, [SurahSeparator] will not work.
-  List<String> getVersesTextByPage(
-    int pageNumber, {
-    bool verseEndSymbol = false,
-    SurahSeparator surahSeparator = SurahSeparator.none,
-    String customSurahSeparator = '',
-  }) {
-    if (pageNumber > 604 || pageNumber <= 0) {
-      throw 'Invalid pageNumber';
-    }
-
-    final List<String> verses = [];
-    final pageData = getPageData(pageNumber);
-    for (final data in pageData) {
-      final surahDataInPage = data as Map<String, dynamic>;
-      if (customSurahSeparator != '') {
-        verses.add(customSurahSeparator);
-      } else if (surahSeparator == SurahSeparator.surahName) {
-        verses.add(getSurahName(surahDataInPage['surah'] as int));
-      } else if (surahSeparator == SurahSeparator.surahNameArabic) {
-        verses.add(getSurahNameArabic(surahDataInPage['surah'] as int));
-      }
-      for (int j = data['start'] as int; j <= (data['end'] as int); j++) {
-        verses.add(
-          getVerse(data['surah'] as int, j, verseEndSymbol: verseEndSymbol),
-        );
-      }
-    }
-    return verses;
-  }
-
-  ///Takes [surahNumber] and returns audio URL of that surah
-  String getAudioURLBySurah(
-    int surahNumber, {
-    Reciter reciter = Reciter.arAlafasy,
-    int bitrate = 128,
-  }) =>
-      'https://cdn.islamic.network/quran/audio-surah/$bitrate/${reciter.code}/$surahNumber.mp3';
-
-  ///Takes [surahNumber] & [verseNumber] and returns audio URL of that verse
-  String getAudioURLByVerse(
-    int surahNumber,
-    int verseNumber, {
-    Reciter reciter = Reciter.arAlafasy,
-    int bitrate = 128,
-  }) {
-    int verseNum = 0;
-
-    // Calculate absolute verse number by counting all verses before this one
-    for (int i = 1; i < surahNumber; i++) {
-      verseNum += (_data[i.toString()]?.length as int?) ?? 0;
-    }
-    verseNum += verseNumber;
-
-    return 'https://cdn.islamic.network/quran/audio/$bitrate/${reciter.code}/$verseNum.mp3';
-  }
-
   ///Takes [surahNumber] & [verseNumber] and returns true if verse is sajdah
   bool isSajdahVerse(int surahNumber, int verseNumber) =>
       sajdahVerses[surahNumber] == verseNumber;
-
-  ///Takes [verseNumber] and returns audio URL of that verse
-  String getAudioURLByVerseNumber(
-    int verseNumber, {
-    Reciter reciter = Reciter.arAlafasy,
-    int bitrate = 128,
-  }) =>
-      'https://cdn.islamic.network/quran/audio/$bitrate/${reciter.code}/$verseNumber.mp3';
 }
