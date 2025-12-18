@@ -77,9 +77,11 @@ class _VerseMenuOverlayState extends State<VerseMenuOverlay>
               child: Material(
                 color: Colors.transparent,
                 child: Container(
-                  constraints: const BoxConstraints(maxWidth: 320),
+                  constraints: const BoxConstraints(maxWidth: 340),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -97,12 +99,7 @@ class _VerseMenuOverlayState extends State<VerseMenuOverlay>
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Theme.of(context).colorScheme.surfaceContainer,
-                              Theme.of(context).colorScheme.primaryContainer,
-                            ],
-                          ),
+                          color: Theme.of(context).colorScheme.surfaceContainer,
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(16),
                           ),
@@ -116,50 +113,48 @@ class _VerseMenuOverlayState extends State<VerseMenuOverlay>
                                   decoration: BoxDecoration(
                                     color: Theme.of(
                                       context,
-                                    ).colorScheme.primary.withOpacity(0.1),
+                                    ).colorScheme.primary,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
                                     Icons.menu_book,
-                                    size: 20,
+                                    fontWeight: FontWeight.w300,
+                                    size: 18,
                                     color: Theme.of(
                                       context,
-                                    ).colorScheme.primary,
+                                    ).colorScheme.onPrimary,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        Quran.instance.getSurahNameArabic(
-                                          widget.surah,
+                                  child: DefaultTextStyle(
+                                    style: TextStyle(
+                                      fontFamily: FontFamily.rustam.name,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 16,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          Quran.instance.getSurahNameArabic(
+                                            widget.surah,
+                                          ),
                                         ),
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onSurface,
+                                        const Text(' - '),
+                                        const Text('الآية '),
+                                        Text(
+                                          _toArabicNumber(widget.verse.number),
+                                          style: TextStyle(
+                                            fontFamily: FontFamily
+                                                .arabicNumbersFontFamily
+                                                .name,
+                                          ),
                                         ),
-                                      ),
-                                      const Text(' - '),
-                                      Text(
-                                        'الآية ${_toArabicNumber(widget.verse.number)}',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                          fontFamily: FontFamily
-                                              .arabicNumbersFontFamily
-                                              .name,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                                 IconButton(
@@ -168,12 +163,17 @@ class _VerseMenuOverlayState extends State<VerseMenuOverlay>
                                 ),
                               ],
                             ),
-                            Text(
-                              widget.verse.text,
-                              style: TextStyle(
-                                fontSize: 18,
-                                height: 1.8,
-                                color: Theme.of(context).colorScheme.onSurface,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Text(
+                                widget.verse.text,
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  height: 2,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                ),
                               ),
                             ),
                           ],
@@ -181,29 +181,44 @@ class _VerseMenuOverlayState extends State<VerseMenuOverlay>
                       ),
 
                       // Actions
-                      Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildMenuTile(
-                              icon: Icons.copy,
-                              label: 'نسخ النص',
-                              onTap: _copyVerse,
+                      SizedBox(
+                        height: 60,
+                        child: Theme(
+                          data: Theme.of(context).copyWith(
+                            textButtonTheme: TextButtonThemeData(
+                              style: ButtonStyle(
+                                textStyle: const WidgetStatePropertyAll(
+                                  TextStyle(fontSize: 16),
+                                ),
+                                foregroundColor: WidgetStatePropertyAll(
+                                  Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
                             ),
-                            _buildMenuTile(
-                              icon: isBookmarked
-                                  ? Icons.bookmark
-                                  : Icons.bookmark_border,
-                              label: isBookmarked
-                                  ? 'إزالة العلامة'
-                                  : 'إضافة علامة',
-                              onTap: () => _toggleBookmark(isBookmarked),
-                              iconColor: isBookmarked
-                                  ? Theme.of(context).colorScheme.primary
-                                  : null,
-                            ),
-                          ],
+                          ),
+
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildActionBtn(
+                                icon: Icons.copy,
+                                label: 'نسخ النص',
+                                onTap: _copyVerse,
+                              ),
+                              _buildActionBtn(
+                                icon: isBookmarked
+                                    ? Icons.bookmark
+                                    : Icons.bookmark_border,
+                                label: isBookmarked
+                                    ? 'إزالة العلامة'
+                                    : 'إضافة علامة',
+                                onTap: () => _toggleBookmark(isBookmarked),
+                                iconColor: isBookmarked
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -217,24 +232,19 @@ class _VerseMenuOverlayState extends State<VerseMenuOverlay>
     );
   }
 
-  Widget _buildMenuTile({
+  Widget _buildActionBtn({
     required IconData icon,
     required String label,
     required VoidCallback onTap,
     Color? iconColor,
   }) {
-    return SizedBox(
-      width: 150,
-      child: ListTile(
-        leading: Icon(icon, size: 22, color: iconColor),
-        title: Text(label, style: const TextStyle(fontSize: 15)),
-        onTap: () {
-          onTap();
-          _dismiss();
-        },
-        dense: true,
-        visualDensity: VisualDensity.compact,
-      ),
+    return TextButton.icon(
+      icon: Icon(icon, color: iconColor),
+      label: Text(label),
+      onPressed: () {
+        onTap();
+        _dismiss();
+      },
     );
   }
 
