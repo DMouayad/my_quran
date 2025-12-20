@@ -1,4 +1,4 @@
-const List<dynamic> surah = [
+const List<Map<String, Object>> surah = [
   {
     'id': 1,
     'name': 'Al Fatiha',

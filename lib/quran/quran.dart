@@ -1,5 +1,4 @@
 // ignore_for_file: only_throw_errors (), avoid_dynamic_calls,
-// ignore_for_file: argument_type_not_assignable ()
 
 import 'dart:async';
 import 'dart:convert' show json;
@@ -59,8 +58,8 @@ class Quran {
     }
   }
 
-  ///Takes [pageNumber] and returns a list containing Surahs and the starting and
-  /// ending Verse numbers in that page
+  ///Takes [pageNumber] and returns a list containing Surahs and the starting
+  /// and ending Verse numbers in that page
   ///
   ///Example:
   ///
@@ -76,11 +75,11 @@ class Quran {
   ///```
   ///
   ///Length of the list is the number of surah in that page.
-  List<dynamic> getPageData(int pageNumber) {
+  List<Map<String, int>> getPageData(int pageNumber) {
     if (pageNumber < 1 || pageNumber > 604) {
       throw 'Invalid page number. Page number must be between 1 and 604';
     }
-    return pageData[pageNumber - 1] as List<dynamic>;
+    return pageData[pageNumber - 1];
   }
 
   ///The most standard and common copy of Arabic only Quran total pages count
@@ -112,7 +111,7 @@ class Quran {
     if (pageNumber < 1 || pageNumber > 604) {
       throw 'Invalid page number. Page number must be between 1 and 604';
     }
-    return (pageData[pageNumber - 1] as List<dynamic>).length;
+    return pageData[pageNumber - 1].length;
   }
 
   ///Takes [pageNumber] and returns total verses count in that page
@@ -121,52 +120,33 @@ class Quran {
       throw 'Invalid page number. Page number must be between 1 and 604';
     }
     int totalVerseCount = 0;
-    for (
-      int i = 0;
-      i < (pageData[pageNumber - 1] as List<dynamic>).length;
-      i++
-    ) {
-      totalVerseCount += int.parse(
-        pageData[pageNumber - 1][i]!['end'].toString(),
-      );
+    for (int i = 0; i < pageData[pageNumber - 1].length; i++) {
+      totalVerseCount += pageData[pageNumber - 1][i]['end'] ?? 0;
     }
     return totalVerseCount;
   }
 
-  ///Takes [surahNumber] & [verseNumber] and returns Juz number
   int getJuzNumber(int surahNumber, int verseNumber) {
     for (final juz in juzData) {
-      final verses = juz['verses'] as Map<int, List<int>>;
+      final verses = juz['verses']! as Map<Object?, Object?>;
       if (verses.keys.contains(surahNumber)) {
-        if (verseNumber >= verses[surahNumber]![0] &&
-            verseNumber <= verses[surahNumber]![1]) {
-          return int.parse(juz['id'].toString());
+        final range = verses[surahNumber]! as List<dynamic>;
+        if (verseNumber >= (range[0] as int) &&
+            verseNumber <= (range[1] as int)) {
+          return juz['id']! as int;
         }
       }
     }
     return -1;
   }
 
-  ///Takes [juzNumber] and returns a map which contains keys as surah number and value as a list containing starting and ending verse numbers.
-  ///
-  ///Example:
-  ///
-  ///```dart
-  ///getSurahAndVersesListFromJuz(1);
-  ///```
-  ///
-  /// Returns Map of Juz 1:
-  ///
-  ///```dart
-  /// Map<int, List<int>> surahAndVerses = {
-  ///        1: [1, 7],
-  ///        2: [1, 141] //2 is surahNumber, 1 is starting verse and 141 is ending verse number
-  /// };
-  ///
-  /// print(surahAndVerseList[1]); //[1, 7] => starting verse : 1, ending verse: 7
-  ///```
   Map<int, List<int>> getSurahAndVersesFromJuz(int juzNumber) {
-    return juzData[juzNumber - 1]['verses'] as Map<int, List<int>>;
+    return (juzData[juzNumber - 1]['verses']! as Map<Object?, Object?>).map((
+      key,
+      value,
+    ) {
+      return MapEntry(key! as int, (value! as List<dynamic>).cast<int>());
+    });
   }
 
   ///Takes [surahNumber] and returns the Surah name
@@ -174,7 +154,7 @@ class Quran {
     if (surahNumber > 114 || surahNumber <= 0) {
       throw 'No Surah found with given surahNumber';
     }
-    return surah[surahNumber - 1]['name'].toString();
+    return surah[surahNumber - 1]['name']! as String;
   }
 
   ///Takes [surahNumber] returns the Surah name in Arabic
@@ -182,7 +162,7 @@ class Quran {
     if (surahNumber > 114 || surahNumber <= 0) {
       throw 'No Surah found with given surahNumber';
     }
-    return surah[surahNumber - 1]['arabic'].toString();
+    return surah[surahNumber - 1]['arabic']! as String;
   }
 
   ///Takes [surahNumber], [verseNumber] and returns the page number of the Quran
@@ -199,8 +179,8 @@ class Quran {
       ) {
         final e = pageData[pageIndex][surahIndexInPage];
         if (e['surah'] == surahNumber &&
-            (e['start'] as int) <= verseNumber &&
-            (e['end'] as int) >= verseNumber) {
+            e['start']! <= verseNumber &&
+            e['end']! >= verseNumber) {
           return pageIndex + 1;
         }
       }
@@ -222,7 +202,7 @@ class Quran {
     if (surahNumber > 114 || surahNumber <= 0) {
       throw 'No verse found with given surahNumber';
     }
-    return int.parse(surah[surahNumber - 1]['aya'].toString());
+    return surah[surahNumber - 1]['aya']! as int;
   }
 
   ///Takes [surahNumber], [verseNumber] & [verseEndSymbol] (optional) and
@@ -232,8 +212,10 @@ class Quran {
     int verseNumber, {
     bool verseEndSymbol = false,
   }) {
-    final verse = data.value[surahNumber.toString()]?[verseNumber.toString()]
-        .toString();
+    final verse =
+        (data.value[surahNumber.toString()]
+                as Map<String, dynamic>?)?[verseNumber.toString()]
+            as String?;
 
     if (verse == null) {
       throw 'No verse found with given surahNumber and verseNumber.\n\n';
@@ -243,8 +225,9 @@ class Quran {
   }
 
   String getVerseInPlainText(int surahNumber, int verseNumber) {
-    return _plainTextData[surahNumber.toString()]?[verseNumber.toString()]
-            ?.toString() ??
+    return (_plainTextData[surahNumber.toString()]
+                as Map<String, dynamic>?)?[verseNumber.toString()]
+            as String? ??
         '';
   }
 

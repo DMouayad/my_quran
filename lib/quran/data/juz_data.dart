@@ -1,4 +1,4 @@
-const List<Map<String, dynamic>> juzData = [
+const List<Map<String, Object>> juzData = [
   {
     'id': 1,
     'surahs': [1, 2],

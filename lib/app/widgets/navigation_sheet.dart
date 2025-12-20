@@ -63,8 +63,8 @@ class _QuranNavigationBottomSheetState
     final pageData = Quran.instance.getPageData(page);
     if (pageData.isNotEmpty) {
       final firstEntry = pageData.first;
-      _currentSurah = firstEntry['surah'] as int;
-      _currentVerse = firstEntry['start'] as int;
+      _currentSurah = firstEntry['surah']!;
+      _currentVerse = firstEntry['start']!;
       _currentJuz = Quran.instance.getJuzNumber(_currentSurah, _currentVerse);
     }
   }

@@ -1,3 +1,5 @@
+// ignore_for_file: lines_longer_than_80_chars (will refactor soon)
+
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -108,8 +110,8 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final pageData = Quran.instance.getPageData(pageNumber);
     if (pageData.isNotEmpty) {
       final firstSurah = pageData.first;
-      final surahNum = firstSurah['surah'] as int;
-      final verseNum = firstSurah['start'] as int;
+      final surahNum = firstSurah['surah']!;
+      final verseNum = firstSurah['start']!;
       final juz = Quran.instance.getJuzNumber(surahNum, verseNum);
       _currentPositionNotifier.value = ReadingPosition(
         pageNumber: pageNumber,
@@ -152,9 +154,9 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
       // Count verses and find our index
       for (final surahData in pageData) {
-        final sNum = surahData['surah'] as int;
-        final start = surahData['start'] as int;
-        final end = surahData['end'] as int;
+        final sNum = surahData['surah']!;
+        final start = surahData['start']!;
+        final end = surahData['end']!;
 
         for (int v = start; v <= end; v++) {
           if (sNum == highlightSurah && v == highlightVerse) {
@@ -222,8 +224,10 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return Scaffold(
       extendBodyBehindAppBar: true, // Critical for glass effect
       floatingActionButton: FloatingActionButton(
-        backgroundColor: colorScheme.surfaceContainer,
-        foregroundColor: colorScheme.secondary,
+        backgroundColor: context.isDarkMode
+            ? colorScheme.surfaceContainer
+            : colorScheme.surfaceContainerLow,
+        foregroundColor: colorScheme.primary,
         elevation: 4,
         onPressed: () => showModalBottomSheet(
           context: context,
@@ -490,9 +494,9 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
     final rawData = Quran.instance.getPageData(widget.pageNumber);
     final List<SurahInPage> surahs = [];
     for (final item in rawData) {
-      final surahNum = item['surah'] as int;
-      final start = item['start'] as int;
-      final end = item['end'] as int;
+      final surahNum = item['surah']!;
+      final start = item['start']!;
+      final end = item['end']!;
       final verses = <Verse>[];
       for (var i = start; i <= end; i++) {
         verses.add((number: i, text: Quran.instance.getVerse(surahNum, i)));
