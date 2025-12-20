@@ -659,7 +659,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
 
   Widget _buildHeader(SurahInPage surah) {
     final surahHeaderFontSize =
-        _fontSizeController.surahHeaderFontSize * _scaleFactor;
+        (_fontSizeController.surahHeaderFontSize * _scaleFactor).clamp(0, 30);
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
@@ -674,6 +674,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
         style: TextStyle(
           color: colorScheme.onSecondaryContainer,
           fontWeight: FontWeight.w500,
+          fontFamily: widget.settingsController.fontFamily.name,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -694,7 +695,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
               'سورة ${Quran.instance.getSurahNameArabic(surah.surahNumber)}',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: surahHeaderFontSize,
+                fontSize: surahHeaderFontSize.toDouble(),
                 height: 1.2,
                 letterSpacing: 0,
                 fontFamily: FontFamily.rustam.name,
@@ -719,7 +720,8 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
   }
 
   Widget _buildBasmala() {
-    final fontSize = _fontSizeController.surahHeaderFontSize * _scaleFactor;
+    final fontSize = (_fontSizeController.surahHeaderFontSize * _scaleFactor)
+        .clamp(0, 30);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
@@ -727,7 +729,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
         Quran.basmala,
         textAlign: TextAlign.center,
         style: TextStyle(
-          fontSize: fontSize,
+          fontSize: fontSize.toDouble(),
           fontFamily: FontFamily.rustam.name,
           letterSpacing: 0,
           fontWeight: FontWeight.w300,
