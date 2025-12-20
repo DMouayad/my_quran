@@ -1,11 +1,8 @@
 # Contributing to MyQuran
 
 First off, thank you for considering contributing to **(قرآني)**! 
-We are an open-source project dedicated to providing a distraction-free, high-performance, and 100% offline Quran reading experience.
 
 ## 🎯 Core Philosophy
-Before you write code, please understand the core values of this project:
-
 1.  **Performance First:** We use `ScrollablePositionedList` and Hit-Testing because standard rendering is too slow for 600+ pages. Any PR that causes scroll jank will be rejected.
 2.  **Zero Bloat:** The app size must stay as small as possible.
 3.  **100% Offline:** The app must function perfectly without internet access.
