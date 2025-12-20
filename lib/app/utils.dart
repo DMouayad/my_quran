@@ -14,6 +14,7 @@ extension ThemeContext on BuildContext {
   ColorScheme get colorScheme => Theme.of(this).colorScheme;
   TextTheme get textTheme => Theme.of(this).textTheme;
   String? get fontFamily => textTheme.bodyLarge?.fontFamily;
+  bool get isDarkMode => colorScheme.brightness == Brightness.dark;
 
   bool get isHafsFontFamily => fontFamily == FontFamily.hafs.name;
   bool get isRustamFontFamily => fontFamily == FontFamily.rustam.name;

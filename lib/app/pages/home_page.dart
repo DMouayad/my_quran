@@ -2,13 +2,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:my_quran/app/utils.dart';
 
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/font_size_controller.dart';
 import 'package:my_quran/app/services/reading_position_service.dart';
+import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/widgets/font_settings_sheet.dart';
 import 'package:my_quran/app/widgets/navigation_sheet.dart';
@@ -384,7 +384,6 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                     '${getArabicNumber(position.surahNumber)} - '
                                     '${Quran.instance.getSurahNameArabic(position.surahNumber)}',
                                   ),
-
                                   Text(
                                     'جزء ${getArabicNumber(position.juzNumber)}',
                                   ),
@@ -604,7 +603,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
           _handleGlobalTap(details.localPosition, isLongPress: true),
       child: Container(
         color: Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -782,27 +781,22 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
     }
   }
 
-  TextAlign _calculateAlignment(double fontSize, double screenWidth) {
-    if (fontSize > 34) {
+  TextAlign _calculateAlignment() {
+    if (Quran.instance.getVerseCount(widget.surah.surahNumber) <= 20) {
       return TextAlign.center;
     }
-
-    // Normal Text: Keep the nice boxy look
-    return TextAlign.justify;
+    if (widget.settingsController.fontFamily == FontFamily.hafs) {
+      return TextAlign.justify;
+    }
+    return widget.fontSize > 34 ? TextAlign.center : TextAlign.justify;
   }
 
   @override
   Widget build(BuildContext context) {
     _ranges.clear();
-    final isDarkMode = Theme.brightnessOf(context) == Brightness.dark;
     int charCount = 0;
     final spans = <InlineSpan>[];
 
-    final highlightedTextStyle = TextStyle(
-      backgroundColor: isDarkMode
-          ? Theme.of(context).colorScheme.surfaceContainerHigh
-          : Theme.of(context).colorScheme.surfaceContainerHighest,
-    );
     for (final verse in widget.surah.verses) {
       // 1. Text
       final String text = verse.text;
@@ -819,15 +813,24 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
       // Space (1)
       charCount += 1;
       // Symbol length
-      final symbol = ' ${Quran.instance.getVerseEndSymbol(verse.number)} ';
+      String symbol = Quran.instance.getVerseEndSymbol(verse.number);
       charCount += symbol.length;
-      // Trailing Spaces (2)
-      charCount += 2;
+
+      final spacingLength = context.isRustamFontFamily ? 2 : 1;
+
+      symbol = context.isRustamFontFamily ? ' $symbol ' : '$symbol ';
+      charCount += spacingLength;
 
       final end = charCount;
       _ranges[verse.number] = (start: start, end: end);
 
       // 4. Build Spans
+
+      final highlightedTextStyle = TextStyle(
+        backgroundColor: context.isDarkMode
+            ? Theme.of(context).colorScheme.surfaceContainerHigh
+            : Theme.of(context).colorScheme.surfaceContainerHighest,
+      );
       spans.add(
         TextSpan(text: text, style: isSelected ? highlightedTextStyle : null),
       );
@@ -849,20 +852,18 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
       onLongPressStart: (d) => _handleTap(d.localPosition, true),
       child: RichText(
         key: _textKey,
-        textAlign: Quran.instance.getVerseCount(widget.surah.surahNumber) < 20
-            ? TextAlign.center
-            : _calculateAlignment(
-                widget.fontSize,
-                MediaQuery.of(context).size.width,
-              ),
+        textAlign: _calculateAlignment(),
         textDirection: TextDirection.rtl,
-        textWidthBasis: TextWidthBasis.longestLine,
         text: TextSpan(
           style: TextStyle(
             fontSize: widget.fontSize,
             fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
             color: Theme.of(context).textTheme.bodyLarge?.color,
-            wordSpacing: widget.fontSize >= 38 ? -1 : 0,
+            wordSpacing: widget.fontSize >= 38
+                ? -1
+                : context.isRustamFontFamily
+                ? -.5
+                : 0,
           ),
           children: spans,
         ),
