@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:my_quran/app/utils.dart';
 
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -382,12 +383,12 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    '${_getArabicNumber(position.surahNumber)} - '
+                                    '${getArabicNumber(position.surahNumber)} - '
                                     '${Quran.instance.getSurahNameArabic(position.surahNumber)}',
                                   ),
 
                                   Text(
-                                    'جزء ${_getArabicNumber(position.juzNumber)}',
+                                    'جزء ${getArabicNumber(position.juzNumber)}',
                                   ),
                                 ],
                               ),
@@ -397,7 +398,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                 child: AnimatedSwitcher(
                                   duration: const Duration(milliseconds: 200),
                                   child: Text(
-                                    _getArabicNumber(position.pageNumber),
+                                    getArabicNumber(position.pageNumber),
                                     key: ValueKey(position.pageNumber),
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
@@ -596,7 +597,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
 
       child: Container(
         color: Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -661,7 +662,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Text(
-            'ترتيبها\n (${_getArabicNumber(surah.surahNumber)})',
+            'ترتيبها\n (${getArabicNumber(surah.surahNumber)})',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: FontFamily.arabicNumbersFontFamily.name,
@@ -678,7 +679,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
             ),
           ),
           Text(
-            'آياتها\n (${_getArabicNumber(Quran.instance.getVerseCount(surah.surahNumber))})',
+            'آياتها\n (${getArabicNumber(Quran.instance.getVerseCount(surah.surahNumber))})',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: FontFamily.arabicNumbersFontFamily.name,
@@ -753,6 +754,15 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
     }
   }
 
+  TextAlign _calculateAlignment(double fontSize, double screenWidth) {
+    if (fontSize > 34) {
+      return TextAlign.center;
+    }
+
+    // Normal Text: Keep the nice boxy look
+    return TextAlign.justify;
+  }
+
   @override
   Widget build(BuildContext context) {
     _ranges.clear();
@@ -812,31 +822,22 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
         key: _textKey,
         textAlign: Quran.instance.getVerseCount(widget.surah.surahNumber) < 20
             ? TextAlign.center
-            : TextAlign.justify,
+            : _calculateAlignment(
+                widget.fontSize,
+                MediaQuery.of(context).size.width,
+              ),
         textDirection: TextDirection.rtl,
+        textWidthBasis: TextWidthBasis.longestLine,
         text: TextSpan(
           style: TextStyle(
             fontSize: widget.fontSize,
             fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
             color: Theme.of(context).textTheme.bodyLarge?.color,
+            wordSpacing: widget.fontSize >= 38 ? -1 : 0,
           ),
           children: spans,
         ),
       ),
     );
   }
-}
-
-// Helpers
-String _getArabicNumber(int number) {
-  const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-  return number
-      .toString()
-      .split('')
-      .map((digit) => arabicNumerals[int.parse(digit)])
-      .join();
-}
-
-extension ThemeContext on BuildContext {
-  ColorScheme get colorScheme => Theme.of(this).colorScheme;
 }
