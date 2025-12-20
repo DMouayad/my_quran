@@ -790,11 +790,8 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
   TextAlign _calculateAlignment() {
     if (Quran.instance.getVerseCount(widget.surah.surahNumber) <= 20) {
       return TextAlign.center;
-    }
-    if (widget.settingsController.fontFamily == FontFamily.hafs) {
-      return TextAlign.start;
-    }
-    return widget.fontSize > 34 ? TextAlign.center : TextAlign.start;
+    }   
+    return widget.fontSize > 34 ? TextAlign.center : TextAlign.justify;
   }
 
   @override
@@ -865,11 +862,6 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
             fontSize: widget.fontSize,
             fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
             color: Theme.of(context).textTheme.bodyLarge?.color,
-            wordSpacing: widget.fontSize >= 38
-                ? -1
-                : context.isRustamFontFamily
-                ? -.5
-                : 0,
           ),
           children: spans,
         ),
