@@ -210,7 +210,7 @@ class SearchResultItem extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     // 1. Get the full verse text (Force plain text for search results)
-    final String fullText = Quran.getVerseInPlainText(
+    final String fullText = Quran.instance.getVerseInPlainText(
       result.surah,
       result.verse,
     );

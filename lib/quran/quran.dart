@@ -240,7 +240,7 @@ class Quran {
     return verse + (verseEndSymbol ? getVerseEndSymbol(verseNumber) : '');
   }
 
-  static String getVerseInPlainText(int surahNumber, int verseNumber) {
+  String getVerseInPlainText(int surahNumber, int verseNumber) {
     return _plainTextData[surahNumber.toString()]?[verseNumber.toString()]
             ?.toString() ??
         '';
