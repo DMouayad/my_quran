@@ -792,9 +792,9 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
       return TextAlign.center;
     }
     if (widget.settingsController.fontFamily == FontFamily.hafs) {
-      return TextAlign.justify;
+      return TextAlign.start;
     }
-    return widget.fontSize > 34 ? TextAlign.center : TextAlign.justify;
+    return widget.fontSize > 34 ? TextAlign.center : TextAlign.start;
   }
 
   @override
