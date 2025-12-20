@@ -211,10 +211,10 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     // 2. Define Glass Style (Reusable)
     final glassDecoration = BoxDecoration(
-      color: Theme.of(context).colorScheme.surface.withOpacity(0.85),
+      color: Theme.of(context).colorScheme.surface.applyOpacity(0.85),
       border: Border(
         bottom: BorderSide(
-          color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.outlineVariant.applyOpacity(0.3),
         ),
       ),
     );

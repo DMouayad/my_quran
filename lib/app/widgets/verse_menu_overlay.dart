@@ -5,6 +5,7 @@ import 'package:my_quran/quran/quran.dart';
 
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
+import 'package:my_quran/app/utils.dart';
 
 class VerseMenuOverlay extends StatefulWidget {
   const VerseMenuOverlay({
@@ -85,7 +86,7 @@ class _VerseMenuOverlayState extends State<VerseMenuOverlay>
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.applyOpacity(0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -146,7 +147,7 @@ class _VerseMenuOverlayState extends State<VerseMenuOverlay>
                                         const Text(' - '),
                                         const Text('الآية '),
                                         Text(
-                                          _toArabicNumber(widget.verse.number),
+                                          getArabicNumber(widget.verse.number),
                                           style: TextStyle(
                                             fontFamily: FontFamily
                                                 .arabicNumbersFontFamily
@@ -287,14 +288,5 @@ class _VerseMenuOverlayState extends State<VerseMenuOverlay>
     }
 
     widget.onBookmarkToggled?.call();
-  }
-
-  String _toArabicNumber(int number) {
-    const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return number
-        .toString()
-        .split('')
-        .map((digit) => arabicNumerals[int.parse(digit)])
-        .join();
   }
 }

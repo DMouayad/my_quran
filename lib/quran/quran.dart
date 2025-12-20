@@ -59,7 +59,8 @@ class Quran {
     }
   }
 
-  ///Takes [pageNumber] and returns a list containing Surahs and the starting and ending Verse numbers in that page
+  ///Takes [pageNumber] and returns a list containing Surahs and the starting and
+  /// ending Verse numbers in that page
   ///
   ///Example:
   ///
@@ -70,7 +71,8 @@ class Quran {
   /// Returns List of Page 604:
   ///
   ///```dart
-  /// [{surah: 112, start: 1, end: 5}, {surah: 113, start: 1, end: 4}, {surah: 114, start: 1, end: 5}]
+  /// [{surah: 112, start: 1, end: 5}, {surah: 113, start: 1, end: 4},
+  ///  {surah: 114, start: 1, end: 5}]
   ///```
   ///
   ///Length of the list is the number of surah in that page.
@@ -256,7 +258,8 @@ class Quran {
   String getVerseURL(int surahNumber, int verseNumber) =>
       'https://quran.com/$surahNumber/$verseNumber';
 
-  ///Takes [verseNumber], [arabicNumeral] (optional) and returns '۝' symbol with verse number
+  ///Takes [verseNumber], [arabicNumeral] (optional)
+  /// and returns '۝' symbol with verse number
   String getVerseEndSymbol(int verseNumber, {bool arabicNumeral = true}) {
     final digits = verseNumber.toString().split('').toList();
 

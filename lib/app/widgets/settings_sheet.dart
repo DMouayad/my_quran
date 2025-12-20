@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_quran/app/utils.dart';
 
 class SettingsBottomSheet extends StatelessWidget {
   const SettingsBottomSheet({super.key});
@@ -48,7 +49,7 @@ class SettingsBottomSheet extends StatelessWidget {
                 decoration: BoxDecoration(
                   border: Border.all(color: colorScheme.outlineVariant),
                   borderRadius: BorderRadius.circular(16),
-                  color: colorScheme.surfaceContainerLow.withOpacity(0.5),
+                  color: colorScheme.surfaceContainerLow.applyOpacity(0.5),
                 ),
                 child: Row(
                   children: [

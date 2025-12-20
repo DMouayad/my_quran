@@ -61,7 +61,7 @@ class _BookmarksSheetState extends State<BookmarksSheet> {
           Icon(
             Icons.bookmark_border,
             size: 80,
-            color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+            color: colorScheme.onSurfaceVariant.applyOpacity(0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -73,7 +73,7 @@ class _BookmarksSheetState extends State<BookmarksSheet> {
             'اضغط مطولاً على أي آية لإضافة علامة',
             style: TextStyle(
               fontSize: 14,
-              color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+              color: colorScheme.onSurfaceVariant.applyOpacity(0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -154,7 +154,7 @@ class _BookmarkCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
+        side: BorderSide(color: colorScheme.outlineVariant.applyOpacity(0.5)),
       ),
       child: InkWell(
         onTap: onTap,
@@ -214,7 +214,9 @@ class _BookmarkCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                    color: colorScheme.surfaceContainerHighest.applyOpacity(
+                      0.5,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -248,7 +250,7 @@ class _BookmarkCard extends StatelessWidget {
                     _formatDate(bookmark.createdAt),
                     style: TextStyle(
                       fontSize: 12,
-                      color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                      color: colorScheme.onSurfaceVariant.applyOpacity(0.7),
                     ),
                   ),
                   const Spacer(),

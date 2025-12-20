@@ -1,9 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:my_quran/app/models.dart';
 
+import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/search/processor.dart';
+import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/quran/quran.dart';
 import 'package:my_quran/app/search/models.dart';
 import 'package:my_quran/app/services/search_service.dart';
@@ -89,7 +90,7 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
                 filled: true,
                 fillColor: Theme.of(
                   context,
-                ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                ).colorScheme.surfaceContainerHighest.applyOpacity(0.3),
               ),
               onChanged: _onSearchChanged,
             ),
@@ -344,7 +345,7 @@ class _HighlightedText extends StatelessWidget {
           if (showStartEllipsis)
             TextSpan(
               text: '... ',
-              style: TextStyle(color: baseColor.withOpacity(0.8)),
+              style: TextStyle(color: baseColor.applyOpacity(0.8)),
             ),
           ...List.generate(displayWords.length, (index) {
             final word = displayWords[index];
