@@ -111,8 +111,14 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
                     // Re-run search immediately with new setting
                     _performSearch(_controller.text);
                   },
-                  selectedColor: colorScheme.primaryContainer,
-                  checkmarkColor: colorScheme.primary,
+
+                  labelStyle: TextStyle(
+                    color: _isExactMatch
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                  selectedColor: colorScheme.primary,
+                  checkmarkColor: colorScheme.onPrimary,
                 ),
 
                 if (_results.isNotEmpty) ...[

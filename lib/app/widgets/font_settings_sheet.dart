@@ -128,7 +128,7 @@ class FontSettingsSheet extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('سمك الخط'),
+                        const Text('سماكة الخط'),
                         SegmentedButton<FontWeight>(
                           segments: const [
                             ButtonSegment(

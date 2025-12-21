@@ -226,7 +226,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
       extendBodyBehindAppBar: true, // Critical for glass effect
       floatingActionButton: FloatingActionButton(
         backgroundColor: context.isDarkMode
-            ? colorScheme.surfaceContainer
+            ? colorScheme.surfaceContainerHigh
             : colorScheme.surfaceContainerLow,
         foregroundColor: colorScheme.primary,
         elevation: 4,
@@ -735,7 +735,7 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
   TextAlign _calculateAlignment() {
     if (Quran.instance.getVerseCount(widget.surah.surahNumber) <= 20) {
       return TextAlign.center;
-    }   
+    }
     return widget.fontSize > 34 ? TextAlign.center : TextAlign.justify;
   }
 
