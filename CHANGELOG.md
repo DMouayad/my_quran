@@ -1,3 +1,10 @@
+### v1.2.5
+
+FEAT: add hafs quran text and font
+FIX: gaps between words for large font sizes (thanks to @Hy4ri)
+FEAT: make navigation wheels items tapable
+FEAT: implement quick navigation by tapping on surah, juz, and page number in the header
+
 ### v1.2.4
 
 FIX: search, text sizer and navigation sheets are covered by on-screen navigation buttons

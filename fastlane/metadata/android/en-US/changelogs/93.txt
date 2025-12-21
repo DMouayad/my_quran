@@ -1,0 +1,5 @@
+- Added the Hafs Quran text\font.
+- Fixed an issue where gaps appeared between words at larger font sizes.
+- You can now tap directly on items in the navigation wheels to select them.
+- Tapping on surah, juz, or page in the pinned header will open an input dialog to quickly
+ navigate to surah/juz/page.
