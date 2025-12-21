@@ -58,6 +58,17 @@ class Quran {
     }
   }
 
+  static final List<({String arabic, String english, int number})> surahNames =
+      surah
+          .map(
+            (e) => (
+              number: e['id']! as int,
+              arabic: e['arabic'].toString(),
+              english: e['name'].toString(),
+            ),
+          )
+          .toList(growable: false);
+
   ///Takes [pageNumber] and returns a list containing Surahs and the starting
   /// and ending Verse numbers in that page
   ///
