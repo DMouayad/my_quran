@@ -17,6 +17,7 @@ import 'package:my_quran/app/widgets/navigation_sheet.dart';
 import 'package:my_quran/app/widgets/bookmarks_sheet.dart';
 import 'package:my_quran/app/widgets/verse_menu_overlay.dart';
 import 'package:my_quran/app/widgets/search_sheet.dart';
+import 'package:my_quran/app/widgets/pinned_header.dart';
 import 'package:my_quran/quran/quran.dart';
 
 class HomePage extends StatefulWidget {
@@ -205,7 +206,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     // 1. Calculate Heights
     final double statusBarHeight = MediaQuery.of(context).padding.top;
     const double appBarHeight = kToolbarHeight; // Standard 56.0
-    const double infoHeaderHeight = 44; // Height of our Surah/Page strip
+    const double infoHeaderHeight = 38; // Height of our Surah/Page strip
 
     // Total height obscuring the top
     final double totalTopHeaderHeight =
@@ -356,69 +357,13 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
             // --- 2. The Pinned Info Header (Middle Layer) ---
             // We position this EXACTLY below the AppBar
-            Positioned(
-              top: statusBarHeight + appBarHeight, // Push down by AppBar height
-              left: 0,
-              right: 0,
-              height: infoHeaderHeight,
-              child: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: DefaultTextStyle(
-                    style: TextStyle(
-                      fontFamily: FontFamily.arabicNumbersFontFamily.name,
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                    child: Container(
-                      decoration: glassDecoration,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: ValueListenableBuilder<ReadingPosition>(
-                        valueListenable: _currentPositionNotifier,
-                        builder: (context, position, _) {
-                          return Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    '${getArabicNumber(position.surahNumber)} - '
-                                    '${Quran.instance.getSurahNameArabic(position.surahNumber)}',
-                                  ),
-                                  Text(
-                                    'جزء ${getArabicNumber(position.juzNumber)}',
-                                  ),
-                                ],
-                              ),
-                              Positioned(
-                                left: 0,
-                                right: 0,
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 200),
-                                  child: Text(
-                                    getArabicNumber(position.pageNumber),
-                                    key: ValueKey(position.pageNumber),
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            PinnedHeader(
+              statusBarHeight: statusBarHeight,
+              appBarHeight: appBarHeight,
+              infoHeight: infoHeaderHeight,
+              glassDecoration: glassDecoration,
+              currentPositionNotifier: _currentPositionNotifier,
+              goToPage: _jumpToPage,
             ),
           ],
         ),
