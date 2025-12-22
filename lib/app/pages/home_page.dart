@@ -212,22 +212,20 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final double totalTopHeaderHeight =
         statusBarHeight + appBarHeight + infoHeaderHeight;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    // 2. Define Glass Style (Reusable)
-    final glassDecoration = BoxDecoration(
-      color: Theme.of(context).colorScheme.surface.applyOpacity(0.85),
+    final appBarDecoration = BoxDecoration(
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       border: Border(
         bottom: BorderSide(
           color: Theme.of(context).colorScheme.outlineVariant.applyOpacity(0.3),
         ),
       ),
     );
+
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       extendBodyBehindAppBar: true, // Critical for glass effect
       floatingActionButton: FloatingActionButton(
-        backgroundColor: context.isDarkMode
-            ? colorScheme.surfaceContainerHigh
-            : colorScheme.surfaceContainerLow,
+        backgroundColor: colorScheme.surfaceContainerLow,
         foregroundColor: colorScheme.primary,
         elevation: 4,
         onPressed: () => showModalBottomSheet(
@@ -308,12 +306,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        flexibleSpace: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(decoration: glassDecoration),
-          ),
-        ),
+        flexibleSpace: Container(decoration: appBarDecoration),
         actions: [
           IconButton(
             onPressed: () =>
@@ -361,7 +354,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
               statusBarHeight: statusBarHeight,
               appBarHeight: appBarHeight,
               infoHeight: infoHeaderHeight,
-              glassDecoration: glassDecoration,
+              decoration: appBarDecoration,
               currentPositionNotifier: _currentPositionNotifier,
               goToPage: _jumpToPage,
             ),

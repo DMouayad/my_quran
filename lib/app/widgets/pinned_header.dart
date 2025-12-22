@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:my_quran/app/models.dart';
@@ -10,7 +8,7 @@ class PinnedHeader extends StatelessWidget {
   const PinnedHeader({
     required this.currentPositionNotifier,
     required this.goToPage,
-    required this.glassDecoration,
+    required this.decoration,
     required this.infoHeight,
     required this.statusBarHeight,
     required this.appBarHeight,
@@ -20,7 +18,7 @@ class PinnedHeader extends StatelessWidget {
   final ValueNotifier<ReadingPosition> currentPositionNotifier;
   final void Function(int page, {int? highlightSurah, int? highlightVerse})
   goToPage;
-  final BoxDecoration glassDecoration;
+  final BoxDecoration decoration;
   final double infoHeight;
   final double statusBarHeight;
   final double appBarHeight;
@@ -32,70 +30,65 @@ class PinnedHeader extends StatelessWidget {
       left: 0,
       right: 0,
       height: infoHeight,
-      child: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: DefaultTextStyle(
-            style: TextStyle(
-              fontFamily: FontFamily.arabicNumbersFontFamily.name,
-              color: Theme.of(context).colorScheme.onSurface,
-              fontWeight: FontWeight.w700,
-              fontSize: 16,
-            ),
-            child: Container(
-              decoration: glassDecoration,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: ValueListenableBuilder<ReadingPosition>(
-                valueListenable: currentPositionNotifier,
-                builder: (context, position, _) {
-                  final surahName = Quran.instance.getSurahNameArabic(
-                    position.surahNumber,
-                  );
-                  return Stack(
-                    alignment: Alignment.center,
+      child: DefaultTextStyle(
+        style: TextStyle(
+          fontFamily: FontFamily.arabicNumbersFontFamily.name,
+          color: Theme.of(context).colorScheme.onSurface,
+          fontWeight: FontWeight.w700,
+          fontSize: 16,
+        ),
+        child: Container(
+          decoration: decoration,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: ValueListenableBuilder<ReadingPosition>(
+            valueListenable: currentPositionNotifier,
+            builder: (context, position, _) {
+              final surahName = Quran.instance.getSurahNameArabic(
+                position.surahNumber,
+              );
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          GestureDetector(
-                            onTap: () => onSurahTapped(context),
-                            child: Text(
-                              '${getArabicNumber(position.surahNumber)} - '
-                              '$surahName',
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => onJuzTapped(context),
-                            child: Text(
-                              'جزء ${getArabicNumber(position.juzNumber)}',
-                            ),
-                          ),
-                        ],
+                      GestureDetector(
+                        onTap: () => onSurahTapped(context),
+                        child: Text(
+                          '${getArabicNumber(position.surahNumber)} - '
+                          '$surahName',
+                        ),
                       ),
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: () => onPageNumberTapped(context),
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: Text(
-                              getArabicNumber(position.pageNumber),
-                              key: ValueKey(position.pageNumber),
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                          ),
+                      GestureDetector(
+                        onTap: () => onJuzTapped(context),
+                        child: Text(
+                          'جزء ${getArabicNumber(position.juzNumber)}',
                         ),
                       ),
                     ],
-                  );
-                },
-              ),
-            ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: () => onPageNumberTapped(context),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: Text(
+                          getArabicNumber(position.pageNumber),
+                          key: ValueKey(position.pageNumber),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
