@@ -386,11 +386,6 @@ class QuranPageWidget extends StatefulWidget {
 class _QuranPageWidgetState extends State<QuranPageWidget> {
   late QuranPage pageDataModel;
   final FontSizeController _fontSizeController = FontSizeController();
-  final GlobalKey _richTextKey = GlobalKey(); // Key to access the text renderer
-
-  // Store the text range of each verse to map taps later
-  // Key: Verse Identifier, Value: Range(Start Index, End Index)
-  final Map<({int surah, int verse}), ({int start, int end})> _verseRanges = {};
 
   double _scaleFactor = 1;
   double _baseScale = 1;
@@ -444,36 +439,6 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
     pageDataModel = QuranPage(pageNumber: widget.pageNumber, surahs: surahs);
   }
 
-  // --- HIT TEST LOGIC ---
-
-  void _handleGlobalTap(Offset localPosition, {bool isLongPress = false}) {
-    final renderObject = _richTextKey.currentContext?.findRenderObject();
-    if (renderObject is! RenderParagraph) return;
-
-    // 1. Get the text index (character position) from the tap coordinates
-    final textPosition = renderObject.getPositionForOffset(localPosition);
-    final index = textPosition.offset;
-
-    // 2. Find which verse contains this index
-    for (final entry in _verseRanges.entries) {
-      final range = entry.value;
-      if (index >= range.start && index < range.end) {
-        final verseId = entry.key;
-        // Found it!
-        _onVerseInteraction(
-          verseId.surah,
-          verseId.verse,
-          isLongPress: isLongPress,
-        );
-        return;
-      }
-    }
-
-    if (!isLongPress) {
-      _removeOverlay();
-    }
-  }
-
   void _onVerseInteraction(
     int surah,
     int verseNumber, {
@@ -518,8 +483,6 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
     _overlayEntry = null;
   }
 
-  // --- BUILDER ---
-
   @override
   Widget build(BuildContext context) {
     final baseFontSize = _fontSizeController.verseFontSize * _scaleFactor;
@@ -527,7 +490,6 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
         _fontSizeController.verseSymbolFontSize * _scaleFactor;
 
     return GestureDetector(
-      // 1. Global Gesture Detector wraps the whole page
       onScaleStart: (_) {
         _baseScale = _scaleFactor;
         _removeOverlay();
@@ -539,10 +501,6 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
         _fontSizeController.setFontSize(newSize);
         setState(() => _scaleFactor = 1.0);
       },
-      // 2. Hit Testing Callbacks
-      onTapUp: (details) => _handleGlobalTap(details.localPosition),
-      onLongPressStart: (details) =>
-          _handleGlobalTap(details.localPosition, isLongPress: true),
       child: Container(
         color: Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 14),
