@@ -7,6 +7,8 @@
 
   A simple, distraction-free and high-performance Quran application.
   
+  Lightweight. No internet required. No tracking. No analytics.
+  حجم صغير، خصوصية تامة، لا يوجد تتبع، ولا يحتاج اتصال بالشبكة.
   <!-- BADGES -->
   ![Version](https://img.shields.io/github/v/release/dmouayad/my_quran?style=flat&labelColor=CCE8E4&color=0F766E&label=Latest%20Version)
   [![Project's License](https://img.shields.io/github/license/dmouayad/my_quran?style=flat&labelColor=CCE8E4&color=0F766E)](./LICENSE)
@@ -23,21 +25,13 @@
   </div>
 </div>
 
-## 📱 Screenshots / لقطات الشاشة
+---
 
 <div align="center">
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/0-light-hafs.png" width="200" />
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2-dark.png" width="200" />
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4-quick-navigation.png" width="200" />
 </div>
-
-## ✨ Features | المميزات
-
-| English | العربية |
-| :--- | :--- |
-| **Lightweight**<br> optimized size (~17MB) using JSON assets and code splitting. | **خفيف جداً**<br> حجم صغير بفضل تقنيات ضغط البيانات، لا يستهلك مساحة الهاتف. |
-| **100% Offline**<br> No internet required. No tracking. No analytics. | **يعمل بدون إنترنت**<br> خصوصية تامة، لا يوجد تتبع، ولا يحتاج اتصال بالشبكة. |
-| **Search**<br> Advanced search that ignores Diacritics (Tashkeel) and supports multi-word queries. | **بحث ذكي**<br> محرك بحث فوري. |
 
 ---
 
