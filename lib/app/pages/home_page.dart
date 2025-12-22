@@ -82,21 +82,23 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final positions = _itemPositionsListener.itemPositions.value;
     if (positions.isEmpty) return;
 
-    // Sort positions by index to ensure order
-    final sortedPositions = positions.toList()
-      ..sort((a, b) => a.index.compareTo(b.index));
+    ItemPosition? bestCandidate;
 
-    final firstItem = sortedPositions.first;
-
-    // --- Header Page Detection ---
-    // We want the page that occupies the "reading line".
-    ItemPosition bestCandidate = firstItem;
-    for (final pos in sortedPositions) {
-      // If this item covers the top 15% of the screen
-      if (pos.itemTrailingEdge > 0.15) {
-        bestCandidate = pos;
-        break;
+    for (final pos in positions) {
+      if (bestCandidate == null || pos.index < bestCandidate.index) {
+        if (pos.itemTrailingEdge > 0.15) {
+          bestCandidate = pos;
+        }
       }
+    }
+
+    if (bestCandidate == null) {
+      // Fallback: find minimum index
+      int minIndex = positions.first.index;
+      for (final pos in positions) {
+        if (pos.index < minIndex) minIndex = pos.index;
+      }
+      bestCandidate = positions.firstWhere((p) => p.index == minIndex);
     }
 
     final newPageNumber = bestCandidate.index + 1;
