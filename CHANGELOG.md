@@ -1,3 +1,15 @@
+### v1.3.0
+
+FEAT: add PWA support and deployment workflow
+FEAT: cache page text, add verse menu dialog and improve verse highlighting
+FEAT: add submit button to quick navigation dialog
+FEAT: update launcher icons and generate web icons
+FEAT: remove app bar glass effect
+FIX: copied verse text font
+FIX: font weight setting not applied
+FIX: remove unnecessary gesture handling
+PERF: optimize surah search dialog for empty search queries
+
 ### v1.2.5
 
 FEAT: add hafs quran text and font

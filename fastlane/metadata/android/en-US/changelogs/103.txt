@@ -1,0 +1,6 @@
+- The app is now available as a Progressive Web App (PWA)!
+- New design for verse menu dialog.
+- Added a submit button for easier navigation in the 'Go to' dialogs.
+- Fix: the font weight setting was not being applied.
+- Fix: corrected the font for copied verse text.
+- Improved overall performance.
