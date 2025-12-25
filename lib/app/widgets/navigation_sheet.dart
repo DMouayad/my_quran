@@ -347,7 +347,7 @@ class _QuranNavigationBottomSheetState
     return Text(
       _toArabicNumber(number),
       style: TextStyle(
-        fontSize: 20,
+        fontSize: 21,
         color: colorScheme.onSurface,
         fontFamily: FontFamily.arabicNumbersFontFamily.name,
       ),

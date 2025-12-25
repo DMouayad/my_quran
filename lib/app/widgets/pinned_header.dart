@@ -237,21 +237,23 @@ class _SearchSurahDialogState extends State<_SearchSurahDialog> {
           child: ValueListenableBuilder(
             valueListenable: searchController,
             builder: (context, value, _) {
-              final items = Quran.surahNames
-                  .where(
-                    (e) =>
-                        e.arabic.contains(value.text) ||
-                        e.english.toLowerCase().contains(
-                          value.text.toLowerCase(),
-                        ),
-                  )
-                  .toList();
+              final items = value.text.isEmpty
+                  ? Quran.surahNames
+                  : Quran.surahNames
+                        .where(
+                          (e) =>
+                              e.arabic.contains(value.text) ||
+                              e.english.toLowerCase().contains(
+                                value.text.toLowerCase(),
+                              ),
+                        )
+                        .toList();
               if (items.isEmpty) {
                 return const Center(child: Text('لا توجد نتائج...'));
               }
               return ListView.builder(
                 itemCount: items.length,
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.only(top: 10, bottom: 32),
                 itemBuilder: (context, index) => ListTile(
                   onTap: () => widget.onSurahTapped(items[index].number),
                   leading: Text(
