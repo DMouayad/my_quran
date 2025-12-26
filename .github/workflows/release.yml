@@ -29,8 +29,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  get-version-info:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_number: ${{ steps.version.outputs.build_number }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: |
+          version=${GITHUB_REF#refs/tags/}
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "Release version: $version"
+          BUILD_NUMBER=$(grep '^version:' pubspec.yaml | sed 's/.*+//')
+          BUILD_NUMBER=$((BUILD_NUMBER * 10 + 3))
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
   build:
     name: Build Release APKs
+    needs: [get-version-info]
     runs-on: ubuntu-latest
 
     steps:
@@ -134,9 +153,9 @@ jobs:
           tag: ${{ github.event.inputs.tag_name }}
           prerelease: ${{ github.event.inputs.prerelease }}
           draft: ${{ github.event.inputs.draft }}
+          body_path: fastlane/metadata/android/en-US/changelogs/${{ needs.get-version-info.outputs.build_number }}.txt
           artifacts: "build/app/outputs/apk/release/*.apk"
           token: ${{ secrets.GITHUB_TOKEN }}
-          generateReleaseNotes: true
 
   build_web_artifact:
     name: Build Web Artifact
@@ -168,12 +187,12 @@ jobs:
           path: './build/web'
 
   deploy_pages:
+    needs: build_web_artifact
     name: Deploy to GitHub Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: build_web_artifact
     permissions:
       pages: write
       id-token: write
