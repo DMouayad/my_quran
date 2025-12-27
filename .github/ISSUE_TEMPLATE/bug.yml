@@ -1,0 +1,82 @@
+name: Report a bug
+description: |
+  You found a bug in MyQuran application causing it to crash or
+  throw an exception, a widget is buggy, or something looks wrong.
+labels:
+  - bug
+  - triage
+body:
+  - type: checkboxes
+    attributes:
+      label: Is there an existing issue for this?
+      description: 'Please [search :mag: the issues](https://github.com/dmouayad/my_quran/issues) to check if this bug has already been reported.'
+      options:
+      - label: I have searched the existing issues
+        required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: Please tell us exactly how to reproduce the problem you are running into.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected results
+      description: Please tell us what is expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Actual results
+      description: Please tell us what is actually happening.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Screenshots or Video
+      description: |
+        Upload any screenshots or video of the bug if applicable.
+      value: |
+        <details open>
+        <summary>Screenshots / Video demonstration</summary>
+
+        [Upload media here]
+
+        </details>
+  - type: input
+    attributes:
+      label: App Version
+      description: What version of the app are you running? (e.g., 1.0.0)
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Environment
+      description: |
+        Please provide the following information about your environment.
+      value: |
+        - Flutter version:
+        - Device model:
+        - OS version:
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      multiple: true
+      description: In which platform do you experience the bug?
+      options:
+        - Android
+        - MacOS
+        - Windows
+        - Linux
+        - iOS
+        - Web
+      default: 0
+    validations:
+      required: true
