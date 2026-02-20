@@ -35,17 +35,30 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
   @override
   void initState() {
     super.initState();
+    _syncCategory();
+  }
+
+  void _syncCategory() {
     if (isBookmarked && bookmark?.categoryId != null) {
       try {
         currentCategory = categories.firstWhere(
           (c) => c.id == bookmark!.categoryId,
         );
-      } catch (_) {}
+      } catch (_) {
+        currentCategory = null;
+      }
+    } else {
+      currentCategory = null;
     }
   }
 
+  /// Default category for new bookmarks created via the note flow.
+  String? get _defaultCategoryId => categories.firstOrNull?.id;
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return ScaffoldMessenger(
       child: Builder(
         builder: (context) {
@@ -57,13 +70,11 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Scaffold(
-                backgroundColor: Theme.of(context).colorScheme.surface,
+                backgroundColor: colorScheme.surface,
                 // ── Fixed bottom actions ──
                 bottomNavigationBar: Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest,
+                    color: colorScheme.surfaceContainerHighest,
                     borderRadius: const BorderRadius.vertical(
                       bottom: Radius.circular(16),
                     ),
@@ -74,188 +85,37 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
                   ),
                   child: Row(
                     children: [
-                      // ── Copy ──
                       _ActionButton(
                         icon: Icons.copy,
                         label: 'نسخ',
                         onTap: () => _copyVerse(context),
                       ),
-
-                      // ── Bookmark with color picker ──
                       _BookmarkActionButton(
                         isBookmarked: isBookmarked,
                         currentCategory: currentCategory,
                         categories: categories,
-                        onCategorySelected: (cat) async {
-                          if (isBookmarked) {
-                            final updated = bookmark!.copyWith(
-                              categoryId: () => cat.id,
-                            );
-                            await bookmarkService.updateBookmark(updated);
-                            setState(() {
-                              bookmark = updated;
-                            });
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'تم النقل إلى "${cat.title}" ✓',
-                                  ),
-                                ),
-                              );
-                            }
-                          } else {
-                            final newBookmark = VerseBookmark(
-                              id:
-                                  '${widget.surah}_${widget.verse.number}_'
-                                  '${DateTime.now().millisecondsSinceEpoch}',
-                              surah: widget.surah,
-                              verse: widget.verse.number,
-                              pageNumber: Quran.instance.getPageNumber(
-                                widget.surah,
-                                widget.verse.number,
-                              ),
-                              createdAt: DateTime.now(),
-                              categoryId: cat.id,
-                            );
-                            await bookmarkService.addBookmark(newBookmark);
-                            setState(() {
-                              isBookmarked = true;
-                              bookmark = newBookmark;
-                            });
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('تمت إضافة العلامة ✓'),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        onRemove: () async {
-                          await bookmarkService.removeBookmarkByVerse(
-                            widget.surah,
-                            widget.verse.number,
-                          );
-                          setState(() {
-                            isBookmarked = false;
-                            bookmark = null;
-                          });
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('تمت إزالة العلامة'),
-                              ),
-                            );
-                          }
-                        },
+                        onCategorySelected: _onCategorySelected,
+                        onRemove: _onRemoveBookmark,
                       ),
-
                       _ActionButton(
                         iconColor: (bookmark?.note?.isNotEmpty ?? false)
-                            ? context.colorScheme.primary
-                            : context.colorScheme.onSurfaceVariant,
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
                         icon: (bookmark?.note?.isNotEmpty ?? false)
                             ? Icons.edit_note
                             : Icons.note_add_outlined,
-
                         label: 'ملاحظة',
-                        onTap: () async {
-                          final updated = await _showEditNoteDialog(
-                            context,
-                            bookmark,
-                            categories,
-                          );
-
-                          if (updated != null) {
-                            if (!isBookmarked) {
-                              await bookmarkService.addBookmark(updated);
-                              final newCategory = updated.categoryId != null
-                                  ? await bookmarkService.getCategoryById(
-                                      updated.categoryId!,
-                                    )
-                                  : categories.first;
-                              setState(() {
-                                isBookmarked = true;
-                                currentCategory = newCategory;
-                              });
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('تمت إضافة العلامة ✓'),
-                                  ),
-                                );
-                              }
-                            }
-                            setState(() {
-                              bookmark = updated;
-                            });
-                          }
-                        },
+                        onTap: () => _onNoteTap(context),
                       ),
                     ],
                   ),
                 ),
-                // ── Body: header + centered verse ──
+                // ── Body: header + centered verse + note preview ──
                 body: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // ── Header ──
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 18),
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.menu_book,
-                              size: 18,
-                              color: Theme.of(context).colorScheme.onPrimary,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: DefaultTextStyle(
-                              style: TextStyle(
-                                fontFamily: FontFamily.rustam.name,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 16,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    Quran.instance.getSurahNameArabic(
-                                      widget.surah,
-                                    ),
-                                  ),
-                                  const Text(' - '),
-                                  const Text('الآية '),
-                                  Text(
-                                    getArabicNumber(widget.verse.number),
-                                    style: TextStyle(
-                                      fontFamily: FontFamily
-                                          .arabicNumbersFontFamily
-                                          .name,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close, size: 20),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                      ),
-                    ),
+                    _buildHeader(context),
 
                     // ── Verse text (centered, scrollable) ──
                     Flexible(
@@ -271,30 +131,55 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
                             style: TextStyle(
                               fontSize: 22,
                               height: 2,
-                              color: Theme.of(context).colorScheme.onSurface,
+                              color: colorScheme.onSurface,
                             ),
                           ),
                         ),
                       ),
                     ),
+
+                    // ── Note preview (protected space) ──
                     if (bookmark?.note?.isNotEmpty ?? false)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: context.colorScheme.tertiaryContainer
-                              .applyOpacity(0.3),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          bookmark!.note!,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: context.colorScheme.onSurfaceVariant,
-                                height: 1.5,
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: colorScheme.tertiaryContainer.applyOpacity(
+                              0.3,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border(
+                              right: BorderSide(
+                                color: colorScheme.tertiary.applyOpacity(0.5),
+                                width: 3,
                               ),
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.sticky_note_2_outlined,
+                                size: 14,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  bookmark!.note!,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                        height: 1.4,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                   ],
@@ -307,6 +192,180 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     );
   }
 
+  // ─────────────────────────────────────────────
+  // Header
+  // ─────────────────────────────────────────────
+
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        children: [
+          const SizedBox(width: 18),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.menu_book,
+              size: 18,
+              color: Theme.of(context).colorScheme.onPrimary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: DefaultTextStyle(
+              style: TextStyle(
+                fontFamily: FontFamily.rustam.name,
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              child: Row(
+                children: [
+                  Text(Quran.instance.getSurahNameArabic(widget.surah)),
+                  const Text(' - '),
+                  const Text('الآية '),
+                  Text(
+                    getArabicNumber(widget.verse.number),
+                    style: TextStyle(
+                      fontFamily: FontFamily.arabicNumbersFontFamily.name,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 20),
+            onPressed: () => Navigator.pop(context),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // Actions
+  // ─────────────────────────────────────────────
+
+  Future<void> _onCategorySelected(BookmarkCategory cat) async {
+    if (isBookmarked) {
+      // Change category on existing bookmark
+      final updated = bookmark!.copyWith(categoryId: () => cat.id);
+      await bookmarkService.updateBookmark(updated);
+      setState(() {
+        bookmark = updated;
+        _syncCategory();
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('تم النقل إلى "${cat.title}" ✓')),
+        );
+      }
+    } else {
+      // Create new bookmark with selected category
+      final newBookmark = VerseBookmark(
+        id:
+            '${widget.surah}_${widget.verse.number}_'
+            '${DateTime.now().millisecondsSinceEpoch}',
+        surah: widget.surah,
+        verse: widget.verse.number,
+        pageNumber: Quran.instance.getPageNumber(
+          widget.surah,
+          widget.verse.number,
+        ),
+        createdAt: DateTime.now(),
+        categoryId: cat.id,
+      );
+      await bookmarkService.addBookmark(newBookmark);
+      setState(() {
+        isBookmarked = true;
+        bookmark = newBookmark;
+        _syncCategory();
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('تمت إضافة العلامة ✓')));
+      }
+    }
+  }
+
+  Future<void> _onRemoveBookmark() async {
+    await bookmarkService.removeBookmarkByVerse(
+      widget.surah,
+      widget.verse.number,
+    );
+    setState(() {
+      isBookmarked = false;
+      bookmark = null;
+      currentCategory = null;
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تمت إزالة العلامة')));
+    }
+  }
+
+  Future<void> _onNoteTap(BuildContext context) async {
+    final result = await showEditNoteDialog(context, bookmark);
+    if (result == null) return;
+
+    final updatedNote = result == '\x00'
+        ? null
+        : (result.trim().isEmpty ? null : result.trim());
+
+    if (isBookmarked) {
+      // Update existing bookmark's note
+      final updated = bookmark!.copyWith(note: () => updatedNote);
+      await bookmarkService.updateBookmark(updated);
+      setState(() => bookmark = updated);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              updatedNote == null ? 'تم حذف الملاحظة' : 'تم حفظ الملاحظة ✓',
+            ),
+          ),
+        );
+      }
+    } else {
+      // Create new bookmark with note
+      final newBookmark = VerseBookmark(
+        id:
+            '${widget.surah}_${widget.verse.number}_'
+            '${DateTime.now().millisecondsSinceEpoch}',
+        surah: widget.surah,
+        verse: widget.verse.number,
+        pageNumber: Quran.instance.getPageNumber(
+          widget.surah,
+          widget.verse.number,
+        ),
+        createdAt: DateTime.now(),
+        categoryId: _defaultCategoryId,
+        note: updatedNote,
+      );
+      await bookmarkService.addBookmark(newBookmark);
+      setState(() {
+        isBookmarked = true;
+        bookmark = newBookmark;
+        _syncCategory();
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('تمت إضافة العلامة ✓')));
+      }
+    }
+  }
+
   void _copyVerse(BuildContext context) {
     final surahName = Quran.instance.getSurahNameArabic(widget.surah);
     final textToCopy =
@@ -317,37 +376,6 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('تم النسخ إلى الحافظة')));
-  }
-
-  Future<VerseBookmark?> _showEditNoteDialog(
-    BuildContext context,
-    VerseBookmark? bookmark,
-    List<BookmarkCategory> categories,
-  ) async {
-    final result = await showEditNoteDialog(context, bookmark);
-
-    if (result == null) return null;
-
-    final updatedNote = result == '\x00' ? null : result.trim();
-
-    final VerseBookmark updated =
-        bookmark?.copyWith(note: () => updatedNote) ??
-        VerseBookmark(
-          id:
-              '${widget.surah}_${widget.verse.number}_'
-              '${DateTime.now().millisecondsSinceEpoch}',
-          surah: widget.surah,
-          verse: widget.verse.number,
-          pageNumber: Quran.instance.getPageNumber(
-            widget.surah,
-            widget.verse.number,
-          ),
-          createdAt: DateTime.now(),
-          categoryId: categories.firstOrNull?.id,
-          note: updatedNote,
-        );
-
-    return updated;
   }
 }
 
@@ -456,18 +484,23 @@ class _BookmarkActionButton extends StatelessWidget {
   void _showColorPicker(BuildContext context) {
     final renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
+
     final offset = renderBox.localToGlobal(Offset.zero);
     final size = renderBox.size;
+    final screenHeight = MediaQuery.of(context).size.height;
 
-    // Total menu items height for positioning above the button
+    // Calculate menu height
     final itemCount = categories.length + (isBookmarked ? 2 : 0);
-    final menuHeight = itemCount * 44.0 + 16.0; // padding
+    final menuHeight = itemCount * 44.0 + 16.0;
+
+    // Position above the button, but clamp so it doesn't go off-screen
+    final topPosition = (offset.dy - menuHeight).clamp(8.0, screenHeight - 48);
 
     showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(
         offset.dx,
-        offset.dy - menuHeight,
+        topPosition,
         offset.dx + size.width,
         offset.dy,
       ),

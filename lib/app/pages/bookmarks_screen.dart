@@ -425,6 +425,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       if (bookmark.note?.isNotEmpty ?? false)
                         Flexible(
@@ -599,6 +600,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
             'هل تريد حذف العلامة من سورة $surahName، '
             'الآية ${getArabicNumber(bookmark.verse)}؟',
             style: TextStyle(
+              fontSize: 16,
               fontFamily: FontFamily.arabicNumbersFontFamily.name,
             ),
           ),
