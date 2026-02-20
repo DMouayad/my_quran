@@ -107,7 +107,8 @@ class SearchService {
 
     // 2. Prefix Match (if enabled)
     if (!exactMatch) {
-      // Find the first key that is not smaller than the token using binary search
+      // Find the first key that is not smaller than the
+      // token using binary search
       final startIndex = lowerBound(_sortedKeys, token);
 
       // Iterate from the start index as long as keys start with the token

@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 class Surah {
   const Surah({
     required this.arabicName,
@@ -80,9 +82,52 @@ class ReadingPosition {
   };
 }
 
-class VerseBookmark {
-  // Optional user note
+@immutable
+class BookmarkCategory {
+  const BookmarkCategory({
+    required this.id,
+    required this.title,
+    required this.color,
+  });
 
+  factory BookmarkCategory.fromJson(Map<String, dynamic> json) {
+    return BookmarkCategory(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      color: Color(json['color'] as int),
+    );
+  }
+
+  final String id;
+  final String title;
+  final Color color;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'color': color.toARGB32(),
+  };
+
+  BookmarkCategory copyWith({String? id, String? title, Color? color}) {
+    return BookmarkCategory(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      color: color ?? this.color,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is BookmarkCategory &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
+}
+
+class VerseBookmark {
   VerseBookmark({
     required this.id,
     required this.surah,
@@ -90,33 +135,58 @@ class VerseBookmark {
     required this.pageNumber,
     required this.createdAt,
     this.note,
+    this.categoryId,
   });
 
-  factory VerseBookmark.fromJson(Map<String, dynamic> json) => VerseBookmark(
-    id: json['id'] as String,
-    surah: json['surah'] as int,
-    verse: json['verse'] as int,
-    pageNumber: json['pageNumber'] as int,
-    createdAt: DateTime.parse(json['createdAt'] as String),
-    note: json['note'] as String?,
-  );
+  factory VerseBookmark.fromJson(Map<String, dynamic> json) {
+    return VerseBookmark(
+      id: json['id'] as String,
+      surah: json['surah'] as int,
+      verse: json['verse'] as int,
+      pageNumber: json['pageNumber'] as int,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
+      note: json['note'] as String?,
+      categoryId: json['categoryId'] as String?,
+    );
+  }
+
   final String id;
   final int surah;
   final int verse;
   final int pageNumber;
   final DateTime createdAt;
   final String? note;
+  final String? categoryId;
 
   Map<String, dynamic> toJson() => {
     'id': id,
     'surah': surah,
     'verse': verse,
     'pageNumber': pageNumber,
-    'createdAt': createdAt.toIso8601String(),
+    'createdAt': createdAt.millisecondsSinceEpoch,
     'note': note,
+    'categoryId': categoryId,
   };
 
-  String get verseKey => '$surah:$verse';
+  VerseBookmark copyWith({
+    String? id,
+    int? surah,
+    int? verse,
+    int? pageNumber,
+    DateTime? createdAt,
+    String? Function()? note,
+    String? Function()? categoryId,
+  }) {
+    return VerseBookmark(
+      id: id ?? this.id,
+      surah: surah ?? this.surah,
+      verse: verse ?? this.verse,
+      pageNumber: pageNumber ?? this.pageNumber,
+      createdAt: createdAt ?? this.createdAt,
+      note: note != null ? note() : this.note,
+      categoryId: categoryId != null ? categoryId() : this.categoryId,
+    );
+  }
 }
 
 enum FontFamily {

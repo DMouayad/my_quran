@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:my_quran/app/pages/bookmarks_screen.dart';
 import 'package:my_quran/app/widgets/settings_sheet.dart';
 
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -16,7 +17,6 @@ import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/app/quran_helpers.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/widgets/navigation_sheet.dart';
-import 'package:my_quran/app/widgets/bookmarks_sheet.dart';
 import 'package:my_quran/app/widgets/verse_menu_dialog.dart';
 import 'package:my_quran/app/widgets/search_sheet.dart';
 import 'package:my_quran/app/widgets/pinned_header.dart';
@@ -292,22 +292,26 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ),
             IconButton(
               icon: const Icon(Icons.bookmark_border),
-              onPressed: () => showModalBottomSheet(
-                context: context,
-                showDragHandle: true,
-                builder: (_) => BookmarksSheet(
-                  onNavigateToPage:
-                      ({
-                        required int page,
-                        required int surah,
-                        required int verse,
-                      }) => _jumpToPage(
-                        page,
-                        highlightSurah: surah,
-                        highlightVerse: verse,
-                      ),
-                ),
-              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => BookmarksScreen(
+                      settingsController: widget.settingsController,
+                      onNavigateToPage:
+                          ({
+                            required int page,
+                            required int surah,
+                            required int verse,
+                          }) => _jumpToPage(
+                            page,
+                            highlightSurah: surah,
+                            highlightVerse: verse,
+                          ),
+                    ),
+                  ),
+                );
+              },
             ),
             Expanded(
               child: Text(

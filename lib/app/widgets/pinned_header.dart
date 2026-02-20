@@ -264,7 +264,7 @@ class _SearchSurahDialogState extends State<_SearchSurahDialog> {
                     ),
                   ),
                   title: Text(
-                    'سورة ${items[index].arabic} - ${items[index].english}',
+                    '${items[index].arabic} - ${items[index].english}',
                     style: TextStyle(
                       fontFamily: FontFamily.rustam.name,
                       letterSpacing: 0,

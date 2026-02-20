@@ -6,7 +6,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:my_quran/app/font_size_controller.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/pages/home_page.dart';
-import 'package:my_quran/app/services/bookmark_service.dart';
 import 'package:my_quran/app/services/reading_position_service.dart';
 import 'package:my_quran/app/services/search_service.dart';
 import 'package:my_quran/app/services/settings_service.dart';
@@ -25,7 +24,6 @@ Future<void> main() async {
   unawaited(SearchService.init(settingsController.fontFamily.name));
 
   await Quran.initialize(fontFamily: settingsController.fontFamily);
-  await BookmarkService().initialize();
   await FontSizeController().initialize();
 
   final lastPosition = await ReadingPositionService.loadPosition();
