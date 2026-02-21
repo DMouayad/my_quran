@@ -94,8 +94,9 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
                         isBookmarked: isBookmarked,
                         currentCategory: currentCategory,
                         categories: categories,
-                        onCategorySelected: _onCategorySelected,
-                        onRemove: _onRemoveBookmark,
+                        onCategorySelected: (cat) =>
+                            _onCategorySelected(context, cat),
+                        onRemove: () => _onRemoveBookmark(context),
                       ),
                       _ActionButton(
                         iconColor: (bookmark?.note?.isNotEmpty ?? false)
@@ -252,7 +253,10 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
   // Actions
   // ─────────────────────────────────────────────
 
-  Future<void> _onCategorySelected(BookmarkCategory cat) async {
+  Future<void> _onCategorySelected(
+    BuildContext context,
+    BookmarkCategory cat,
+  ) async {
     if (isBookmarked) {
       // Change category on existing bookmark
       final updated = bookmark!.copyWith(categoryId: () => cat.id);
@@ -261,7 +265,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
         bookmark = updated;
         _syncCategory();
       });
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('تم النقل إلى "${cat.title}" ✓')),
         );
@@ -287,7 +291,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
         bookmark = newBookmark;
         _syncCategory();
       });
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('تمت إضافة العلامة ✓')));
@@ -295,7 +299,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     }
   }
 
-  Future<void> _onRemoveBookmark() async {
+  Future<void> _onRemoveBookmark(BuildContext context) async {
     await bookmarkService.removeBookmarkByVerse(
       widget.surah,
       widget.verse.number,
@@ -305,7 +309,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
       bookmark = null;
       currentCategory = null;
     });
-    if (mounted) {
+    if (context.mounted) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('تمت إزالة العلامة')));
@@ -358,7 +362,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
         _syncCategory();
       });
 
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('تمت إضافة العلامة ✓')));
@@ -368,9 +372,13 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
 
   void _copyVerse(BuildContext context) {
     final surahName = Quran.instance.getSurahNameArabic(widget.surah);
+    final verseInPlainText = Quran.instance.getVerseInPlainText(
+      widget.surah,
+      widget.verse.number,
+    );
     final textToCopy =
         'سورة $surahName - الآية {${getArabicNumber(widget.verse.number)}}\n'
-        '"${Quran.instance.getVerseInPlainText(widget.surah, widget.verse.number)}"\n';
+        '"$verseInPlainText"\n';
     Clipboard.setData(ClipboardData(text: textToCopy));
 
     ScaffoldMessenger.of(

@@ -76,57 +76,52 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final filtered = _filteredBookmarks;
 
-    return Theme(
-      data: Theme.of(context).copyWith(
-        textTheme: context.textTheme.apply(fontFamily: FontFamily.hafs.name),
-      ),
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Builder(
-          builder: (context) {
-            return Scaffold(
-              appBar: AppBar(
-                title: const Text('العلامات المرجعية'),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.category_outlined),
-                    tooltip: 'إدارة التصنيفات',
-                    onPressed: _openCategoryManagement,
-                  ),
-                ],
-              ),
-              body: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Column(
-                      children: [
-                        // ── Category filter chips ──
-                        _buildCategoryFilter(colorScheme),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Builder(
+        builder: (context) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('العلامات المرجعية'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.category_outlined),
+                  tooltip: 'إدارة التصنيفات',
+                  onPressed: _openCategoryManagement,
+                ),
+              ],
+            ),
+            body: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    children: [
+                      // ── Category filter chips ──
+                      _buildCategoryFilter(colorScheme),
 
-                        // ── Bookmarks list ──
-                        Expanded(
-                          child: filtered.isEmpty
-                              ? _buildEmptyState()
-                              : ListView.separated(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  itemCount: filtered.length,
-                                  separatorBuilder: (_, _) =>
-                                      const SizedBox(height: 8),
-                                  itemBuilder: (context, index) {
-                                    return _buildBookmarkCard(
-                                      context,
-                                      filtered[index],
-                                    );
-                                  },
+                      // ── Bookmarks list ──
+                      Expanded(
+                        child: filtered.isEmpty
+                            ? _buildEmptyState()
+                            : ListView.separated(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
                                 ),
-                        ),
-                      ],
-                    ),
-            );
-          },
-        ),
+                                itemCount: filtered.length,
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(height: 8),
+                                itemBuilder: (context, index) {
+                                  return _buildBookmarkCard(
+                                    context,
+                                    filtered[index],
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+          );
+        },
       ),
     );
   }
@@ -195,53 +190,48 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
   Widget _buildEmptyState() {
     final isFiltered = _selectedCategoryId != null;
-    return Theme(
-      data: Theme.of(context).copyWith(
-        textTheme: context.textTheme.apply(fontFamily: FontFamily.hafs.name),
-      ),
-      child: Builder(
-        builder: (context) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    isFiltered ? Icons.filter_list_off : Icons.bookmark_border,
-                    size: 64,
+    return Builder(
+      builder: (context) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isFiltered ? Icons.filter_list_off : Icons.bookmark_border,
+                  size: 64,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.applyOpacity(0.4),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  isFiltered
+                      ? 'لا توجد علامات في هذا التصنيف'
+                      : 'لا توجد علامات مرجعية بعد',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isFiltered
+                      ? 'جرّب اختيار تصنيف آخر أو عرض الكل'
+                      : 'اضغط مطولاً على أي آية لإضافة علامة',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurfaceVariant.applyOpacity(0.4),
+                    ).colorScheme.onSurfaceVariant.applyOpacity(0.7),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    isFiltered
-                        ? 'لا توجد علامات في هذا التصنيف'
-                        : 'لا توجد علامات مرجعية بعد',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    isFiltered
-                        ? 'جرّب اختيار تصنيف آخر أو عرض الكل'
-                        : 'اضغط مطولاً على أي آية لإضافة علامة',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurfaceVariant.applyOpacity(0.7),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 

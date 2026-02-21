@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:my_quran/app/pages/bookmarks_screen.dart';
+import 'package:my_quran/app/services/bookmark_service.dart';
 import 'package:my_quran/app/widgets/settings_sheet.dart';
+import 'package:my_quran/app/widgets/whats_new_dialog.dart';
 
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -71,8 +73,13 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     _itemPositionsListener.itemPositions.addListener(_onScrollUpdate);
     widget.settingsController.addListener(_onScrollingModeChanged);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WhatsNewDialog.showIfNeeded(context);
+    });
   }
 
+  late final ValueNotifier<int> bookmarkRevision = ValueNotifier(0);
   @override
   void dispose() {
     _highlightedVerseNotifier.dispose();
@@ -222,7 +229,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     // 1. Calculate Heights
     final double statusBarHeight = MediaQuery.of(context).padding.top;
     const double appBarHeight = kToolbarHeight; // Standard 56.0
-    const double infoHeaderHeight = 38; // Height of our Surah/Page strip
+    const double infoHeaderHeight = 35; // Height of our Surah/Page strip
 
     // Total height obscuring the top
     final double totalTopHeaderHeight =
@@ -281,6 +288,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 useSafeArea: true,
                 showDragHandle: true,
                 builder: (_) => QuranSearchBottomSheet(
+                  verseFontFamily: widget.settingsController.fontFamily,
                   onNavigateToPage: (int page, {int? surah, int? verse}) =>
                       _jumpToPage(
                         page,
@@ -381,6 +389,8 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         highlightedVerseListenable: _highlightedVerseNotifier,
                         settingsController: widget.settingsController,
                         onVerseTap: _onVerseTapped,
+                        bookmarkRevision: bookmarkRevision,
+                        onBookmarkChanged: () => bookmarkRevision.value++,
                       ),
                     );
                   },
@@ -400,10 +410,11 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   itemBuilder: (context, index) => RepaintBoundary(
                     child: QuranPageWidget(
                       pageNumber: index + 1,
-                      key: ValueKey(index + 1),
                       highlightedVerseListenable: _highlightedVerseNotifier,
-                      onVerseTap: _onVerseTapped,
                       settingsController: widget.settingsController,
+                      onVerseTap: _onVerseTapped,
+                      bookmarkRevision: bookmarkRevision,
+                      onBookmarkChanged: () => bookmarkRevision.value++,
                     ),
                   ),
                 ),
@@ -430,13 +441,17 @@ class QuranPageWidget extends StatefulWidget {
     required this.pageNumber,
     required this.settingsController,
     required this.highlightedVerseListenable,
+    required this.bookmarkRevision,
     this.onVerseTap,
+    this.onBookmarkChanged,
     super.key,
   });
 
   final int pageNumber;
   final ValueListenable<({int surah, int verse})?> highlightedVerseListenable;
+  final ValueListenable<int> bookmarkRevision;
   final void Function(int surah, int verse)? onVerseTap;
+  final VoidCallback? onBookmarkChanged;
   final SettingsController settingsController;
 
   @override
@@ -444,21 +459,49 @@ class QuranPageWidget extends StatefulWidget {
 }
 
 class _QuranPageWidgetState extends State<QuranPageWidget> {
-  final FontSizeController _fontSizeController = FontSizeController();
+  late final FontSizeController _fontSizeController = FontSizeController();
 
   double _scaleFactor = 1;
   double _baseScale = 1;
+
+  // Track to detect actual font changes
+  late FontFamily _lastFontFamily;
+  late FontWeight _lastFontWeight;
 
   @override
   void initState() {
     super.initState();
     _fontSizeController.addListener(_rebuild);
+    _lastFontFamily = widget.settingsController.fontFamily;
+    _lastFontWeight = widget.settingsController.fontWeight;
+    widget.settingsController.addListener(_onSettingsChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant QuranPageWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.settingsController != widget.settingsController) {
+      oldWidget.settingsController.removeListener(_onSettingsChanged);
+      widget.settingsController.addListener(_onSettingsChanged);
+    }
   }
 
   @override
   void dispose() {
     _fontSizeController.removeListener(_rebuild);
+    widget.settingsController.removeListener(_onSettingsChanged);
     super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    final newFamily = widget.settingsController.fontFamily;
+    final newWeight = widget.settingsController.fontWeight;
+
+    if (newFamily != _lastFontFamily || newWeight != _lastFontWeight) {
+      _lastFontFamily = newFamily;
+      _lastFontWeight = newWeight;
+      _rebuild();
+    }
   }
 
   void _rebuild() {
@@ -470,10 +513,8 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
     int verseNumber, {
     required bool isLongPress,
   }) {
-    // 1. Highlight the verse (Parent Logic)
     widget.onVerseTap?.call(surah, verseNumber);
 
-    // 2. Handle specific action
     if (isLongPress && context.mounted) {
       showDialog<void>(
         context: context,
@@ -486,7 +527,9 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
             ),
           ),
         ),
-      );
+      ).then((_) {
+        widget.onBookmarkChanged?.call();
+      });
     }
   }
 
@@ -500,15 +543,15 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
   @override
   Widget build(BuildContext context) {
     final pageModel = QuranPageTextCache.instance.get(widget.pageNumber);
-
     final baseFontSize = _fontSizeController.verseFontSize * _scaleFactor;
     final symbolFontSize =
         _fontSizeController.verseSymbolFontSize * _scaleFactor;
+    final headerFontSize =
+        _fontSizeController.surahHeaderFontSize * _scaleFactor;
+    final fontFamily = widget.settingsController.fontFamily;
 
     return GestureDetector(
-      onScaleStart: (_) {
-        _baseScale = _scaleFactor;
-      },
+      onScaleStart: (_) => _baseScale = _scaleFactor,
       onScaleUpdate: (d) =>
           setState(() => _scaleFactor = (_baseScale * d.scale).clamp(0.8, 2.5)),
       onScaleEnd: (_) {
@@ -524,31 +567,27 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ...List.generate(pageModel.surahs.length, (i) {
-              final surah = pageModel.surahs[i];
-              final block = pageModel.blocks[i];
-
-              return Column(
-                children: [
-                  if (surah.verses.any((v) => v.number == 1)) ...[
-                    _buildHeader(surah),
-                    if (surah.hasBasmala ||
-                        widget.settingsController.fontFamily.isWarsh)
-                      _buildBasmala(),
-                  ],
-                  _SurahTextBlock(
-                    surahNumber: surah.surahNumber,
-                    block: block,
-                    fontSize: baseFontSize,
-                    symbolFontSize: symbolFontSize,
-                    highlightedVerseListenable:
-                        widget.highlightedVerseListenable,
-                    onInteraction: _onVerseInteraction,
-                    settingsController: widget.settingsController,
-                  ),
-                ],
-              );
-            }),
+            for (int i = 0; i < pageModel.surahs.length; i++) ...[
+              if (pageModel.surahs[i].verses.any((v) => v.number == 1)) ...[
+                _SurahHeader(
+                  surah: pageModel.surahs[i],
+                  fontSize: headerFontSize,
+                  fontFamily: fontFamily,
+                ),
+                if (pageModel.surahs[i].hasBasmala || fontFamily.isWarsh)
+                  _Basmala(fontSize: headerFontSize, fontFamily: fontFamily),
+              ],
+              _SurahTextBlock(
+                surahNumber: pageModel.surahs[i].surahNumber,
+                block: pageModel.blocks[i],
+                fontSize: baseFontSize,
+                symbolFontSize: symbolFontSize,
+                highlightedVerseListenable: widget.highlightedVerseListenable,
+                bookmarkRevision: widget.bookmarkRevision,
+                onInteraction: _onVerseInteraction,
+                settingsController: widget.settingsController,
+              ),
+            ],
             if (!widget.settingsController.isHorizontalScrolling)
               const Divider(height: 32, thickness: 2),
           ],
@@ -556,10 +595,24 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
       ),
     );
   }
+}
+// ─────────────────────────────────────────────────────────
+// Extracted: Surah Header (won't rebuild unnecessarily)
+// ─────────────────────────────────────────────────────────
 
-  Widget _buildHeader(SurahInPage surah) {
-    final surahHeaderFontSize =
-        (_fontSizeController.surahHeaderFontSize * _scaleFactor).clamp(0, 30);
+class _SurahHeader extends StatelessWidget {
+  const _SurahHeader({
+    required this.surah,
+    required this.fontSize,
+    required this.fontFamily,
+  });
+
+  final SurahInPage surah;
+  final double fontSize;
+  final FontFamily fontFamily;
+
+  @override
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
@@ -573,7 +626,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
         style: TextStyle(
           color: colorScheme.onSecondaryContainer,
           fontWeight: FontWeight.w500,
-          fontFamily: widget.settingsController.fontFamily.name,
+          fontFamily: fontFamily.name,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -594,7 +647,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
               'سورة ${Quran.instance.getSurahNameArabic(surah.surahNumber)}',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: surahHeaderFontSize.toDouble(),
+                fontSize: fontSize,
                 height: 1.2,
                 letterSpacing: 0,
                 fontFamily: FontFamily.rustam.name,
@@ -617,11 +670,21 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
       ),
     );
   }
+}
 
-  Widget _buildBasmala() {
-    final fontSize = (_fontSizeController.surahHeaderFontSize * _scaleFactor)
-        .clamp(0, 50);
-    final text = switch (widget.settingsController.fontFamily) {
+// ─────────────────────────────────────────────────────────
+// Extracted: Basmala
+// ─────────────────────────────────────────────────────────
+
+class _Basmala extends StatelessWidget {
+  const _Basmala({required this.fontSize, required this.fontFamily});
+
+  final double fontSize;
+  final FontFamily fontFamily;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = switch (fontFamily) {
       FontFamily.hafs => Quran.uthmanicHafsBasmala,
       FontFamily.rustam => Quran.madinaHafsBasmala,
       FontFamily.warsh => Quran.warshBasmala,
@@ -633,8 +696,8 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
         text,
         textAlign: TextAlign.center,
         style: TextStyle(
-          fontSize: fontSize.toDouble(),
-          fontFamily: widget.settingsController.fontFamily.name,
+          fontSize: fontSize,
+          fontFamily: fontFamily.name,
           letterSpacing: 0,
           fontWeight: FontWeight.w300,
         ),
@@ -643,6 +706,10 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
   }
 }
 
+// ─────────────────────────────────────────────────────────
+// Surah Text Block
+// ─────────────────────────────────────────────────────────
+
 class _SurahTextBlock extends StatefulWidget {
   const _SurahTextBlock({
     required this.surahNumber,
@@ -650,6 +717,7 @@ class _SurahTextBlock extends StatefulWidget {
     required this.fontSize,
     required this.symbolFontSize,
     required this.highlightedVerseListenable,
+    required this.bookmarkRevision,
     required this.onInteraction,
     required this.settingsController,
   });
@@ -659,6 +727,7 @@ class _SurahTextBlock extends StatefulWidget {
   final double fontSize;
   final double symbolFontSize;
   final ValueListenable<({int surah, int verse})?> highlightedVerseListenable;
+  final ValueListenable<int> bookmarkRevision;
   final void Function(int s, int v, {required bool isLongPress}) onInteraction;
   final SettingsController settingsController;
 
@@ -670,34 +739,44 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
   final GlobalKey _textKey = GlobalKey();
 
   ({int surah, int verse})? _highlight;
+  Map<int, _VerseIndicatorInfo> _verseIndicators = const {};
 
   @override
   void initState() {
     super.initState();
     _highlight = widget.highlightedVerseListenable.value;
     widget.highlightedVerseListenable.addListener(_onHighlightChanged);
+    widget.bookmarkRevision.addListener(_onBookmarkRevisionChanged);
+    _refreshIndicators();
   }
 
   @override
   void didUpdateWidget(covariant _SurahTextBlock oldWidget) {
     super.didUpdateWidget(oldWidget);
+
     if (oldWidget.highlightedVerseListenable !=
         widget.highlightedVerseListenable) {
       oldWidget.highlightedVerseListenable.removeListener(_onHighlightChanged);
       _highlight = widget.highlightedVerseListenable.value;
       widget.highlightedVerseListenable.addListener(_onHighlightChanged);
     }
+
+    if (oldWidget.bookmarkRevision != widget.bookmarkRevision) {
+      oldWidget.bookmarkRevision.removeListener(_onBookmarkRevisionChanged);
+      widget.bookmarkRevision.addListener(_onBookmarkRevisionChanged);
+    }
   }
 
   @override
   void dispose() {
     widget.highlightedVerseListenable.removeListener(_onHighlightChanged);
+    widget.bookmarkRevision.removeListener(_onBookmarkRevisionChanged);
     super.dispose();
   }
 
   void _onHighlightChanged() {
-    final oldH = _highlight;
     final newH = widget.highlightedVerseListenable.value;
+    final oldH = _highlight;
     _highlight = newH;
 
     final affected =
@@ -707,12 +786,55 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
     if (affected && mounted) setState(() {});
   }
 
+  void _onBookmarkRevisionChanged() {
+    _refreshIndicators();
+    if (mounted) setState(() {});
+  }
+
+  void _refreshIndicators() {
+    final bookmarkService = BookmarkService();
+    final bookmarks = bookmarkService.getBookmarksSync();
+
+    // Quick filter: any bookmarks for this surah?
+    final surahBookmarks = <int, VerseBookmark>{};
+    for (final bm in bookmarks) {
+      if (bm.surah == widget.surahNumber) {
+        surahBookmarks[bm.verse] = bm;
+      }
+    }
+
+    if (surahBookmarks.isEmpty) {
+      _verseIndicators = const {};
+      return;
+    }
+
+    final categories = bookmarkService.getCategoriesSync();
+    final categoryColors = <String, Color>{
+      for (final cat in categories) cat.id: cat.color,
+    };
+
+    final indicators = <int, _VerseIndicatorInfo>{};
+    for (final seg in widget.block.segments) {
+      final bm = surahBookmarks[seg.verse];
+      if (bm != null) {
+        indicators[seg.verse] = _VerseIndicatorInfo(
+          hasBookmark: true,
+          hasNote: bm.note?.isNotEmpty ?? false,
+          categoryColor: bm.categoryId != null
+              ? categoryColors[bm.categoryId!]
+              : null,
+        );
+      }
+    }
+
+    _verseIndicators = indicators;
+  }
+
   void _handleTap(Offset localPos, bool isLongPress) {
     final renderObj = _textKey.currentContext?.findRenderObject();
     if (renderObj is! RenderParagraph) return;
 
     final index = renderObj.getPositionForOffset(localPos).offset;
-
     final verse = _findVerseAt(index);
     if (verse != null) {
       widget.onInteraction(widget.surahNumber, verse, isLongPress: isLongPress);
@@ -747,74 +869,82 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isWarsh = widget.settingsController.fontFamily == FontFamily.warsh;
 
     final highlightBg = context.isDarkMode
-        ? theme.colorScheme.surfaceContainerHigh
-        : theme.colorScheme.surfaceContainerHighest;
-
+        ? colorScheme.surfaceContainerHigh
+        : colorScheme.surfaceContainerHighest;
     final highlightStyle = TextStyle(backgroundColor: highlightBg);
 
-    final symbolStyle = TextStyle(
-      fontFamily: FontFamily.arabicNumbersFontFamily.name,
+    final symbolFontFamily = isWarsh
+        ? FontFamily.warsh.name
+        : FontFamily.arabicNumbersFontFamily.name;
+
+    final baseSymbolStyle = TextStyle(
+      fontFamily: symbolFontFamily,
       fontSize: widget.symbolFontSize,
       fontWeight: FontWeight.w500,
-      color: theme.colorScheme.primary,
+      color: colorScheme.primary,
     );
 
     final selectedVerse = (_highlight?.surah == widget.surahNumber)
         ? _highlight?.verse
         : null;
 
+    final hasAnyIndicators = _verseIndicators.isNotEmpty;
+
     final children = <InlineSpan>[];
+
     for (final seg in widget.block.segments) {
-      final bool isSelected = (selectedVerse == seg.verse);
-      final String fullText = seg.text;
+      final isSelected = selectedVerse == seg.verse;
+      final fullText = seg.text;
 
-      // Variable to hold the symbol we will display
-      String displaySymbol;
       String displayText;
+      String displaySymbol;
 
-      // WARSH LOGIC
-      if (widget.settingsController.fontFamily == FontFamily.warsh &&
-          fullText.isNotEmpty) {
-        // 1. Extract the last character (The PUA Symbol)
-        // We assume the last char is always the symbol in Warsh data
-        final lastChar = fullText.substring(fullText.length - 1);
-        final textPart = fullText.substring(0, fullText.length - 1).trim();
-
-        // 2. Use the extracted symbol
-        displayText = textPart;
-        displaySymbol = lastChar;
+      if (isWarsh && fullText.isNotEmpty) {
+        displayText = fullText.substring(0, fullText.length - 1).trimRight();
+        displaySymbol = fullText.substring(fullText.length - 1);
       } else {
-        // HAFS LOGIC
-        // Use the text as is, and use the generated symbolText
         displayText = fullText;
         displaySymbol = seg.symbolText;
       }
 
-      // 1. Verse Text Span
+      // 1. Verse text
       children.add(
-        TextSpan(text: displayText, style: isSelected ? highlightStyle : null),
+        TextSpan(
+          text: displayText.trim(),
+          style: isSelected ? highlightStyle : null,
+        ),
       );
 
       // 2. Spacer
-      children.add(const TextSpan(text: ' '));
+      if (isWarsh) {
+        children.add(const TextSpan(text: ' '));
+      }
 
-      // 3. Symbol Span (Styled)
-      children.add(
-        TextSpan(
-          text: displaySymbol,
-          style: symbolStyle.copyWith(
-            // If Warsh, we must use the Warsh font for the symbol too
-            // otherwise the PUA code might not render or render wrong.
-            fontFamily: widget.settingsController.fontFamily == FontFamily.warsh
-                ? FontFamily.warsh.name
-                : FontFamily.arabicNumbersFontFamily.name,
-          ),
-        ),
-      );
+      // 3. Symbol with indicator styling
+      TextStyle symbolStyle = baseSymbolStyle;
+
+      if (hasAnyIndicators) {
+        final indicator = _verseIndicators[seg.verse];
+        if (indicator != null) {
+          final catColor = indicator.categoryColor ?? colorScheme.primary;
+          symbolStyle = baseSymbolStyle.copyWith(
+            fontFamily: symbolFontFamily,
+            color: catColor,
+            decoration: indicator.hasNote ? TextDecoration.underline : null,
+          );
+        }
+      }
+
+      children.add(TextSpan(text: displaySymbol.trim(), style: symbolStyle));
+
+      // 4. Spacer
       children.add(const TextSpan(text: ' '));
     }
+
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTapUp: (d) => _handleTap(d.localPosition, false),
@@ -828,12 +958,23 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
             fontSize: widget.fontSize,
             fontFamily: widget.settingsController.fontFamily.name,
             fontWeight: widget.settingsController.fontWeight,
-            color:
-                theme.textTheme.bodyLarge?.color ?? theme.colorScheme.onSurface,
+            color: theme.textTheme.bodyLarge?.color ?? colorScheme.onSurface,
           ),
           children: children,
         ),
       ),
     );
   }
+}
+
+class _VerseIndicatorInfo {
+  const _VerseIndicatorInfo({
+    required this.hasBookmark,
+    required this.hasNote,
+    this.categoryColor,
+  });
+
+  final bool hasBookmark;
+  final bool hasNote;
+  final Color? categoryColor;
 }

@@ -41,93 +41,134 @@ class SettingsSheet extends StatelessWidget {
       ),
     );
 
-    return Theme(
-      data: Theme.of(context).copyWith(
-        textTheme: context.textTheme.apply(fontFamily: FontFamily.hafs.name),
-      ),
-      child: Builder(
-        builder: (context) {
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-            children: [
-              ListenableBuilder(
-                listenable: Listenable.merge([
-                  fontController,
-                  settingsController,
-                ]),
-                builder: (context, _) {
-                  // Check if current font is Warsh to toggle visibility
-                  final isWarsh =
-                      settingsController.fontFamily == FontFamily.warsh;
+    return Builder(
+      builder: (context) {
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          children: [
+            ListenableBuilder(
+              listenable: Listenable.merge([
+                fontController,
+                settingsController,
+              ]),
+              builder: (context, _) {
+                // Check if current font is Warsh to toggle visibility
+                final isWarsh =
+                    settingsController.fontFamily == FontFamily.warsh;
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // --- 1. FONT SIZE (Always Visible) ---
-                      _buildSectionTitle('حجم الخط'),
-                      Container(
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainer,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            IconButton(
-                              onPressed: fontController.decreaseFontSize,
-                              icon: const Icon(Icons.remove),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // --- 1. FONT SIZE (Always Visible) ---
+                    _buildSectionTitle('حجم الخط'),
+                    Container(
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainer,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: fontController.decreaseFontSize,
+                            icon: const Icon(Icons.remove),
+                          ),
+                          Expanded(
+                            child: Text(
+                              fontController.fontSize.round().toString(),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                fontFamily:
+                                    FontFamily.arabicNumbersFontFamily.name,
+                              ),
                             ),
-                            Expanded(
-                              child: Text(
-                                fontController.fontSize.round().toString(),
-                                textAlign: TextAlign.center,
+                          ),
+                          IconButton(
+                            onPressed: fontController.increaseFontSize,
+                            icon: const Icon(Icons.add),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // --- 2. NARRATION (The Main Switch) ---
+                    _buildSectionTitle('الرواية'),
+                    SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<bool>(
+                        segments: [
+                          const ButtonSegment(
+                            value: false,
+                            label: Text('حفص عن عاصم'),
+                          ),
+                          ButtonSegment(
+                            value: true,
+                            label: Text(
+                              'ورش عن نافع',
+                              style: TextStyle(
+                                fontFamily: FontFamily.warsh.name,
+                              ),
+                            ),
+                          ),
+                        ],
+                        style: segmentStyle,
+                        selected: {isWarsh},
+                        onSelectionChanged: (newSet) async {
+                          final selectedWarsh = newSet.first;
+                          if (selectedWarsh) {
+                            settingsController.fontFamily = FontFamily.warsh;
+                          } else {
+                            // Revert to default Hafs font if switching back
+                            settingsController.fontFamily = FontFamily.hafs;
+                          }
+
+                          //  Wait for the toggle animation to finish
+                          await Future<void>.delayed(
+                            const Duration(milliseconds: 300),
+                          );
+                          final newFont = settingsController.fontFamily;
+                          //
+                          await Quran.useDatasourceForFont(newFont);
+
+                          unawaited(SearchService.init(newFont.name));
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    if (!isWarsh) ...[
+                      _buildSectionTitle('نوع الخط'),
+                      SizedBox(
+                        width: double.infinity,
+                        child: SegmentedButton<FontFamily>(
+                          segments: [
+                            ButtonSegment(
+                              value: FontFamily.hafs,
+                              label: Text(
+                                'الرسم العثماني',
                                 style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily:
-                                      FontFamily.arabicNumbersFontFamily.name,
+                                  fontFamily: FontFamily.hafs.name,
                                 ),
                               ),
                             ),
-                            IconButton(
-                              onPressed: fontController.increaseFontSize,
-                              icon: const Icon(Icons.add),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // --- 2. NARRATION (The Main Switch) ---
-                      _buildSectionTitle('الرواية'),
-                      SizedBox(
-                        width: double.infinity,
-                        child: SegmentedButton<bool>(
-                          segments: [
-                            const ButtonSegment(
-                              value: false,
-                              label: Text('حفص عن عاصم'),
-                            ),
                             ButtonSegment(
-                              value: true,
+                              value: FontFamily.rustam,
                               label: Text(
-                                'ورش عن نافع',
+                                'خط المدينة',
+
                                 style: TextStyle(
-                                  fontFamily: FontFamily.warsh.name,
+                                  fontFamily: FontFamily.rustam.name,
                                 ),
                               ),
                             ),
                           ],
                           style: segmentStyle,
-                          selected: {isWarsh},
+                          selected: {settingsController.fontFamily},
                           onSelectionChanged: (newSet) async {
-                            final selectedWarsh = newSet.first;
-                            if (selectedWarsh) {
-                              settingsController.fontFamily = FontFamily.warsh;
-                            } else {
-                              // Revert to default Hafs font if switching back
-                              settingsController.fontFamily = FontFamily.hafs;
-                            }
+                            settingsController.fontFamily = newSet.first;
 
                             //  Wait for the toggle animation to finish
                             await Future<void>.delayed(
@@ -135,123 +176,75 @@ class SettingsSheet extends StatelessWidget {
                             );
                             final newFont = settingsController.fontFamily;
                             //
+                            if (newFont.isWarsh) {
+                              settingsController.fontWeight = FontWeight.normal;
+                            }
                             await Quran.useDatasourceForFont(newFont);
-
-                            unawaited(SearchService.init(newFont.name));
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    if (settingsController.fontFamily != FontFamily.rustam) ...[
+                      _buildSectionTitle('سماكة الخط'),
+                      SizedBox(
+                        width: double.infinity,
+                        child: SegmentedButton<FontWeight>(
+                          segments: const [
+                            ButtonSegment(
+                              value: FontWeight.w500,
+                              label: Text('عادي'),
+                            ),
+                            ButtonSegment(
+                              value: FontWeight.w600,
+                              label: Text('عريض'),
+                            ),
+                          ],
+                          style: segmentStyle,
+                          selected: {settingsController.fontWeight},
+                          onSelectionChanged: (newSet) {
+                            settingsController.fontWeight = newSet.first;
                           },
                         ),
                       ),
                       const SizedBox(height: 24),
-
-                      if (!isWarsh) ...[
-                        _buildSectionTitle('نوع الخط'),
-                        SizedBox(
-                          width: double.infinity,
-                          child: SegmentedButton<FontFamily>(
-                            segments: [
-                              ButtonSegment(
-                                value: FontFamily.hafs,
-                                label: Text(
-                                  'الرسم العثماني',
-                                  style: TextStyle(
-                                    fontFamily: FontFamily.hafs.name,
-                                  ),
-                                ),
-                              ),
-                              ButtonSegment(
-                                value: FontFamily.rustam,
-                                label: Text(
-                                  'خط المدينة',
-
-                                  style: TextStyle(
-                                    fontFamily: FontFamily.rustam.name,
-                                  ),
-                                ),
-                              ),
-                            ],
-                            style: segmentStyle,
-                            selected: {settingsController.fontFamily},
-                            onSelectionChanged: (newSet) async {
-                              settingsController.fontFamily = newSet.first;
-
-                              //  Wait for the toggle animation to finish
-                              await Future<void>.delayed(
-                                const Duration(milliseconds: 300),
-                              );
-                              final newFont = settingsController.fontFamily;
-                              //
-                              if (newFont.isWarsh) {
-                                settingsController.fontWeight =
-                                    FontWeight.normal;
-                              }
-                              await Quran.useDatasourceForFont(newFont);
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      if (settingsController.fontFamily !=
-                          FontFamily.rustam) ...[
-                        _buildSectionTitle('سماكة الخط'),
-                        SizedBox(
-                          width: double.infinity,
-                          child: SegmentedButton<FontWeight>(
-                            segments: const [
-                              ButtonSegment(
-                                value: FontWeight.w500,
-                                label: Text('عادي'),
-                              ),
-                              ButtonSegment(
-                                value: FontWeight.w600,
-                                label: Text('عريض'),
-                              ),
-                            ],
-                            style: segmentStyle,
-                            selected: {settingsController.fontWeight},
-                            onSelectionChanged: (newSet) {
-                              settingsController.fontWeight = newSet.first;
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                      ],
                     ],
-                  );
-                },
-              ),
+                  ],
+                );
+              },
+            ),
 
-              const Divider(),
+            const Divider(),
 
-              // --- 4. GENERAL SETTINGS ---
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text(
-                  'استخدام اللون الأسود',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text('للشاشات من نوع AMOLED (توفير البطارية)'),
-                value: settingsController.useTrueBlackBgColor,
-                activeThumbColor: colorScheme.primary,
-                onChanged: (v) => settingsController.useTrueBlackBgColor = v,
+            // --- 4. GENERAL SETTINGS ---
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(
+                'استخدام اللون الأسود',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
+              subtitle: const Text('للشاشات من نوع AMOLED (توفير البطارية)'),
+              value: settingsController.useTrueBlackBgColor,
+              activeThumbColor: colorScheme.primary,
+              onChanged: (v) => settingsController.useTrueBlackBgColor = v,
+            ),
 
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text(
-                  'وضع الكتاب',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text(
-                  'يمكنك من تقليب الصفحات بالسحب يميناً ويساراً.',
-                ),
-                value: settingsController.isHorizontalScrolling,
-                activeThumbColor: colorScheme.primary,
-                onChanged: (v) => settingsController.isHorizontalScrolling = v,
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(
+                'وضع الكتاب',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-            ],
-          );
-        },
-      ),
+              subtitle: const Text(
+                'يمكنك من تقليب الصفحات بالسحب يميناً ويساراً.',
+              ),
+              value: settingsController.isHorizontalScrolling,
+              activeThumbColor: colorScheme.primary,
+              onChanged: (v) => settingsController.isHorizontalScrolling = v,
+            ),
+          ],
+        );
+      },
     );
   }
 

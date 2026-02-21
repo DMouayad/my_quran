@@ -48,6 +48,7 @@ class MyApp extends StatelessWidget {
   final ReadingPosition? lastPosition;
   final SettingsController settingsController;
   static const seedColor = Color(0xFF0F766E);
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -61,7 +62,7 @@ class MyApp extends StatelessWidget {
           themeMode: settingsController.themeMode,
           localizationsDelegates: GlobalMaterialLocalizations.delegates,
           darkTheme: ThemeData(
-            fontFamily: settingsController.fontFamily.name,
+            fontFamily: FontFamily.hafs.name,
             colorScheme: ColorScheme.fromSeed(
               brightness: Brightness.dark,
               surface: settingsController.useTrueBlackBgColor
@@ -71,7 +72,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
           theme: ThemeData(
-            fontFamily: settingsController.fontFamily.name,
+            fontFamily: FontFamily.hafs.name,
             colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
           ),
           home: HomePage(

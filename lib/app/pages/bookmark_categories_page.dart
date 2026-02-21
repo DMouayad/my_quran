@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
-import 'package:my_quran/app/utils.dart';
 
 class ManageCategoriesScreen extends StatefulWidget {
   const ManageCategoriesScreen({required this.settingsController, super.key});
@@ -34,59 +33,54 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(
-        textTheme: context.textTheme.apply(fontFamily: FontFamily.hafs.name),
-      ),
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Scaffold(
-          appBar: AppBar(title: const Text('إدارة التصنيفات')),
-          floatingActionButton: FloatingActionButton(
-            onPressed: _addCategory,
-            child: const Icon(Icons.add),
-          ),
-          body: _loading
-              ? const Center(child: CircularProgressIndicator())
-              : _categories.isEmpty
-              ? const Center(child: Text('لا توجد تصنيفات'))
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: _categories.length,
-                  itemBuilder: (context, index) {
-                    final cat = _categories[index];
-                    final isDefault = cat.id == 'default';
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: cat.color,
-                        radius: 16,
-                      ),
-                      title: Text(cat.title),
-                      subtitle: isDefault
-                          ? const Text('التصنيف الافتراضي')
-                          : null,
-                      trailing: isDefault
-                          ? null
-                          : Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined),
-                                  onPressed: () => _editCategory(cat),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.delete_outline,
-                                    color: Theme.of(context).colorScheme.error,
-                                  ),
-                                  onPressed: () => _deleteCategory(cat),
-                                ),
-                              ],
-                            ),
-                    );
-                  },
-                ),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('إدارة التصنيفات')),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _addCategory,
+          child: const Icon(Icons.add),
         ),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _categories.isEmpty
+            ? const Center(child: Text('لا توجد تصنيفات'))
+            : ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: _categories.length,
+                itemBuilder: (context, index) {
+                  final cat = _categories[index];
+                  final isDefault = cat.id == 'default';
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: cat.color,
+                      radius: 16,
+                    ),
+                    title: Text(cat.title),
+                    subtitle: isDefault
+                        ? const Text('التصنيف الافتراضي')
+                        : null,
+                    trailing: isDefault
+                        ? null
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined),
+                                onPressed: () => _editCategory(cat),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                                onPressed: () => _deleteCategory(cat),
+                              ),
+                            ],
+                          ),
+                  );
+                },
+              ),
       ),
     );
   }

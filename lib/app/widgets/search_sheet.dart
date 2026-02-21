@@ -10,9 +10,13 @@ import 'package:my_quran/app/search/models.dart';
 import 'package:my_quran/app/services/search_service.dart';
 
 class QuranSearchBottomSheet extends StatefulWidget {
-  const QuranSearchBottomSheet({required this.onNavigateToPage, super.key});
+  const QuranSearchBottomSheet({
+    required this.verseFontFamily,
+    required this.onNavigateToPage,
+    super.key,
+  });
   final void Function(int page, {int? surah, int? verse}) onNavigateToPage;
-
+  final FontFamily verseFontFamily;
   @override
   State<QuranSearchBottomSheet> createState() => _QuranSearchBottomSheetState();
 }
@@ -165,6 +169,7 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
                     itemBuilder: (context, index) {
                       final result = _results[index];
                       return SearchResultItem(
+                        verseFontFamily: widget.verseFontFamily,
                         queryTokens: _currentQueryTokens,
                         result: result,
                         highlightExactMatchOnly: _isExactMatch,
@@ -198,6 +203,7 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
 
 class SearchResultItem extends StatelessWidget {
   const SearchResultItem({
+    required this.verseFontFamily,
     required this.result,
     required this.query,
     required this.onTap,
@@ -211,16 +217,11 @@ class SearchResultItem extends StatelessWidget {
   final bool highlightExactMatchOnly;
   final String query;
   final VoidCallback onTap;
+  final FontFamily verseFontFamily;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
-    // 1. Get the full verse text (Force plain text for search results)
-    final String fullText = Quran.instance.getVerseInPlainText(
-      result.surah,
-      result.verse,
-    );
 
     return InkWell(
       onTap: onTap,
@@ -264,12 +265,17 @@ class SearchResultItem extends StatelessWidget {
 
             // --- Body: Highlighted Verse Text ---
             _HighlightedText(
-              text: fullText,
+              plainText: Quran.instance.getVerseInPlainText(
+                result.surah,
+                result.verse,
+              ),
+              displayText: Quran.instance.getVerse(result.surah, result.verse),
               query: query,
               queryTokens: queryTokens,
               highlightExactMatchOnly: highlightExactMatchOnly,
               highlightColor: colorScheme.primary,
               baseColor: colorScheme.onSurface,
+              verseFontFamily: verseFontFamily,
             ),
           ],
         ),
@@ -280,25 +286,30 @@ class SearchResultItem extends StatelessWidget {
 
 class _HighlightedText extends StatelessWidget {
   const _HighlightedText({
-    required this.text,
+    required this.verseFontFamily,
+    required this.plainText,
+    required this.displayText,
     required this.query,
     required this.highlightColor,
     required this.baseColor,
     required this.queryTokens,
     required this.highlightExactMatchOnly,
   });
-  final String text;
+
+  final String plainText;
+  final String displayText;
   final String query;
   final Color highlightColor;
   final Color baseColor;
   final Set<String> queryTokens;
   final bool highlightExactMatchOnly;
+  final FontFamily verseFontFamily;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final List<String> words = text.trim().split(RegExp(r'\s+'));
+    final List<String> words = plainText.trim().split(RegExp(r'\s+'));
 
     // 1. Find the index of the first match
     int firstMatchIndex = -1;
@@ -332,10 +343,14 @@ class _HighlightedText extends StatelessWidget {
       startIndex = firstMatchIndex - 3;
       showStartEllipsis = true;
     }
-
     // 3. Slice the list
-    final displayWords = words.sublist(startIndex);
-    final isWarsh = context.fontFamily == FontFamily.warsh.name;
+
+    final displayWords = displayText.split(RegExp(r'\s+')).sublist(startIndex);
+    if (verseFontFamily == FontFamily.hafs) {
+      displayWords.removeLast();
+    }
+
+    final isWarsh = verseFontFamily == FontFamily.warsh;
     return RichText(
       textDirection: TextDirection.rtl,
       maxLines: 2,
@@ -346,7 +361,7 @@ class _HighlightedText extends StatelessWidget {
           color: baseColor,
           height: 1.8,
           fontWeight: isWarsh ? FontWeight.w500 : null,
-          fontFamily: context.fontFamily,
+          fontFamily: verseFontFamily.name,
         ),
         children: [
           if (showStartEllipsis)
@@ -356,7 +371,7 @@ class _HighlightedText extends StatelessWidget {
             ),
           ...List.generate(displayWords.length, (index) {
             final word = displayWords[index];
-            final cleanWord = ArabicTextProcessor.normalize(word);
+            final cleanWord = ArabicTextProcessor.normalize(words[index]);
 
             bool isMatch = false;
 
