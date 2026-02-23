@@ -587,6 +587,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
                 bookmarkRevision: widget.bookmarkRevision,
                 onInteraction: _onVerseInteraction,
                 settingsController: widget.settingsController,
+                lineHeight: _fontSizeController.lineHeight,
               ),
             ],
             if (!widget.settingsController.isHorizontalScrolling)
@@ -713,6 +714,7 @@ class _Basmala extends StatelessWidget {
 
 class _SurahTextBlock extends StatefulWidget {
   const _SurahTextBlock({
+    required this.lineHeight,
     required this.surahNumber,
     required this.block,
     required this.fontSize,
@@ -731,6 +733,7 @@ class _SurahTextBlock extends StatefulWidget {
   final ValueListenable<int> bookmarkRevision;
   final void Function(int s, int v, {required bool isLongPress}) onInteraction;
   final SettingsController settingsController;
+  final double lineHeight;
 
   @override
   State<_SurahTextBlock> createState() => _SurahTextBlockState();
@@ -957,6 +960,7 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
         text: TextSpan(
           style: TextStyle(
             fontSize: widget.fontSize,
+            height: widget.lineHeight,
             fontFamily: widget.settingsController.fontFamily.name,
             fontWeight: widget.settingsController.fontWeight,
             color: theme.textTheme.bodyLarge?.color ?? colorScheme.onSurface,

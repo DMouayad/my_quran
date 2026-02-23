@@ -93,7 +93,44 @@ class SettingsSheet extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-
+                    // --- 1b. LINE HEIGHT ---
+                    _buildSectionTitle('ارتفاع الأسطر'),
+                    Container(
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainer,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: fontController.isAtMinLineHeight
+                                ? null
+                                : fontController.decreaseLineHeight,
+                            icon: const Icon(Icons.density_large),
+                          ),
+                          Expanded(
+                            child: Text(
+                              fontController.lineHeight.toStringAsFixed(1),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                fontFamily:
+                                    FontFamily.arabicNumbersFontFamily.name,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: fontController.isAtMaxLineHeight
+                                ? null
+                                : fontController.increaseLineHeight,
+                            icon: const Icon(Icons.density_small),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                     // --- 2. NARRATION (The Main Switch) ---
                     _buildSectionTitle('الرواية'),
                     SizedBox(
