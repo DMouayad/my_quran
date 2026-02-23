@@ -44,82 +44,30 @@ extension AppThemeX on AppTheme {
   };
 }
 
-// ({Color background, Color text, Color secondary}) resolveReadingThemeColors(
-//   BuildContext context,
-//   ReadingTheme theme,
-// ) {
-//   return switch (theme) {
-//     ReadingTheme.system => (
-//       background: Colors.transparent,
-//       text: Theme.of(context).colorScheme.onSurface,
-//       secondary: Theme.of(context).colorScheme.primary,
-//     ),
-//     ReadingTheme.classic => (
-//       background: const Color(0xFFFFFFFF),
-//       text: const Color(0xFF000000),
-//       secondary: const Color(0xFF1565C0),
-//     ),
-//     ReadingTheme.sepia => (
-//       background: const Color(0xFFF5E6C8),
-//       text: const Color(0xFF5B4636),
-//       secondary: const Color(0xFF8D6E4C),
-//     ),
-//     ReadingTheme.night => (
-//       background: const Color(0xFF000000),
-//       text: const Color(0xFFE0E0E0),
-//       secondary: const Color(0xFF90CAF9),
-//     ),
-//   };
-// }
-
-ReadingColors resolveReadingColors(BuildContext context, AppTheme theme) {
-  final colorScheme = Theme.of(context).colorScheme;
-
+({Color bg, Color text}) previewColorsForTheme(
+  BuildContext context,
+  AppTheme theme,
+) {
   return switch (theme) {
-    AppTheme.light => ReadingColors(
-      background: colorScheme.surface,
-      text: colorScheme.onSurface,
-      primary: colorScheme.primary,
-      secondary: colorScheme.secondary,
-      onSecondary: colorScheme.onSecondary,
-      highlight: colorScheme.surfaceContainerHighest,
-      surfaceContainer: colorScheme.surfaceContainerHighest,
+    AppTheme.light => (
+      bg: Theme.of(context).colorScheme.surface,
+      text: Theme.of(context).colorScheme.onSurface,
     ),
-    AppTheme.dark => ReadingColors(
-      background: colorScheme.surface,
-      text: colorScheme.onSurface,
-      primary: colorScheme.primary,
-      secondary: colorScheme.secondary,
-      onSecondary: colorScheme.onSecondary,
-      highlight: colorScheme.surfaceContainerHigh,
-      surfaceContainer: colorScheme.surfaceContainerHigh,
+    AppTheme.dark => (
+      bg: const Color(0xFF1C1B1F),
+      text: const Color(0xFFE6E1E5),
     ),
-    AppTheme.classic => const ReadingColors(
-      background: Color(0xFFFFFFFF),
-      text: Color(0xFF212121),
-      primary: Color(0xFF0D47A1),
-      secondary: Color(0xFFBBDEFB),
-      onSecondary: Color(0xFF0D47A1),
-      highlight: Color(0xFFE3F2FD),
-      surfaceContainer: Color(0xFFE8EAF6),
+    AppTheme.classic => (
+      bg: const Color(0xFFFAFAFA),
+      text: const Color(0xFF212121),
     ),
-    AppTheme.amoled => const ReadingColors(
-      background: Color(0xFF000000),
-      text: Color(0xFFEEEEEE),
-      primary: Color(0xFF64B5F6),
-      secondary: Color(0xFF1B1B1B),
-      onSecondary: Color(0xFFEEEEEE),
-      highlight: Color(0xFF212121),
-      surfaceContainer: Color(0xFF171717),
+    AppTheme.amoled => (
+      bg: const Color(0xFF000000),
+      text: const Color(0xFFEEEEEE),
     ),
-    AppTheme.sepia => const ReadingColors(
-      background: Color(0xFFF4E4C1),
-      text: Color(0xFF4E3524),
-      primary: Color(0xFF795548),
-      secondary: Color(0xFFD7C4A0),
-      onSecondary: Color(0xFF4E3524),
-      highlight: Color(0xFFE6D2AC),
-      surfaceContainer: Color(0xFFE0CDAA),
+    AppTheme.sepia => (
+      bg: const Color(0xFFF4E4C1),
+      text: const Color(0xFF4E3524),
     ),
   };
 }

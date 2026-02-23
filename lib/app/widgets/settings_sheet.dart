@@ -40,187 +40,197 @@ class SettingsSheet extends StatelessWidget {
       ),
     );
 
-    return ListenableBuilder(
-      listenable: Listenable.merge([fontController, settingsController]),
-      builder: (context, _) {
-        final isWarsh = settingsController.fontFamily == FontFamily.warsh;
+    return DefaultTextStyle(
+      style: context.textTheme.bodyMedium!.copyWith(
+        color: context.colorScheme.onSurface,
+      ),
+      child: ListenableBuilder(
+        listenable: Listenable.merge([fontController, settingsController]),
+        builder: (context, _) {
+          final isWarsh = settingsController.fontFamily == FontFamily.warsh;
 
-        return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-          children: [
-            // ── FONT SIZE ──
-            _buildSectionTitle('حجم الخط'),
-            _buildStepperControl(
-              colorScheme: colorScheme,
-              value: fontController.fontSize.round().toString(),
-              onDecrease: fontController.isAtMinFont
-                  ? null
-                  : fontController.decreaseFontSize,
-              onIncrease: fontController.isAtMaxFont
-                  ? null
-                  : fontController.increaseFontSize,
-            ),
-            const SizedBox(height: 16),
-
-            // ── LINE HEIGHT ──
-            _buildSectionTitle('ارتفاع الأسطر'),
-            _buildStepperControl(
-              colorScheme: colorScheme,
-              value: fontController.lineHeight.toStringAsFixed(1),
-              onDecrease: fontController.isAtMinLineHeight
-                  ? null
-                  : fontController.decreaseLineHeight,
-              onIncrease: fontController.isAtMaxLineHeight
-                  ? null
-                  : fontController.increaseLineHeight,
-            ),
-            const SizedBox(height: 24),
-
-            // ── NARRATION ──
-            _buildSectionTitle('الرواية'),
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<bool>(
-                segments: [
-                  const ButtonSegment(value: false, label: Text('حفص عن عاصم')),
-                  ButtonSegment(
-                    value: true,
-                    label: Text(
-                      'ورش عن نافع',
-                      style: TextStyle(fontFamily: FontFamily.warsh.name),
-                    ),
-                  ),
-                ],
-                style: segmentStyle,
-                selected: {isWarsh},
-                onSelectionChanged: (newSet) async {
-                  final selectedWarsh = newSet.first;
-                  if (selectedWarsh) {
-                    settingsController.fontFamily = FontFamily.warsh;
-                  } else {
-                    settingsController.fontFamily = FontFamily.hafs;
-                  }
-                  await Future<void>.delayed(const Duration(milliseconds: 300));
-                  final newFont = settingsController.fontFamily;
-                  await Quran.useDatasourceForFont(newFont);
-                  unawaited(SearchService.init(newFont.name));
-                },
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+            children: [
+              // ── FONT SIZE ──
+              _buildSectionTitle('حجم الخط'),
+              _buildStepperControl(
+                colorScheme: colorScheme,
+                value: fontController.fontSize.round().toString(),
+                onDecrease: fontController.isAtMinFont
+                    ? null
+                    : fontController.decreaseFontSize,
+                onIncrease: fontController.isAtMaxFont
+                    ? null
+                    : fontController.increaseFontSize,
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
-            // ── FONT TYPE (Hafs only) ──
-            if (!isWarsh) ...[
-              _buildSectionTitle('نوع الخط'),
+              // ── LINE HEIGHT ──
+              _buildSectionTitle('ارتفاع الأسطر'),
+              _buildStepperControl(
+                colorScheme: colorScheme,
+                value: fontController.lineHeight.toStringAsFixed(1),
+                onDecrease: fontController.isAtMinLineHeight
+                    ? null
+                    : fontController.decreaseLineHeight,
+                onIncrease: fontController.isAtMaxLineHeight
+                    ? null
+                    : fontController.increaseLineHeight,
+              ),
+              const SizedBox(height: 24),
+
+              // ── THEME ──
+              _buildSectionTitle('المظهر'),
+              _ReadingThemePicker(
+                selected: settingsController.appTheme,
+                onChanged: (theme) => settingsController.appTheme = theme,
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 16),
+
+              // ── NARRATION ──
+              _buildSectionTitle('الرواية'),
               SizedBox(
                 width: double.infinity,
-                child: SegmentedButton<FontFamily>(
+                child: SegmentedButton<bool>(
                   segments: [
-                    ButtonSegment(
-                      value: FontFamily.hafs,
-                      label: Text(
-                        'الرسم العثماني',
-                        style: TextStyle(fontFamily: FontFamily.hafs.name),
-                      ),
+                    const ButtonSegment(
+                      value: false,
+                      label: Text('حفص عن عاصم'),
                     ),
                     ButtonSegment(
-                      value: FontFamily.rustam,
+                      value: true,
                       label: Text(
-                        'خط المدينة',
-                        style: TextStyle(fontFamily: FontFamily.rustam.name),
+                        'ورش عن نافع',
+                        style: TextStyle(fontFamily: FontFamily.warsh.name),
                       ),
                     ),
                   ],
                   style: segmentStyle,
-                  selected: {settingsController.fontFamily},
+                  selected: {isWarsh},
                   onSelectionChanged: (newSet) async {
-                    settingsController.fontFamily = newSet.first;
+                    final selectedWarsh = newSet.first;
+                    if (selectedWarsh) {
+                      settingsController.fontFamily = FontFamily.warsh;
+                    } else {
+                      settingsController.fontFamily = FontFamily.hafs;
+                    }
                     await Future<void>.delayed(
                       const Duration(milliseconds: 300),
                     );
                     final newFont = settingsController.fontFamily;
-                    if (newFont.isWarsh) {
-                      settingsController.fontWeight = FontWeight.normal;
-                    }
                     await Quran.useDatasourceForFont(newFont);
+                    unawaited(SearchService.init(newFont.name));
                   },
                 ),
               ),
+              // ── FONT TYPE (Hafs only) ──
+              if (!isWarsh) ...[
+                _buildSectionTitle('نوع الخط'),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<FontFamily>(
+                    segments: [
+                      ButtonSegment(
+                        value: FontFamily.hafs,
+                        label: Text(
+                          'الرسم العثماني',
+                          style: TextStyle(fontFamily: FontFamily.hafs.name),
+                        ),
+                      ),
+                      ButtonSegment(
+                        value: FontFamily.rustam,
+                        label: Text(
+                          'خط المدينة',
+                          style: TextStyle(fontFamily: FontFamily.rustam.name),
+                        ),
+                      ),
+                    ],
+                    style: segmentStyle,
+                    selected: {settingsController.fontFamily},
+                    onSelectionChanged: (newSet) async {
+                      settingsController.fontFamily = newSet.first;
+                      await Future<void>.delayed(
+                        const Duration(milliseconds: 300),
+                      );
+                      final newFont = settingsController.fontFamily;
+                      if (newFont.isWarsh) {
+                        settingsController.fontWeight = FontWeight.normal;
+                      }
+                      await Quran.useDatasourceForFont(newFont);
+                    },
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
-            ],
 
-            // ── FONT WEIGHT ──
-            if (settingsController.fontFamily != FontFamily.rustam) ...[
-              _buildSectionTitle('سماكة الخط'),
-              SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<FontWeight>(
-                  segments: const [
-                    ButtonSegment(value: FontWeight.w500, label: Text('عادي')),
-                    ButtonSegment(value: FontWeight.w600, label: Text('عريض')),
-                  ],
-                  style: segmentStyle,
-                  selected: {settingsController.fontWeight},
-                  onSelectionChanged: (newSet) {
-                    settingsController.fontWeight = newSet.first;
-                  },
+              // ── FONT WEIGHT ──
+              if (settingsController.fontFamily != FontFamily.rustam) ...[
+                _buildSectionTitle('سماكة الخط'),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<FontWeight>(
+                    segments: const [
+                      ButtonSegment(
+                        value: FontWeight.w500,
+                        label: Text('عادي'),
+                      ),
+                      ButtonSegment(
+                        value: FontWeight.w600,
+                        label: Text('عريض'),
+                      ),
+                    ],
+                    style: segmentStyle,
+                    selected: {settingsController.fontWeight},
+                    onSelectionChanged: (newSet) {
+                      settingsController.fontWeight = newSet.first;
+                    },
+                  ),
                 ),
+                const SizedBox(height: 16),
+              ],
+
+              const Divider(),
+
+              // ── GENERAL SETTINGS ──
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text(
+                  'وضع الكتاب',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text(
+                  'يمكنك من تقليب الصفحات بالسحب يميناً ويساراً.',
+                ),
+                value: settingsController.isHorizontalScrolling,
+                activeThumbColor: colorScheme.primary,
+                onChanged: (v) => settingsController.isHorizontalScrolling = v,
               ),
-              const SizedBox(height: 24),
+
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text(
+                  'إبقاء الشاشة مضاءة',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text('منع الشاشة من الانطفاء أثناء القراءة'),
+                value: settingsController.keepScreenOn,
+                activeThumbColor: colorScheme.primary,
+                onChanged: (_) => settingsController.toggleKeepScreenOn(),
+              ),
             ],
-
-            const Divider(),
-
-            // ── READING THEME ──
-            // ── THEME ──
-            _buildSectionTitle('المظهر'),
-            _ReadingThemePicker(
-              selected: settingsController.appTheme,
-              onChanged: (theme) => settingsController.appTheme = theme,
-            ),
-            const SizedBox(height: 16),
-
-            const Divider(),
-
-            // ── GENERAL SETTINGS ──
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text(
-                'وضع الكتاب',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: const Text(
-                'يمكنك من تقليب الصفحات بالسحب يميناً ويساراً.',
-              ),
-              value: settingsController.isHorizontalScrolling,
-              activeThumbColor: colorScheme.primary,
-              onChanged: (v) => settingsController.isHorizontalScrolling = v,
-            ),
-
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text(
-                'إبقاء الشاشة مضاءة',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: const Text('منع الشاشة من الانطفاء أثناء القراءة'),
-              value: settingsController.keepScreenOn,
-              activeThumbColor: colorScheme.primary,
-              onChanged: (_) => settingsController.toggleKeepScreenOn(),
-            ),
-          ],
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        title,
-        style: TextStyle(fontFamily: FontFamily.hafs.name, fontSize: 16),
-      ),
+      child: Text(title, style: const TextStyle(fontSize: 16)),
     );
   }
 
@@ -231,7 +241,7 @@ class SettingsSheet extends StatelessWidget {
     required VoidCallback? onIncrease,
   }) {
     return Container(
-      height: 56,
+      height: 50,
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
@@ -273,7 +283,7 @@ class _ReadingThemePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final selectedColor = Theme.of(context).colorScheme.primary;
 
     return Row(
       children: [
@@ -283,9 +293,9 @@ class _ReadingThemePicker extends StatelessWidget {
             child: _ThemeCard(
               label: _themes[i].label,
               icon: _themes[i].icon,
-              colors: resolveReadingColors(context, _themes[i].theme),
+              previewColors: previewColorsForTheme(context, _themes[i].theme),
               isSelected: selected == _themes[i].theme,
-              selectedColor: colorScheme.primary,
+              selectedColor: selectedColor,
               onTap: () => onChanged(_themes[i].theme),
             ),
           ),
@@ -299,7 +309,7 @@ class _ThemeCard extends StatelessWidget {
   const _ThemeCard({
     required this.label,
     required this.icon,
-    required this.colors,
+    required this.previewColors,
     required this.isSelected,
     required this.selectedColor,
     required this.onTap,
@@ -307,24 +317,20 @@ class _ThemeCard extends StatelessWidget {
 
   final String label;
   final IconData icon;
-  final ReadingColors colors;
+  final ({Color bg, Color text}) previewColors;
   final bool isSelected;
   final Color selectedColor;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final previewBg = colors.background == Colors.transparent
-        ? Theme.of(context).colorScheme.surface
-        : colors.background;
-
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: previewBg,
+          color: previewColors.bg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? selectedColor : Colors.grey.applyOpacity(0.3),
@@ -343,14 +349,14 @@ class _ThemeCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20, color: colors.text),
+            Icon(icon, size: 20, color: previewColors.text),
             const SizedBox(height: 6),
             Text(
               label,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: colors.text,
+                color: previewColors.text,
               ),
             ),
           ],

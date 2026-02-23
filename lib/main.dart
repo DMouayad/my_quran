@@ -10,6 +10,8 @@ import 'package:my_quran/app/services/reading_position_service.dart';
 import 'package:my_quran/app/services/search_service.dart';
 import 'package:my_quran/app/services/settings_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
+import 'package:my_quran/app/theme.dart';
+import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/quran/quran.dart';
 
 Future<void> main() async {
@@ -47,7 +49,6 @@ class MyApp extends StatelessWidget {
   const MyApp(this.lastPosition, this.settingsController, {super.key});
   final ReadingPosition? lastPosition;
   final SettingsController settingsController;
-  static const seedColor = Color(0xFF0F766E);
 
   @override
   Widget build(BuildContext context) {
@@ -61,19 +62,19 @@ class MyApp extends StatelessWidget {
           supportedLocales: const [Locale('ar')],
           themeMode: settingsController.themeMode,
           localizationsDelegates: GlobalMaterialLocalizations.delegates,
-          darkTheme: ThemeData(
-            fontFamily: FontFamily.hafs.name,
-            colorScheme: ColorScheme.fromSeed(
-              brightness: Brightness.dark,
-              surface: settingsController.useTrueBlackBgColor
-                  ? const Color(0xFF000000)
-                  : null,
-              seedColor: seedColor,
+          theme: buildThemeForAppTheme(settingsController.appTheme).copyWith(
+            textTheme: const TextTheme().apply(
+              fontFamily: FontFamily.hafs.name,
             ),
           ),
-          theme: ThemeData(
-            fontFamily: FontFamily.hafs.name,
-            colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
+          builder: (context, child) => Theme(
+            data: Theme.of(context).copyWith(
+              textTheme: context.textTheme.apply(
+                bodyColor: context.colorScheme.onSurface,
+                displayColor: context.colorScheme.onSurface,
+              ),
+            ),
+            child: child!,
           ),
           home: HomePage(
             initialPosition: lastPosition,

@@ -255,16 +255,11 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
       ),
     );
 
-    final themeColors = resolveReadingColors(
-      context,
-      widget.settingsController.appTheme,
-    );
     return Scaffold(
-      backgroundColor: themeColors.background,
       extendBodyBehindAppBar: true,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: themeColors.surfaceContainer,
-        foregroundColor: themeColors.text,
+        // backgroundColor: themeColors.surfaceContainer,
+        // foregroundColor: themeColors.text,
         elevation: 4,
         onPressed: () => showModalBottomSheet(
           context: context,
@@ -571,10 +566,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
     final headerFontSize =
         _fontSizeController.surahHeaderFontSize * _scaleFactor;
     final fontFamily = widget.settingsController.fontFamily;
-    final readingColors = resolveReadingColors(
-      context,
-      widget.settingsController.appTheme,
-    );
+
     return GestureDetector(
       onScaleStart: (_) => _baseScale = _scaleFactor,
       onScaleUpdate: (d) =>
@@ -585,7 +577,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
         setState(() => _scaleFactor = 1.0);
       },
       child: Container(
-        color: readingColors.background,
+        color: Colors.transparent,
         padding: EdgeInsets.symmetric(
           horizontal: _pageHorizontalPadding(baseFontSize),
         ),
@@ -598,15 +590,9 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
                   surah: pageModel.surahs[i],
                   fontSize: headerFontSize,
                   fontFamily: fontFamily,
-                  backgroundColor: readingColors.secondary,
-                  textColor: readingColors.onSecondary,
                 ),
                 if (pageModel.surahs[i].hasBasmala || fontFamily.isWarsh)
-                  _Basmala(
-                    fontSize: headerFontSize,
-                    fontFamily: fontFamily,
-                    textColor: readingColors.text,
-                  ),
+                  _Basmala(fontSize: headerFontSize, fontFamily: fontFamily),
               ],
               _SurahTextBlock(
                 surahNumber: pageModel.surahs[i].surahNumber,
@@ -618,8 +604,6 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
                 onInteraction: _onVerseInteraction,
                 settingsController: widget.settingsController,
                 lineHeight: _fontSizeController.lineHeight,
-                textColor: readingColors.text,
-                symbolColor: readingColors.primary,
               ),
             ],
             if (!widget.settingsController.isHorizontalScrolling)
@@ -636,8 +620,6 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
 
 class _SurahHeader extends StatelessWidget {
   const _SurahHeader({
-    required this.backgroundColor,
-    required this.textColor,
     required this.surah,
     required this.fontSize,
     required this.fontFamily,
@@ -646,8 +628,6 @@ class _SurahHeader extends StatelessWidget {
   final SurahInPage surah;
   final double fontSize;
   final FontFamily fontFamily;
-  final Color backgroundColor;
-  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -656,12 +636,12 @@ class _SurahHeader extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12, top: 4),
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: context.colorScheme.secondaryContainer,
         borderRadius: BorderRadius.circular(2),
       ),
       child: DefaultTextStyle(
         style: TextStyle(
-          color: textColor,
+          color: context.colorScheme.onSecondaryContainer,
           fontWeight: FontWeight.w500,
           fontFamily: fontFamily.name,
           letterSpacing: 0,
@@ -712,15 +692,10 @@ class _SurahHeader extends StatelessWidget {
 // ─────────────────────────────────────────────────────────
 
 class _Basmala extends StatelessWidget {
-  const _Basmala({
-    required this.textColor,
-    required this.fontSize,
-    required this.fontFamily,
-  });
+  const _Basmala({required this.fontSize, required this.fontFamily});
 
   final double fontSize;
   final FontFamily fontFamily;
-  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -736,7 +711,7 @@ class _Basmala extends StatelessWidget {
         text,
         textAlign: TextAlign.center,
         style: TextStyle(
-          color: textColor,
+          color: context.colorScheme.onSurface,
           fontSize: fontSize,
           fontFamily: fontFamily.name,
           letterSpacing: 0,
@@ -753,8 +728,6 @@ class _Basmala extends StatelessWidget {
 
 class _SurahTextBlock extends StatefulWidget {
   const _SurahTextBlock({
-    required this.symbolColor,
-    required this.textColor,
     required this.lineHeight,
     required this.surahNumber,
     required this.block,
@@ -775,8 +748,6 @@ class _SurahTextBlock extends StatefulWidget {
   final void Function(int s, int v, {required bool isLongPress}) onInteraction;
   final SettingsController settingsController;
   final double lineHeight;
-  final Color textColor;
-  final Color symbolColor;
 
   @override
   State<_SurahTextBlock> createState() => _SurahTextBlockState();
@@ -932,7 +903,7 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
       fontFamily: symbolFontFamily,
       fontSize: widget.symbolFontSize,
       fontWeight: FontWeight.w500,
-      color: widget.symbolColor,
+      color: context.colorScheme.primary,
     );
 
     final selectedVerse = (_highlight?.surah == widget.surahNumber)
@@ -1004,7 +975,7 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
           style: TextStyle(
             fontSize: widget.fontSize,
             height: widget.lineHeight,
-            color: widget.textColor,
+            color: context.colorScheme.onSurface,
             fontFamily: widget.settingsController.fontFamily.name,
             fontWeight: widget.settingsController.fontWeight,
           ),

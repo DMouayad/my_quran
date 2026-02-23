@@ -47,7 +47,7 @@ class ThemePickerDialog extends StatelessWidget {
                           icon: _themes[i].icon,
                           isSelected:
                               settingsController.appTheme == _themes[i].theme,
-                          colors: resolveReadingColors(
+                          colors: previewColorsForTheme(
                             context,
                             _themes[i].theme,
                           ),
@@ -74,13 +74,13 @@ class ThemePickerDialog extends StatelessWidget {
     required String label,
     required IconData icon,
     required bool isSelected,
-    required ReadingColors colors,
+    required ({Color bg, Color text}) colors,
     required VoidCallback onTap,
   }) {
     final selectedColor = Theme.of(context).colorScheme.primary;
-    final previewBg = colors.background == Colors.transparent
+    final previewBg = colors.bg == Colors.transparent
         ? Theme.of(context).colorScheme.surface
-        : colors.background;
+        : colors.bg;
 
     return GestureDetector(
       onTap: onTap,
