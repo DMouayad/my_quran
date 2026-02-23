@@ -68,11 +68,21 @@ class SettingsService {
     await _prefs.setBool('true_black_bg', value);
   }
 
+  // ignore: avoid_positional_boolean_parameters ()
   Future<void> setIsHorizontalScrolling(bool value) async {
     await _prefs.setBool('is_horizontal', value);
   }
 
   Future<bool> loadIsHorizontalScroling() async {
     return await _prefs.getBool('is_horizontal') ?? false;
+  }
+
+  Future<bool> loadKeepScreenOn() async {
+    return await _prefs.getBool('keep_screen_on') ?? false;
+  }
+
+  // ignore: avoid_positional_boolean_parameters ()
+  Future<void> setKeepScreenOn(bool value) async {
+    await _prefs.setBool('keep_screen_on', value);
   }
 }
