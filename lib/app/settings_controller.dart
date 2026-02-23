@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show ChangeNotifier, debugPrint;
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/settings_service.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class SettingsController extends ChangeNotifier {
   SettingsController({required this.settingsService});
@@ -17,6 +18,9 @@ class SettingsController extends ChangeNotifier {
   ThemeMode _theme = ThemeMode.system;
   bool _useTrueBlackBgColor = false;
   bool _isHorizontalScrolling = false;
+
+  bool _keepScreenOn = true;
+  bool get keepScreenOn => _keepScreenOn;
 
   bool get isHorizontalScrolling => _isHorizontalScrolling;
   set isHorizontalScrolling(bool value) {
@@ -72,12 +76,28 @@ class SettingsController extends ChangeNotifier {
     };
   }
 
+  Future<void> toggleKeepScreenOn() async {
+    _keepScreenOn = !_keepScreenOn;
+    await _applyWakelock();
+    await settingsService.setKeepScreenOn(_keepScreenOn);
+    notifyListeners();
+  }
+
+  Future<void> _applyWakelock() async {
+    if (_keepScreenOn) {
+      await WakelockPlus.enable();
+    } else {
+      await WakelockPlus.disable();
+    }
+  }
+
   Future<void> init() async {
     _theme = await settingsService.loadTheme();
     _fontFamily = await settingsService.loadFontFamily();
     _fontWeight = await settingsService.loadFontWeight();
     _useTrueBlackBgColor = await settingsService.loadUseTrueBlackBgColor();
     _isHorizontalScrolling = await settingsService.loadIsHorizontalScroling();
+    _keepScreenOn = await settingsService.loadKeepScreenOn();
     debugPrint('✅ Loaded settings');
     debugPrint('📏 Theme: $_theme');
     debugPrint('📏 Font Family: ${_fontFamily.name}');
