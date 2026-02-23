@@ -91,11 +91,6 @@ class SettingsController extends ChangeNotifier {
     }
   }
 
-  // Call this in your existing loadSettings method:
-
-  // Add to your existing _saveSettings method:
-  // prefs.setBool('keepScreenOn', _keepScreenOn);
-
   Future<void> init() async {
     _theme = await settingsService.loadTheme();
     _fontFamily = await settingsService.loadFontFamily();
