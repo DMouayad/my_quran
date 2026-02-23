@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show ChangeNotifier, debugPrint;
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/settings_service.dart';
+import 'package:my_quran/app/utils.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class SettingsController extends ChangeNotifier {
@@ -15,35 +16,45 @@ class SettingsController extends ChangeNotifier {
   String _language = 'ar';
   FontFamily _fontFamily = FontFamily.rustam;
   FontWeight _fontWeight = FontWeight.w500;
-  ThemeMode _theme = ThemeMode.system;
-  bool _useTrueBlackBgColor = false;
+  AppTheme _appTheme = AppTheme.light;
   bool _isHorizontalScrolling = false;
-
   bool _keepScreenOn = true;
-  bool get keepScreenOn => _keepScreenOn;
 
+  // ── Getters ──
+
+  AppTheme get appTheme => _appTheme;
+  ThemeMode get themeMode => _appTheme.themeMode;
+  bool get keepScreenOn => _keepScreenOn;
   bool get isHorizontalScrolling => _isHorizontalScrolling;
+  String get language => _language;
+  FontFamily get fontFamily => _fontFamily;
+  FontWeight get fontWeight => _fontWeight;
+
+  // Backward compat: some code checks this
+  bool get useTrueBlackBgColor => _appTheme == AppTheme.amoled;
+
+  FontWeight get fontWeightForCurrentFamily =>
+      fontFamily == FontFamily.rustam ? FontWeight.w500 : _fontWeight;
+
+  // ── Setters ──
+
+  set appTheme(AppTheme value) {
+    _appTheme = value;
+    notifyListeners();
+    settingsService.setAppTheme(value);
+  }
+
   set isHorizontalScrolling(bool value) {
     _isHorizontalScrolling = value;
     notifyListeners();
     settingsService.setIsHorizontalScrolling(value);
   }
 
-  bool get useTrueBlackBgColor => _useTrueBlackBgColor;
-  set useTrueBlackBgColor(bool value) {
-    _useTrueBlackBgColor = value;
-    notifyListeners();
-    settingsService.setUseTrueBlackBgColor(value);
-  }
-
-  String get language => _language;
   set language(String value) {
     _language = value;
     notifyListeners();
     settingsService.setLanguage(value);
   }
-
-  FontFamily get fontFamily => _fontFamily;
 
   set fontFamily(FontFamily value) {
     _fontFamily = value;
@@ -51,29 +62,22 @@ class SettingsController extends ChangeNotifier {
     notifyListeners();
   }
 
-  FontWeight get fontWeight => _fontWeight;
-  FontWeight get fontWeightForCurrentFamily =>
-      fontFamily == FontFamily.rustam ? FontWeight.w500 : _fontWeight;
-
   set fontWeight(FontWeight value) {
     _fontWeight = value;
     notifyListeners();
     settingsService.setFontWeight(value);
   }
 
-  ThemeMode get themeMode => _theme;
-  set themeMode(ThemeMode value) {
-    _theme = value;
-    notifyListeners();
-    settingsService.setTheme(value);
-  }
+  // ── Actions ──
 
-  void toggleTheme() {
-    themeMode = switch (themeMode) {
-      ThemeMode.system => ThemeMode.dark,
-      ThemeMode.dark => ThemeMode.light,
-      ThemeMode.light => ThemeMode.system,
-    };
+  /// Quick toggle: light↔dark. Returns false if theme needs picker.
+  bool toggleTheme() {
+    final counterpart = _appTheme.toggleCounterpart;
+    if (counterpart != null) {
+      appTheme = counterpart;
+      return true;
+    }
+    return false; // caller should show picker
   }
 
   Future<void> toggleKeepScreenOn() async {
@@ -92,16 +96,20 @@ class SettingsController extends ChangeNotifier {
   }
 
   Future<void> init() async {
-    _theme = await settingsService.loadTheme();
+    _appTheme = await settingsService.loadAppTheme();
+
     _fontFamily = await settingsService.loadFontFamily();
     _fontWeight = await settingsService.loadFontWeight();
-    _useTrueBlackBgColor = await settingsService.loadUseTrueBlackBgColor();
     _isHorizontalScrolling = await settingsService.loadIsHorizontalScroling();
     _keepScreenOn = await settingsService.loadKeepScreenOn();
+    unawaited(_applyWakelock());
+
     debugPrint('✅ Loaded settings');
-    debugPrint('📏 Theme: $_theme');
+    debugPrint('📏 Theme: $appTheme');
     debugPrint('📏 Font Family: ${_fontFamily.name}');
     debugPrint('📏 Font Weight: ${_fontWeight.value}');
+    debugPrint('Keep screen on: $_keepScreenOn');
+    debugPrint('Is book mode: $_isHorizontalScrolling');
     notifyListeners();
   }
 }

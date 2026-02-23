@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
 import 'package:my_quran/app/font_size_controller.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/search_service.dart';
@@ -49,78 +48,35 @@ class SettingsSheet extends StatelessWidget {
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
-            // --- 1. FONT SIZE ---
+            // ── FONT SIZE ──
             _buildSectionTitle('حجم الخط'),
-            Container(
-              height: 56,
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: fontController.decreaseFontSize,
-                    icon: const Icon(Icons.remove),
-                  ),
-                  Expanded(
-                    child: Text(
-                      fontController.fontSize.round().toString(),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: FontFamily.arabicNumbersFontFamily.name,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: fontController.increaseFontSize,
-                    icon: const Icon(Icons.add),
-                  ),
-                ],
-              ),
+            _buildStepperControl(
+              colorScheme: colorScheme,
+              value: fontController.fontSize.round().toString(),
+              onDecrease: fontController.isAtMinFont
+                  ? null
+                  : fontController.decreaseFontSize,
+              onIncrease: fontController.isAtMaxFont
+                  ? null
+                  : fontController.increaseFontSize,
             ),
-            const SizedBox(height: 24),
-            // --- 1b. LINE HEIGHT ---
+            const SizedBox(height: 16),
+
+            // ── LINE HEIGHT ──
             _buildSectionTitle('ارتفاع الأسطر'),
-            Container(
-              height: 56,
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: fontController.isAtMinLineHeight
-                        ? null
-                        : fontController.decreaseLineHeight,
-                    icon: const Icon(Icons.density_large),
-                  ),
-                  Expanded(
-                    child: Text(
-                      fontController.lineHeight.toStringAsFixed(1),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: FontFamily.arabicNumbersFontFamily.name,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: fontController.isAtMaxLineHeight
-                        ? null
-                        : fontController.increaseLineHeight,
-                    icon: const Icon(Icons.density_small),
-                  ),
-                ],
-              ),
+            _buildStepperControl(
+              colorScheme: colorScheme,
+              value: fontController.lineHeight.toStringAsFixed(1),
+              onDecrease: fontController.isAtMinLineHeight
+                  ? null
+                  : fontController.decreaseLineHeight,
+              onIncrease: fontController.isAtMaxLineHeight
+                  ? null
+                  : fontController.increaseLineHeight,
             ),
             const SizedBox(height: 24),
 
-            // --- 2. NARRATION ---
+            // ── NARRATION ──
             _buildSectionTitle('الرواية'),
             SizedBox(
               width: double.infinity,
@@ -153,7 +109,7 @@ class SettingsSheet extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // --- 3. FONT TYPE (Hafs only) ---
+            // ── FONT TYPE (Hafs only) ──
             if (!isWarsh) ...[
               _buildSectionTitle('نوع الخط'),
               SizedBox(
@@ -193,7 +149,7 @@ class SettingsSheet extends StatelessWidget {
               const SizedBox(height: 16),
             ],
 
-            // --- 4. FONT WEIGHT ---
+            // ── FONT WEIGHT ──
             if (settingsController.fontFamily != FontFamily.rustam) ...[
               _buildSectionTitle('سماكة الخط'),
               SizedBox(
@@ -215,19 +171,18 @@ class SettingsSheet extends StatelessWidget {
 
             const Divider(),
 
-            // --- 5. GENERAL SETTINGS ---
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text(
-                'استخدام اللون الأسود',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: const Text('للشاشات من نوع AMOLED (توفير البطارية)'),
-              value: settingsController.useTrueBlackBgColor,
-              activeThumbColor: colorScheme.primary,
-              onChanged: (v) => settingsController.useTrueBlackBgColor = v,
+            // ── READING THEME ──
+            // ── THEME ──
+            _buildSectionTitle('المظهر'),
+            _ReadingThemePicker(
+              selected: settingsController.appTheme,
+              onChanged: (theme) => settingsController.appTheme = theme,
             ),
+            const SizedBox(height: 16),
 
+            const Divider(),
+
+            // ── GENERAL SETTINGS ──
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text(
@@ -245,7 +200,7 @@ class SettingsSheet extends StatelessWidget {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text(
-                'إبقاء الشاشة فعّالة',
+                'إبقاء الشاشة مضاءة',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               subtitle: const Text('منع الشاشة من الانطفاء أثناء القراءة'),
@@ -265,6 +220,141 @@ class SettingsSheet extends StatelessWidget {
       child: Text(
         title,
         style: TextStyle(fontFamily: FontFamily.hafs.name, fontSize: 16),
+      ),
+    );
+  }
+
+  Widget _buildStepperControl({
+    required ColorScheme colorScheme,
+    required String value,
+    required VoidCallback? onDecrease,
+    required VoidCallback? onIncrease,
+  }) {
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          IconButton(onPressed: onDecrease, icon: const Icon(Icons.remove)),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                fontFamily: FontFamily.arabicNumbersFontFamily.name,
+              ),
+            ),
+          ),
+          IconButton(onPressed: onIncrease, icon: const Icon(Icons.add)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReadingThemePicker extends StatelessWidget {
+  const _ReadingThemePicker({required this.selected, required this.onChanged});
+
+  final AppTheme selected;
+  final ValueChanged<AppTheme> onChanged;
+
+  static const List<({IconData icon, String label, AppTheme theme})> _themes = [
+    (theme: AppTheme.light, label: 'فاتح', icon: Icons.light_mode_outlined),
+    (theme: AppTheme.dark, label: 'داكن', icon: Icons.dark_mode_outlined),
+    (theme: AppTheme.classic, label: 'كلاسيكي', icon: Icons.contrast),
+    (theme: AppTheme.amoled, label: 'أسود', icon: Icons.brightness_2_outlined),
+    (theme: AppTheme.sepia, label: 'سيبيا', icon: Icons.auto_stories_outlined),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      children: [
+        for (int i = 0; i < _themes.length; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          Expanded(
+            child: _ThemeCard(
+              label: _themes[i].label,
+              icon: _themes[i].icon,
+              colors: resolveReadingColors(context, _themes[i].theme),
+              isSelected: selected == _themes[i].theme,
+              selectedColor: colorScheme.primary,
+              onTap: () => onChanged(_themes[i].theme),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ThemeCard extends StatelessWidget {
+  const _ThemeCard({
+    required this.label,
+    required this.icon,
+    required this.colors,
+    required this.isSelected,
+    required this.selectedColor,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final ReadingColors colors;
+  final bool isSelected;
+  final Color selectedColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final previewBg = colors.background == Colors.transparent
+        ? Theme.of(context).colorScheme.surface
+        : colors.background;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: previewBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? selectedColor : Colors.grey.applyOpacity(0.3),
+            width: isSelected ? 2.5 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: selectedColor.applyOpacity(0.2),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: colors.text),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: colors.text,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -257,7 +257,10 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     final previewText = verseText.length > 100
         ? '${verseText.substring(0, 100)}...'
         : verseText;
-
+    final themeColors = resolveReadingColors(
+      context,
+      widget.settingsController.appTheme,
+    );
     return Dismissible(
       key: Key(bookmark.id),
       direction: DismissDirection.endToStart,
@@ -394,9 +397,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.applyOpacity(
-                      0.5,
-                    ),
+                    color: themeColors.background,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -404,7 +405,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       height: 1.8,
-                      color: colorScheme.onSurface,
+                      color: themeColors.text,
                       fontFamily: widget.settingsController.fontFamily.name,
                     ),
                     textAlign: TextAlign.center,

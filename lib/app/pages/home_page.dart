@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:my_quran/app/pages/bookmarks_screen.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
 import 'package:my_quran/app/widgets/settings_sheet.dart';
+import 'package:my_quran/app/widgets/theme_picker_dialog.dart';
 import 'package:my_quran/app/widgets/whats_new_dialog.dart';
 
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -224,6 +225,14 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
+  void _showThemePicker(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) =>
+          ThemePickerDialog(settingsController: widget.settingsController),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // 1. Calculate Heights
@@ -246,12 +255,16 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
       ),
     );
 
-    final colorScheme = Theme.of(context).colorScheme;
+    final themeColors = resolveReadingColors(
+      context,
+      widget.settingsController.appTheme,
+    );
     return Scaffold(
+      backgroundColor: themeColors.background,
       extendBodyBehindAppBar: true,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: colorScheme.surfaceContainerLow,
-        foregroundColor: colorScheme.primary,
+        backgroundColor: themeColors.surfaceContainer,
+        foregroundColor: themeColors.text,
         elevation: 4,
         onPressed: () => showModalBottomSheet(
           context: context,
@@ -269,7 +282,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ),
           ),
         ),
-        child: Icon(Icons.menu_book_outlined, color: colorScheme.primary),
+        child: const Icon(Icons.menu_book_outlined),
       ),
       // --- 1. The Glass App Bar ---
       appBar: AppBar(
@@ -340,11 +353,19 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
         flexibleSpace: Container(decoration: appBarDecoration),
         actions: [
           IconButton(
-            onPressed: widget.settingsController.toggleTheme,
-            icon: Icon(switch (widget.settingsController.themeMode) {
-              ThemeMode.dark => Icons.dark_mode_outlined,
-              ThemeMode.light => Icons.light_mode_outlined,
-              ThemeMode.system => Icons.brightness_auto_outlined,
+            onPressed: () {
+              final toggled = widget.settingsController.toggleTheme();
+              if (!toggled) {
+                _showThemePicker(context);
+              }
+            },
+            onLongPress: () => _showThemePicker(context),
+            icon: Icon(switch (widget.settingsController.appTheme) {
+              AppTheme.light => Icons.light_mode_outlined,
+              AppTheme.dark => Icons.dark_mode_outlined,
+              AppTheme.classic => Icons.contrast,
+              AppTheme.amoled => Icons.brightness_2_outlined,
+              AppTheme.sepia => Icons.auto_stories_outlined,
             }),
           ),
           IconButton(
@@ -353,7 +374,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
               showModalBottomSheet(
                 context: context,
                 showDragHandle: true,
-                barrierColor: Colors.black12,
+                barrierColor: Colors.transparent,
                 builder: (context) {
                   final fontController = FontSizeController();
 
@@ -550,7 +571,10 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
     final headerFontSize =
         _fontSizeController.surahHeaderFontSize * _scaleFactor;
     final fontFamily = widget.settingsController.fontFamily;
-
+    final readingColors = resolveReadingColors(
+      context,
+      widget.settingsController.appTheme,
+    );
     return GestureDetector(
       onScaleStart: (_) => _baseScale = _scaleFactor,
       onScaleUpdate: (d) =>
@@ -561,7 +585,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
         setState(() => _scaleFactor = 1.0);
       },
       child: Container(
-        color: Colors.transparent,
+        color: readingColors.background,
         padding: EdgeInsets.symmetric(
           horizontal: _pageHorizontalPadding(baseFontSize),
         ),
@@ -574,9 +598,15 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
                   surah: pageModel.surahs[i],
                   fontSize: headerFontSize,
                   fontFamily: fontFamily,
+                  backgroundColor: readingColors.secondary,
+                  textColor: readingColors.onSecondary,
                 ),
                 if (pageModel.surahs[i].hasBasmala || fontFamily.isWarsh)
-                  _Basmala(fontSize: headerFontSize, fontFamily: fontFamily),
+                  _Basmala(
+                    fontSize: headerFontSize,
+                    fontFamily: fontFamily,
+                    textColor: readingColors.text,
+                  ),
               ],
               _SurahTextBlock(
                 surahNumber: pageModel.surahs[i].surahNumber,
@@ -588,6 +618,8 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
                 onInteraction: _onVerseInteraction,
                 settingsController: widget.settingsController,
                 lineHeight: _fontSizeController.lineHeight,
+                textColor: readingColors.text,
+                symbolColor: readingColors.primary,
               ),
             ],
             if (!widget.settingsController.isHorizontalScrolling)
@@ -599,11 +631,13 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
   }
 }
 // ─────────────────────────────────────────────────────────
-// Extracted: Surah Header (won't rebuild unnecessarily)
+// Surah Header
 // ─────────────────────────────────────────────────────────
 
 class _SurahHeader extends StatelessWidget {
   const _SurahHeader({
+    required this.backgroundColor,
+    required this.textColor,
     required this.surah,
     required this.fontSize,
     required this.fontFamily,
@@ -612,33 +646,36 @@ class _SurahHeader extends StatelessWidget {
   final SurahInPage surah;
   final double fontSize;
   final FontFamily fontFamily;
+  final Color backgroundColor;
+  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12, top: 4),
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: colorScheme.secondaryContainer,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(2),
       ),
       child: DefaultTextStyle(
         style: TextStyle(
-          color: colorScheme.onSecondaryContainer,
+          color: textColor,
           fontWeight: FontWeight.w500,
           fontFamily: fontFamily.name,
+          letterSpacing: 0,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Column(
+            Wrap(
+              spacing: 5,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 const Text('ترتيبها'),
                 Text(
                   '(${getArabicNumber(surah.surahNumber)})',
-                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: FontFamily.arabicNumbersFontFamily.name,
                   ),
@@ -648,19 +685,15 @@ class _SurahHeader extends StatelessWidget {
             Text(
               'سورة ${Quran.instance.getSurahNameArabic(surah.surahNumber)}',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: fontSize,
-                height: 1.2,
-                letterSpacing: 0,
-                fontFamily: FontFamily.rustam.name,
-              ),
+              style: TextStyle(fontSize: fontSize, height: 1),
             ),
-            Column(
+            Wrap(
+              spacing: 5,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 const Text('آياتها'),
                 Text(
                   '(${getArabicNumber(Quran.instance.getVerseCount(surah.surahNumber))})',
-                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: FontFamily.arabicNumbersFontFamily.name,
                   ),
@@ -679,10 +712,15 @@ class _SurahHeader extends StatelessWidget {
 // ─────────────────────────────────────────────────────────
 
 class _Basmala extends StatelessWidget {
-  const _Basmala({required this.fontSize, required this.fontFamily});
+  const _Basmala({
+    required this.textColor,
+    required this.fontSize,
+    required this.fontFamily,
+  });
 
   final double fontSize;
   final FontFamily fontFamily;
+  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -698,6 +736,7 @@ class _Basmala extends StatelessWidget {
         text,
         textAlign: TextAlign.center,
         style: TextStyle(
+          color: textColor,
           fontSize: fontSize,
           fontFamily: fontFamily.name,
           letterSpacing: 0,
@@ -714,6 +753,8 @@ class _Basmala extends StatelessWidget {
 
 class _SurahTextBlock extends StatefulWidget {
   const _SurahTextBlock({
+    required this.symbolColor,
+    required this.textColor,
     required this.lineHeight,
     required this.surahNumber,
     required this.block,
@@ -734,6 +775,8 @@ class _SurahTextBlock extends StatefulWidget {
   final void Function(int s, int v, {required bool isLongPress}) onInteraction;
   final SettingsController settingsController;
   final double lineHeight;
+  final Color textColor;
+  final Color symbolColor;
 
   @override
   State<_SurahTextBlock> createState() => _SurahTextBlockState();
@@ -889,7 +932,7 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
       fontFamily: symbolFontFamily,
       fontSize: widget.symbolFontSize,
       fontWeight: FontWeight.w500,
-      color: colorScheme.primary,
+      color: widget.symbolColor,
     );
 
     final selectedVerse = (_highlight?.surah == widget.surahNumber)
@@ -961,9 +1004,9 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
           style: TextStyle(
             fontSize: widget.fontSize,
             height: widget.lineHeight,
+            color: widget.textColor,
             fontFamily: widget.settingsController.fontFamily.name,
             fontWeight: widget.settingsController.fontWeight,
-            color: theme.textTheme.bodyLarge?.color ?? colorScheme.onSurface,
           ),
           children: children,
         ),

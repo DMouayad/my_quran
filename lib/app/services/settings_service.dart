@@ -6,7 +6,9 @@ import 'package:my_quran/app/models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsService {
+  static const String _appThemeKey = 'app_theme';
   final _prefs = SharedPreferencesAsync();
+
   Future<void> setLanguage(String language) async {
     await _prefs.setString('language', language);
   }
@@ -59,15 +61,6 @@ class SettingsService {
     return FontWeight.w500;
   }
 
-  Future<bool> loadUseTrueBlackBgColor() async {
-    return await _prefs.getBool('true_black_bg') ?? false;
-  }
-
-  // ignore: avoid_positional_boolean_parameters ()
-  Future<void> setUseTrueBlackBgColor(bool value) async {
-    await _prefs.setBool('true_black_bg', value);
-  }
-
   // ignore: avoid_positional_boolean_parameters ()
   Future<void> setIsHorizontalScrolling(bool value) async {
     await _prefs.setBool('is_horizontal', value);
@@ -84,5 +77,17 @@ class SettingsService {
   // ignore: avoid_positional_boolean_parameters ()
   Future<void> setKeepScreenOn(bool value) async {
     await _prefs.setBool('keep_screen_on', value);
+  }
+
+  Future<AppTheme> loadAppTheme() async {
+    final value = await _prefs.getString(_appThemeKey);
+    return AppTheme.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => AppTheme.light,
+    );
+  }
+
+  Future<void> setAppTheme(AppTheme theme) async {
+    await _prefs.setString(_appThemeKey, theme.name);
   }
 }

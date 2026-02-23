@@ -210,3 +210,31 @@ enum FontFamily {
     };
   }
 }
+
+enum AppTheme {
+  light, // فاتح — Material light
+  dark, // داكن — Material dark
+  classic, // كلاسيكي — black on white
+  amoled, // أسود — white on pure black
+  sepia, // سيبيا — brown on beige
+}
+
+class ReadingColors {
+  const ReadingColors({
+    required this.background,
+    required this.text,
+    required this.primary,
+    required this.secondary,
+    required this.onSecondary,
+    required this.highlight,
+    required this.surfaceContainer,
+  });
+
+  final Color background;
+  final Color text;
+  final Color primary;
+  final Color secondary;
+  final Color onSecondary;
+  final Color highlight;
+  final Color surfaceContainer;
+}
