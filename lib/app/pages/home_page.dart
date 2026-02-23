@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:my_quran/app/pages/bookmarks_screen.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
 import 'package:my_quran/app/widgets/settings_sheet.dart';
-import 'package:my_quran/app/widgets/theme_picker_dialog.dart';
+import 'package:my_quran/app/widgets/theme_tiles_picker.dart';
 import 'package:my_quran/app/widgets/whats_new_dialog.dart';
 
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -228,9 +228,62 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void _showThemePicker(BuildContext context) {
     showDialog(
       context: context,
-      builder: (ctx) =>
-          ThemePickerDialog(settingsController: widget.settingsController),
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'المظهر',
+                  style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ListenableBuilder(
+                  listenable: widget.settingsController,
+                  builder: (context, _) {
+                    return ThemeTilesPicker(
+                      selected: widget.settingsController.appTheme,
+                      onChanged: (theme) {
+                        widget.settingsController.appTheme = theme;
+                        Navigator.pop(ctx);
+                      },
+                      supportsDynamic:
+                          widget.settingsController.supportsDynamicColor,
+                      deviceLightScheme:
+                          widget.settingsController.deviceLightScheme,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
+  }
+
+  Widget _buildThemeIcon() {
+    final appTheme = widget.settingsController.appTheme;
+
+    if (appTheme.supportsThemeModeToggle) {
+      // Show light/dark/system icon based on current mode
+      return Icon(switch (widget.settingsController.themeMode) {
+        ThemeMode.light => Icons.light_mode_outlined,
+        ThemeMode.dark => Icons.dark_mode_outlined,
+        ThemeMode.system => Icons.brightness_auto_outlined,
+      });
+    }
+
+    // Fixed themes: show a single settings icon to open picker
+    return const Icon(Icons.color_lens_outlined);
   }
 
   @override
@@ -245,7 +298,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
         statusBarHeight + appBarHeight + infoHeaderHeight;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final appBarDecoration = BoxDecoration(
-      color: isDarkMode && widget.settingsController.useTrueBlackBgColor
+      color: isDarkMode && widget.settingsController.appTheme == AppTheme.amoled
           ? Colors.black
           : Theme.of(context).colorScheme.surfaceContainerLow,
       border: Border(
@@ -349,19 +402,14 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
         actions: [
           IconButton(
             onPressed: () {
-              final toggled = widget.settingsController.toggleTheme();
-              if (!toggled) {
+              if (widget.settingsController.appTheme.supportsThemeModeToggle) {
+                widget.settingsController.toggleThemeMode();
+              } else {
                 _showThemePicker(context);
               }
             },
             onLongPress: () => _showThemePicker(context),
-            icon: Icon(switch (widget.settingsController.appTheme) {
-              AppTheme.light => Icons.light_mode_outlined,
-              AppTheme.dark => Icons.dark_mode_outlined,
-              AppTheme.classic => Icons.contrast,
-              AppTheme.amoled => Icons.brightness_2_outlined,
-              AppTheme.sepia => Icons.auto_stories_outlined,
-            }),
+            icon: _buildThemeIcon(),
           ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
@@ -369,7 +417,12 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
               showModalBottomSheet(
                 context: context,
                 showDragHandle: false,
+                isScrollControlled: true,
                 barrierColor: Colors.transparent,
+
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * .6,
+                ),
                 builder: (context) {
                   final fontController = FontSizeController();
 
@@ -538,6 +591,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
         builder: (_) => Dialog(
           child: VerseMenuDialog(
             surah: surah,
+            fontFamily: widget.settingsController.fontFamily,
             verse: (
               number: verseNumber,
               text: Quran.instance.getVerse(surah, verseNumber),
@@ -642,7 +696,7 @@ class _SurahHeader extends StatelessWidget {
       child: DefaultTextStyle(
         style: TextStyle(
           color: context.colorScheme.onSecondaryContainer,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           fontFamily: fontFamily.name,
           letterSpacing: 0,
         ),
@@ -665,7 +719,7 @@ class _SurahHeader extends StatelessWidget {
             Text(
               'سورة ${Quran.instance.getSurahNameArabic(surah.surahNumber)}',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: fontSize, height: 1),
+              style: TextStyle(fontSize: fontSize, height: 1.2),
             ),
             Wrap(
               spacing: 5,

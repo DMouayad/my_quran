@@ -9,10 +9,15 @@ import 'package:my_quran/app/services/bookmark_service.dart';
 import 'package:my_quran/app/utils.dart';
 
 class VerseMenuDialog extends StatefulWidget {
-  const VerseMenuDialog({required this.surah, required this.verse, super.key});
+  const VerseMenuDialog({
+    required this.fontFamily,
+    required this.surah,
+    required this.verse,
+    super.key,
+  });
   final int surah;
   final Verse verse;
-
+  final FontFamily fontFamily;
   @override
   State<VerseMenuDialog> createState() => _VerseMenuDialogState();
 }
@@ -132,6 +137,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
                             style: TextStyle(
                               fontSize: 22,
                               height: 2,
+                              fontFamily: widget.fontFamily.name,
                               color: colorScheme.onSurface,
                             ),
                           ),
@@ -219,7 +225,6 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
           Expanded(
             child: DefaultTextStyle(
               style: TextStyle(
-                fontFamily: FontFamily.rustam.name,
                 fontWeight: FontWeight.w500,
                 fontSize: 16,
                 color: Theme.of(context).colorScheme.onSurface,

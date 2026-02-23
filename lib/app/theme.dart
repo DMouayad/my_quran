@@ -3,17 +3,44 @@ import 'package:my_quran/app/models.dart';
 
 const _seedColor = Color(0xFF0F766E);
 
-ThemeData buildThemeForAppTheme(AppTheme appTheme) {
+({ThemeData theme, ThemeData? darkTheme}) buildThemes(
+  AppTheme appTheme, {
+  ThemeMode themeMode = ThemeMode.system,
+  ColorScheme? deviceLightScheme,
+  ColorScheme? deviceDarkScheme,
+}) {
   return switch (appTheme) {
-    AppTheme.light => _buildLight(),
-    AppTheme.dark => _buildDark(),
-    AppTheme.classic => _buildClassic(),
-    AppTheme.amoled => _buildAmoled(),
-    AppTheme.sepia => _buildSepia(),
+    AppTheme.myQuran => switch (themeMode) {
+      ThemeMode.light => (theme: _buildMyQuranLight(), darkTheme: null),
+      ThemeMode.dark => (theme: _buildMyQuranDark(), darkTheme: null),
+      ThemeMode.system => (
+        theme: _buildMyQuranLight(),
+        darkTheme: _buildMyQuranDark(),
+      ),
+    },
+    AppTheme.classic => (theme: _buildClassic(), darkTheme: null),
+    AppTheme.amoled => (theme: _buildAmoled(), darkTheme: null),
+    AppTheme.sepia => (theme: _buildSepia(), darkTheme: null),
+    AppTheme.dynamic => switch (themeMode) {
+      ThemeMode.light => (
+        theme: _buildDynamicLight(deviceLightScheme),
+        darkTheme: null,
+      ),
+      ThemeMode.dark => (
+        theme: _buildDynamicDark(deviceDarkScheme),
+        darkTheme: null,
+      ),
+      ThemeMode.system => (
+        theme: _buildDynamicLight(deviceLightScheme),
+        darkTheme: _buildDynamicDark(deviceDarkScheme),
+      ),
+    },
   };
 }
 
-ThemeData _buildLight() {
+// ... all _build methods stay the same ...
+
+ThemeData _buildMyQuranLight() {
   final colorScheme = ColorScheme.fromSeed(seedColor: _seedColor);
   return ThemeData(
     useMaterial3: true,
@@ -22,7 +49,7 @@ ThemeData _buildLight() {
   );
 }
 
-ThemeData _buildDark() {
+ThemeData _buildMyQuranDark() {
   final colorScheme = ColorScheme.fromSeed(
     seedColor: _seedColor,
     brightness: Brightness.dark,
@@ -36,6 +63,8 @@ ThemeData _buildDark() {
 
 ThemeData _buildClassic() {
   const colorScheme = ColorScheme.light(
+    // ignore: avoid_redundant_argument_values ()
+    surface: Color(0xFFFFFFFF),
     primary: Color(0xFF0D47A1),
     primaryContainer: Color(0xFFBBDEFB),
     onPrimaryContainer: Color(0xFF0D47A1),
@@ -69,32 +98,24 @@ ThemeData _buildClassic() {
 }
 
 ThemeData _buildAmoled() {
-  const colorScheme = ColorScheme.dark(
-    surface: Color(0xFF000000),
-    onSurface: Color(0xFFEEEEEE),
-    primary: Color(0xFF64B5F6),
-    primaryContainer: Color(0xFF1A237E),
-    onPrimaryContainer: Color(0xFF90CAF9),
-    secondary: Color(0xFF64B5F6),
-    secondaryContainer: Color(0xFF1B1B1B),
-    onSecondaryContainer: Color(0xFFEEEEEE),
-    tertiary: Color(0xFF80CBC4),
-    onTertiary: Color(0xFF000000),
-    tertiaryContainer: Color(0xFF1B1B1B),
-    onTertiaryContainer: Color(0xFF80CBC4),
-    error: Color(0xFFEF9A9A),
-    errorContainer: Color(0xFF2C0B0B),
-    onErrorContainer: Color(0xFFEF9A9A),
-    outline: Color(0xFF424242),
-    outlineVariant: Color(0xFF2C2C2C),
-    surfaceContainerHighest: Color(0xFF212121),
-    surfaceContainerHigh: Color(0xFF1A1A1A),
-    surfaceContainer: Color(0xFF141414),
-    surfaceContainerLow: Color(0xFF0A0A0A),
-    surfaceContainerLowest: Color(0xFF000000),
-    onSurfaceVariant: Color(0xFFBDBDBD),
-    inverseSurface: Color(0xFFEEEEEE),
-    onInverseSurface: Color(0xFF000000),
+  final colorScheme = ColorScheme.fromSeed(
+    seedColor: _seedColor,
+    brightness: Brightness.dark,
+    surface: const Color(0xFF000000),
+    onSurface: const Color(0xFFEEEEEE),
+    error: const Color(0xFFEF9A9A),
+    errorContainer: const Color(0xFF2C0B0B),
+    onErrorContainer: const Color(0xFFEF9A9A),
+    outline: const Color(0xFF424242),
+    outlineVariant: const Color(0xFF2C2C2C),
+    surfaceContainerHighest: const Color(0xFF212121),
+    surfaceContainerHigh: const Color(0xFF1A1A1A),
+    surfaceContainer: const Color(0xFF141414),
+    surfaceContainerLow: const Color(0xFF0A0A0A),
+    surfaceContainerLowest: const Color(0xFF000000),
+    onSurfaceVariant: const Color(0xFFBDBDBD),
+    inverseSurface: const Color(0xFFEEEEEE),
+    onInverseSurface: const Color(0xFF000000),
   );
   return ThemeData(
     useMaterial3: true,
@@ -140,5 +161,26 @@ ThemeData _buildSepia() {
     colorScheme: colorScheme,
     scaffoldBackgroundColor: colorScheme.surface,
     brightness: Brightness.light,
+  );
+}
+
+ThemeData _buildDynamicLight(ColorScheme? deviceScheme) {
+  final colorScheme =
+      deviceScheme ?? ColorScheme.fromSeed(seedColor: Colors.blue);
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: colorScheme,
+    scaffoldBackgroundColor: colorScheme.surface,
+  );
+}
+
+ThemeData _buildDynamicDark(ColorScheme? deviceScheme) {
+  final colorScheme =
+      deviceScheme ??
+      ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark);
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: colorScheme,
+    scaffoldBackgroundColor: colorScheme.surface,
   );
 }

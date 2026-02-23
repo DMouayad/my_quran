@@ -83,7 +83,7 @@ class SettingsService {
     final value = await _prefs.getString(_appThemeKey);
     return AppTheme.values.firstWhere(
       (e) => e.name == value,
-      orElse: () => AppTheme.light,
+      orElse: () => AppTheme.myQuran,
     );
   }
 
@@ -101,7 +101,21 @@ class SettingsService {
     );
   }
 
+  static const String _themeModeKey = 'theme_mode';
   Future<void> setTextAlign(TextAlignOption align) async {
     await _prefs.setString(_textAlignKey, align.name);
+  }
+
+  Future<ThemeMode> loadThemeMode() async {
+    final value = await _prefs.getString(_themeModeKey);
+    return switch (value) {
+      'light' => ThemeMode.light,
+      'dark' => ThemeMode.dark,
+      _ => ThemeMode.system,
+    };
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    await _prefs.setString(_themeModeKey, mode.name);
   }
 }

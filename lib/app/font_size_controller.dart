@@ -1,5 +1,5 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/material.dart';
 
 class FontSizeController extends ChangeNotifier {
   factory FontSizeController() => _instance;
@@ -29,7 +29,7 @@ class FontSizeController extends ChangeNotifier {
   // Relative sizes based on base font size
   double get verseFontSize => _fontSize;
   double get verseSymbolFontSize => _fontSize + 2;
-  double get surahHeaderFontSize => _fontSize - 3;
+  double get surahHeaderFontSize => clampDouble(_fontSize - 3, 14, 24);
   double get pageNumberFontSize => _fontSize + 14;
 
   final _prefs = SharedPreferencesAsync();

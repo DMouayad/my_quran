@@ -29,19 +29,21 @@ extension ThemeContext on BuildContext {
 
 extension AppThemeX on AppTheme {
   bool get isDark => switch (this) {
-    AppTheme.light || AppTheme.classic || AppTheme.sepia => false,
-    AppTheme.dark || AppTheme.amoled => true,
+    AppTheme.classic || AppTheme.sepia => false,
+    AppTheme.amoled => true,
+
+    AppTheme.dynamic || AppTheme.myQuran => false, // handled at build time
   };
 
-  /// For MaterialApp themeMode
-  ThemeMode get themeMode => isDark ? ThemeMode.dark : ThemeMode.light;
-
-  /// Quick toggle counterpart
-  AppTheme? get toggleCounterpart => switch (this) {
-    AppTheme.light => AppTheme.dark,
-    AppTheme.dark => AppTheme.light,
-    _ => null, // no simple toggle, open picker
+  /// myQuran and dynamic follow system brightness
+  ThemeMode get themeMode => switch (this) {
+    AppTheme.myQuran || AppTheme.dynamic => ThemeMode.system,
+    AppTheme.classic || AppTheme.sepia => ThemeMode.light,
+    AppTheme.amoled => ThemeMode.dark,
   };
+
+  bool get supportsThemeModeToggle =>
+      this == AppTheme.myQuran || this == AppTheme.dynamic;
 }
 
 ({Color bg, Color text}) previewColorsForTheme(
@@ -49,14 +51,10 @@ extension AppThemeX on AppTheme {
   AppTheme theme,
 ) {
   return switch (theme) {
-    AppTheme.light => (
-      bg: const Color(0xFFf4fbf8),
-      text: const Color(0xFF161d1c),
-    ),
-    AppTheme.dark => (
-      bg: const Color(0xFF0e1514),
-      text: const Color(0xFFdde4e2),
-    ),
+    AppTheme.myQuran =>
+      context.isDarkMode
+          ? (bg: const Color(0xFF0e1514), text: const Color(0xFFdde4e2))
+          : (bg: const Color(0xFFf4fbf8), text: const Color(0xFF161d1c)),
     AppTheme.classic => (
       bg: const Color(0xFFFFFFFF),
       text: const Color(0xFF000000),
@@ -69,11 +67,15 @@ extension AppThemeX on AppTheme {
       bg: const Color(0xFFF4E4C1),
       text: const Color(0xFF4E3524),
     ),
+    AppTheme.dynamic => (
+      bg: context.colorScheme.surface,
+      text: context.colorScheme.onSurface,
+    ),
   };
 }
 
 extension HexColor on Color {
-  /// Converts this [Color] to a hexadecimal string in format #RRGGBB or #AARRGGBB.
+  /// Converts this [Color] to a hexadecimal string in format #RRGGBB.
   /// Set `withAlpha` to `true` to include the alpha channel.
   String toHex({bool withAlpha = false, bool leadingHashSign = true}) {
     final int argb32 = toARGB32();

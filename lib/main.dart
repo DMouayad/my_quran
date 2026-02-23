@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -52,34 +53,54 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: settingsController,
-      builder: (context, child) {
-        return MaterialApp(
-          title: 'My Quran',
-          debugShowCheckedModeBanner: false,
-          locale: Locale(settingsController.language),
-          supportedLocales: const [Locale('ar')],
-          themeMode: settingsController.themeMode,
-          localizationsDelegates: GlobalMaterialLocalizations.delegates,
-          theme: buildThemeForAppTheme(settingsController.appTheme).copyWith(
-            textTheme: const TextTheme().apply(
-              fontFamily: FontFamily.hafs.name,
-            ),
-          ),
-          builder: (context, child) => Theme(
-            data: Theme.of(context).copyWith(
-              textTheme: context.textTheme.apply(
-                bodyColor: context.colorScheme.onSurface,
-                displayColor: context.colorScheme.onSurface,
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        settingsController.setDynamicColorSupport(
+          supported: lightDynamic != null,
+          lightScheme: lightDynamic,
+          darkScheme: darkDynamic,
+        );
+
+        return ListenableBuilder(
+          listenable: settingsController,
+          builder: (context, child) {
+            var appTheme = settingsController.appTheme;
+            if (appTheme == AppTheme.dynamic &&
+                !settingsController.supportsDynamicColor) {
+              appTheme = AppTheme.myQuran;
+            }
+
+            final themes = buildThemes(
+              appTheme,
+              themeMode: settingsController.themeMode,
+              deviceLightScheme: lightDynamic,
+              deviceDarkScheme: darkDynamic,
+            );
+
+            return MaterialApp(
+              title: 'My Quran',
+              debugShowCheckedModeBanner: false,
+              locale: Locale(settingsController.language),
+              supportedLocales: const [Locale('ar')],
+              localizationsDelegates: GlobalMaterialLocalizations.delegates,
+              theme: themes.theme,
+              darkTheme: themes.darkTheme,
+              themeMode: settingsController.appTheme.themeMode,
+              builder: (context, child) => Theme(
+                data: Theme.of(context).copyWith(
+                  textTheme: context.textTheme.apply(
+                    bodyColor: context.colorScheme.onSurface,
+                    displayColor: context.colorScheme.onSurface,
+                  ),
+                ),
+                child: child!,
               ),
-            ),
-            child: child!,
-          ),
-          home: HomePage(
-            initialPosition: lastPosition,
-            settingsController: settingsController,
-          ),
+              home: HomePage(
+                initialPosition: lastPosition,
+                settingsController: settingsController,
+              ),
+            );
+          },
         );
       },
     );

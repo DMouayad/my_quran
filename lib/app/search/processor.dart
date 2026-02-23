@@ -18,8 +18,8 @@ class ArabicTextProcessor {
   // Remove diacritics (tashkeel)
   static String removeDiacritics(String text) {
     // Convert dagger alef to standard alef for consistency.
-    text = text.replaceAll('\u0670', 'ا');
-    return text.replaceAll(
+    final updated = text.replaceAll('\u0670', 'ا');
+    return updated.replaceAll(
       RegExp(r'[\u0610-\u061A\u064B-\u065F\u06D6-\u06ED]'),
       '',
     );

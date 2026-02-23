@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:ui' show FontWeight;
 
 import 'package:flutter/foundation.dart' show ChangeNotifier, debugPrint;
-import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/material.dart' show ColorScheme, ThemeMode;
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/settings_service.dart';
 import 'package:my_quran/app/utils.dart';
@@ -16,15 +16,19 @@ class SettingsController extends ChangeNotifier {
   String _language = 'ar';
   FontFamily _fontFamily = FontFamily.rustam;
   FontWeight _fontWeight = FontWeight.w500;
-  AppTheme _appTheme = AppTheme.light;
+  AppTheme _appTheme = AppTheme.myQuran;
   bool _isHorizontalScrolling = false;
   bool _keepScreenOn = true;
   TextAlignOption _textAlign = TextAlignOption.auto;
+  bool _supportsDynamicColor = false;
+  ColorScheme? _deviceLightScheme;
+  ColorScheme? _deviceDarkScheme;
+  ThemeMode _themeMode = ThemeMode.system;
 
   // ── Getters ──
 
+  bool get supportsDynamicColor => _supportsDynamicColor;
   AppTheme get appTheme => _appTheme;
-  ThemeMode get themeMode => _appTheme.themeMode;
   bool get keepScreenOn => _keepScreenOn;
   bool get isHorizontalScrolling => _isHorizontalScrolling;
   String get language => _language;
@@ -34,10 +38,21 @@ class SettingsController extends ChangeNotifier {
 
   // Backward compat: some code checks this
   bool get useTrueBlackBgColor => _appTheme == AppTheme.amoled;
+  ColorScheme? get deviceLightScheme => _deviceLightScheme;
+  ColorScheme? get deviceDarkScheme => _deviceDarkScheme;
 
   FontWeight get fontWeightForCurrentFamily =>
       fontFamily == FontFamily.rustam ? FontWeight.w500 : _fontWeight;
 
+  ThemeMode get themeMode {
+    if (_appTheme.supportsThemeModeToggle) return _themeMode;
+    // Fixed themes have fixed brightness
+    return switch (_appTheme) {
+      AppTheme.classic || AppTheme.sepia => ThemeMode.light,
+      AppTheme.amoled => ThemeMode.dark,
+      _ => ThemeMode.system,
+    };
+  }
   // ── Setters ──
 
   set appTheme(AppTheme value) {
@@ -75,16 +90,23 @@ class SettingsController extends ChangeNotifier {
     notifyListeners();
     settingsService.setTextAlign(value);
   }
+
+  set themeMode(ThemeMode value) {
+    _themeMode = value;
+    notifyListeners();
+    settingsService.setThemeMode(value);
+  }
   // ── Actions ──
 
-  /// Quick toggle: light↔dark. Returns false if theme needs picker.
-  bool toggleTheme() {
-    final counterpart = _appTheme.toggleCounterpart;
-    if (counterpart != null) {
-      appTheme = counterpart;
-      return true;
-    }
-    return false; // caller should show picker
+  void toggleThemeMode() {
+    if (!_appTheme.supportsThemeModeToggle) return;
+    _themeMode = switch (_themeMode) {
+      ThemeMode.system => ThemeMode.light,
+      ThemeMode.light => ThemeMode.dark,
+      ThemeMode.dark => ThemeMode.system,
+    };
+    notifyListeners();
+    settingsService.setThemeMode(_themeMode);
   }
 
   Future<void> toggleKeepScreenOn() async {
@@ -102,12 +124,23 @@ class SettingsController extends ChangeNotifier {
     }
   }
 
+  void setDynamicColorSupport({
+    required bool supported,
+    ColorScheme? lightScheme,
+    ColorScheme? darkScheme,
+  }) {
+    _supportsDynamicColor = supported;
+    _deviceLightScheme = lightScheme;
+    _deviceDarkScheme = darkScheme;
+  }
+
   Future<void> init() async {
     _appTheme = await settingsService.loadAppTheme();
 
     _fontFamily = await settingsService.loadFontFamily();
     _fontWeight = await settingsService.loadFontWeight();
     _isHorizontalScrolling = await settingsService.loadIsHorizontalScroling();
+    _themeMode = await settingsService.loadThemeMode();
     _keepScreenOn = await settingsService.loadKeepScreenOn();
     _textAlign = await settingsService.loadTextAlign();
 
