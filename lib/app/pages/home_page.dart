@@ -1,5 +1,7 @@
 // ignore_for_file: lines_longer_than_80_chars (will refactor soon)
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -81,6 +83,8 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   late final ValueNotifier<int> bookmarkRevision = ValueNotifier(0);
+  bool _isLandscape = false;
+  bool _showHeader = true;
   @override
   void dispose() {
     _highlightedVerseNotifier.dispose();
@@ -290,12 +294,19 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     // 1. Calculate Heights
     final double statusBarHeight = MediaQuery.of(context).padding.top;
-    const double appBarHeight = kToolbarHeight; // Standard 56.0
-    const double infoHeaderHeight = 35; // Height of our Surah/Page strip
+    const double appBarHeight = kToolbarHeight;
+    const double infoHeaderHeight = 35;
 
-    // Total height obscuring the top
-    final double totalTopHeaderHeight =
-        statusBarHeight + appBarHeight + infoHeaderHeight;
+    _isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
+    double totalTopHeaderHeight = statusBarHeight;
+    if (!_isLandscape) {
+      totalTopHeaderHeight += appBarHeight;
+    }
+    if (_showHeader) {
+      totalTopHeaderHeight += infoHeaderHeight;
+    }
+
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final appBarDecoration = BoxDecoration(
       color: isDarkMode && widget.settingsController.appTheme == AppTheme.amoled
@@ -310,138 +321,144 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: context.colorScheme.surfaceContainer,
-        foregroundColor: context.colorScheme.primary,
-        elevation: 4,
-        onPressed: () => showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          useSafeArea: true,
-          constraints: const BoxConstraints(maxHeight: 600),
-          builder: (_) => QuranNavigationBottomSheet(
-            initialPage: _currentPositionNotifier.value.pageNumber,
-            onNavigate:
-                ({required int page, required int surah, required int verse}) =>
-                    _jumpToPage(
-                      page,
-                      highlightSurah: surah,
-                      highlightVerse: verse,
-                    ),
-          ),
-        ),
-        child: const Icon(Icons.menu_book_outlined),
-      ),
-      // --- 1. The Glass App Bar ---
-      appBar: AppBar(
-        systemOverlayStyle: isDarkMode
-            ? SystemUiOverlayStyle.light
-            : SystemUiOverlayStyle.dark,
-        titleSpacing: 4,
-        title: Row(
-          spacing: 5,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.search),
+      floatingActionButton: _isLandscape
+          ? null
+          : FloatingActionButton(
+              backgroundColor: context.colorScheme.surfaceContainer,
+              foregroundColor: context.colorScheme.primary,
+              elevation: 4,
               onPressed: () => showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
                 useSafeArea: true,
-                showDragHandle: true,
-                builder: (_) => QuranSearchBottomSheet(
-                  verseFontFamily: widget.settingsController.fontFamily,
-                  onNavigateToPage: (int page, {int? surah, int? verse}) =>
-                      _jumpToPage(
+                constraints: const BoxConstraints(maxHeight: 600),
+                builder: (_) => QuranNavigationBottomSheet(
+                  initialPage: _currentPositionNotifier.value.pageNumber,
+                  onNavigate:
+                      ({
+                        required int page,
+                        required int surah,
+                        required int verse,
+                      }) => _jumpToPage(
                         page,
                         highlightSurah: surah,
                         highlightVerse: verse,
                       ),
                 ),
               ),
+              child: const Icon(Icons.menu_book_outlined),
             ),
-            IconButton(
-              icon: const Icon(Icons.bookmark_border),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (_) => BookmarksScreen(
-                      onBookmarkChanged: () => bookmarkRevision.value++,
-                      settingsController: widget.settingsController,
-                      onNavigateToPage:
-                          ({
-                            required int page,
-                            required int surah,
-                            required int verse,
-                          }) => _jumpToPage(
-                            page,
-                            highlightSurah: surah,
-                            highlightVerse: verse,
-                          ),
+      appBar: _isLandscape
+          ? null
+          : AppBar(
+              systemOverlayStyle: isDarkMode
+                  ? SystemUiOverlayStyle.light
+                  : SystemUiOverlayStyle.dark,
+              titleSpacing: 4,
+              title: Row(
+                spacing: 5,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: () => showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      useSafeArea: true,
+                      showDragHandle: true,
+                      builder: (_) => QuranSearchBottomSheet(
+                        verseFontFamily: widget.settingsController.fontFamily,
+                        onNavigateToPage:
+                            (int page, {int? surah, int? verse}) => _jumpToPage(
+                              page,
+                              highlightSurah: surah,
+                              highlightVerse: verse,
+                            ),
+                      ),
                     ),
                   ),
-                );
-              },
-            ),
-            Expanded(
-              child: Text(
-                'قرآني',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: context.colorScheme.secondary,
-                  fontFamily: FontFamily.rustam.name,
-                ),
+                  IconButton(
+                    icon: const Icon(Icons.bookmark_border),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (_) => BookmarksScreen(
+                            onBookmarkChanged: () => bookmarkRevision.value++,
+                            settingsController: widget.settingsController,
+                            onNavigateToPage:
+                                ({
+                                  required int page,
+                                  required int surah,
+                                  required int verse,
+                                }) => _jumpToPage(
+                                  page,
+                                  highlightSurah: surah,
+                                  highlightVerse: verse,
+                                ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  Expanded(
+                    child: Text(
+                      'قرآني',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: context.colorScheme.secondary,
+                        fontFamily: FontFamily.rustam.name,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(decoration: appBarDecoration),
-        actions: [
-          IconButton(
-            onPressed: () {
-              if (widget.settingsController.appTheme.supportsThemeModeToggle) {
-                widget.settingsController.toggleThemeMode();
-              } else {
-                _showThemePicker(context);
-              }
-            },
-            onLongPress: () => _showThemePicker(context),
-            icon: _buildThemeIcon(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                showDragHandle: false,
-                isScrollControlled: true,
-                barrierColor: Colors.transparent,
-
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * .6,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              flexibleSpace: Container(decoration: appBarDecoration),
+              actions: [
+                IconButton(
+                  onPressed: () {
+                    if (widget
+                        .settingsController
+                        .appTheme
+                        .supportsThemeModeToggle) {
+                      widget.settingsController.toggleThemeMode();
+                    } else {
+                      _showThemePicker(context);
+                    }
+                  },
+                  onLongPress: () => _showThemePicker(context),
+                  icon: _buildThemeIcon(),
                 ),
-                builder: (context) {
-                  final fontController = FontSizeController();
-
-                  return SettingsSheet(
-                    fontController: fontController,
-                    settingsController: widget.settingsController,
-                  );
-                },
-              );
-            },
-          ),
-        ],
-      ),
-
+                IconButton(
+                  icon: const Icon(Icons.settings_outlined),
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      showDragHandle: false,
+                      isScrollControlled: true,
+                      barrierColor: Colors.transparent,
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * .6,
+                      ),
+                      builder: (context) {
+                        final fontController = FontSizeController();
+                        return SettingsSheet(
+                          fontController: fontController,
+                          settingsController: widget.settingsController,
+                        );
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
       body: SafeArea(
-        top: false,
+        top: _isLandscape,
         child: Stack(
           children: [
-            // --- 3. The List (Bottom Layer) ---
+            // --- The List (Bottom Layer) ---
             if (widget.settingsController.isHorizontalScrolling)
               Positioned.fill(
                 child: PageView.builder(
@@ -469,13 +486,11 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
             else
               Positioned.fill(
                 child: ScrollablePositionedList.builder(
-                  // scrollDirection: Axis.horizontal,
                   itemCount: Quran.totalPagesCount,
                   itemScrollController: _itemScrollController,
                   itemPositionsListener: _itemPositionsListener,
                   initialScrollIndex:
                       (widget.initialPosition?.pageNumber ?? 1) - 1,
-                  // This pushes the first page down so it's visible initially
                   padding: EdgeInsets.only(top: totalTopHeaderHeight + 10),
                   itemBuilder: (context, index) => RepaintBoundary(
                     child: QuranPageWidget(
@@ -489,20 +504,80 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ),
                 ),
               ),
-            // --- 2. The Pinned Info Header (Middle Layer) ---
-            // We position this EXACTLY below the AppBar
-            PinnedHeader(
-              statusBarHeight: statusBarHeight,
-              appBarHeight: appBarHeight,
-              infoHeight: infoHeaderHeight,
-              decoration: appBarDecoration,
-              currentPositionNotifier: _currentPositionNotifier,
-              goToPage: _jumpToPage,
-            ),
+
+            // --- Pinned Info Header (animates in/out in landscape) ---
+            if (_isLandscape)
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                top: _showHeader ? 0 : -infoHeaderHeight,
+                left: 0,
+                right: 0,
+                height: infoHeaderHeight,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: _showHeader ? 1 : 0,
+                  child: PinnedHeader(
+                    decoration: appBarDecoration,
+                    currentPositionNotifier: _currentPositionNotifier,
+                    goToPage: _jumpToPage,
+                  ),
+                ),
+              )
+            else
+              Positioned(
+                top: statusBarHeight + appBarHeight,
+                left: 0,
+                right: 0,
+                height: infoHeaderHeight,
+                child: PinnedHeader(
+                  decoration: appBarDecoration,
+                  currentPositionNotifier: _currentPositionNotifier,
+                  goToPage: _jumpToPage,
+                ),
+              ),
+
+            // --- Landscape toggle button ---
+            if (_isLandscape)
+              Positioned(
+                top: _showHeader ? infoHeaderHeight + 4 : 4,
+                left: 8,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 300),
+                  opacity: _showHeader ? 0.4 : 0.6,
+                  child: GestureDetector(
+                    onTap: _toggleHeader,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.applyOpacity(0.1),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        _showHeader
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 18,
+                        color: context.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
+  }
+
+  void _toggleHeader() {
+    setState(() => _showHeader = !_showHeader);
   }
 }
 
@@ -604,11 +679,28 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
     }
   }
 
-  double _pageHorizontalPadding(double fontSize) {
-    if (fontSize >= 40) return 6;
-    if (fontSize >= 34) return 8;
-    if (fontSize >= 28) return 10;
-    return 14;
+  double _pageHorizontalPadding(double fontSize, double screenWidth) {
+    // Base padding from font size
+    double base;
+    if (fontSize >= 40) {
+      base = 6;
+    } else if (fontSize >= 34) {
+      base = 8;
+    } else if (fontSize >= 28) {
+      base = 10;
+    } else {
+      base = 14;
+    }
+
+    // In landscape, add extra padding proportional to screen width
+    // to keep line length comfortable for reading
+    if (screenWidth > 600) {
+      // Landscape or tablet
+      final extra = (screenWidth - 600) * 0.08;
+      return base + extra.clamp(0, 60);
+    }
+
+    return base;
   }
 
   @override
@@ -633,7 +725,10 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
       child: Container(
         color: Colors.transparent,
         padding: EdgeInsets.symmetric(
-          horizontal: _pageHorizontalPadding(baseFontSize),
+          horizontal: _pageHorizontalPadding(
+            baseFontSize,
+            MediaQuery.of(context).size.width,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

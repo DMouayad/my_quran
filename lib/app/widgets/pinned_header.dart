@@ -9,9 +9,6 @@ class PinnedHeader extends StatelessWidget {
     required this.currentPositionNotifier,
     required this.goToPage,
     required this.decoration,
-    required this.infoHeight,
-    required this.statusBarHeight,
-    required this.appBarHeight,
     super.key,
   });
 
@@ -19,77 +16,66 @@ class PinnedHeader extends StatelessWidget {
   final void Function(int page, {int? highlightSurah, int? highlightVerse})
   goToPage;
   final BoxDecoration decoration;
-  final double infoHeight;
-  final double statusBarHeight;
-  final double appBarHeight;
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      top: statusBarHeight + appBarHeight, // Push down by AppBar height
-      left: 0,
-      right: 0,
-      height: infoHeight,
-      child: DefaultTextStyle(
-        style: TextStyle(
-          fontFamily: FontFamily.arabicNumbersFontFamily.name,
-          color: Theme.of(context).colorScheme.onSurface,
-          fontWeight: FontWeight.w700,
-          fontSize: 16,
-        ),
-        child: Container(
-          decoration: decoration,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: ValueListenableBuilder<ReadingPosition>(
-            valueListenable: currentPositionNotifier,
-            builder: (context, position, _) {
-              final surahName = Quran.instance.getSurahNameArabic(
-                position.surahNumber,
-              );
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () => onSurahTapped(context),
-                        child: Text(
-                          '${getArabicNumber(position.surahNumber)} - '
-                          '$surahName',
-                        ),
+    return DefaultTextStyle(
+      style: TextStyle(
+        fontFamily: FontFamily.arabicNumbersFontFamily.name,
+        color: Theme.of(context).colorScheme.onSurface,
+        fontWeight: FontWeight.w700,
+        fontSize: 16,
+      ),
+      child: Container(
+        decoration: decoration,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: ValueListenableBuilder<ReadingPosition>(
+          valueListenable: currentPositionNotifier,
+          builder: (context, position, _) {
+            final surahName = Quran.instance.getSurahNameArabic(
+              position.surahNumber,
+            );
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () => onSurahTapped(context),
+                      child: Text(
+                        '${getArabicNumber(position.surahNumber)} - '
+                        '$surahName',
                       ),
-                      GestureDetector(
-                        onTap: () => onJuzTapped(context),
-                        child: Text(
-                          'جزء ${getArabicNumber(position.juzNumber)}',
-                        ),
-                      ),
-                    ],
-                  ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onTap: () => onPageNumberTapped(context),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: Text(
-                          getArabicNumber(position.pageNumber),
-                          key: ValueKey(position.pageNumber),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+                    ),
+                    GestureDetector(
+                      onTap: () => onJuzTapped(context),
+                      child: Text('جزء ${getArabicNumber(position.juzNumber)}'),
+                    ),
+                  ],
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: () => onPageNumberTapped(context),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Text(
+                        getArabicNumber(position.pageNumber),
+                        key: ValueKey(position.pageNumber),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ),
                   ),
-                ],
-              );
-            },
-          ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
