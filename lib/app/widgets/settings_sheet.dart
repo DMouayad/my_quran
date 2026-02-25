@@ -259,33 +259,28 @@ class SettingsSheet extends StatelessWidget {
                       onChanged: (_) => settingsController.toggleKeepScreenOn(),
                     ),
                     const _ThinDivider(),
-                    _SegmentedRow(
-                      label: 'عرض رقم الحزب',
-                      child: SegmentedButton<bool>(
-                        segments: const [
-                          ButtonSegment(value: false, label: Text('مخفي')),
-
-                          ButtonSegment(value: true, label: Text('بدل الجزء')),
-                        ],
-                        style: _segmentStyle(colorScheme),
-                        selected: {!settingsController.hizbDisplay.isHidden},
-                        onSelectionChanged: (v) =>
-                            settingsController.hizbDisplay = v.first
-                            ? HizbDisplay.replaceJuzWithQuarter
-                            : HizbDisplay.hidden,
-                      ),
+                    _ToggleRow(
+                      icon: Icons.numbers_outlined,
+                      title: 'عرض رقم الحزب',
+                      subtitle:
+                          'يظهر رقم الحزب بدلاً من رقم الجزء في الشريط المُثبت.',
+                      value: !settingsController.hizbDisplay.isHidden,
+                      onChanged: (displayed) =>
+                          settingsController.hizbDisplay = displayed
+                          ? HizbDisplay.replaceJuzWithQuarter
+                          : HizbDisplay.hidden,
                     ),
-                    if (settingsController.hizbDisplay.isReplaceJuz) ...[
-                      _ToggleRow(
-                        icon: Icons.hide_source,
-                        title: 'إخفاء رقم الربع',
-                        value: !settingsController.hizbDisplay.withQuarter,
-                        onChanged: (hidden) =>
-                            settingsController.hizbDisplay = hidden
-                            ? HizbDisplay.replaceJuz
-                            : HizbDisplay.replaceJuzWithQuarter,
-                      ),
-                    ],
+                    _ToggleRow(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                      enabled: !settingsController.hizbDisplay.isHidden,
+                      icon: Icons.hide_source,
+                      title: 'إخفاء رقم الربع',
+                      value: !settingsController.hizbDisplay.withQuarter,
+                      onChanged: (hidden) =>
+                          settingsController.hizbDisplay = hidden
+                          ? HizbDisplay.replaceJuz
+                          : HizbDisplay.replaceJuzWithQuarter,
+                    ),
                   ],
                 ),
               ],
@@ -513,7 +508,9 @@ class _ToggleRow extends StatelessWidget {
     required this.title,
     required this.value,
     required this.onChanged,
+    this.enabled = true,
     this.subtitle,
+    this.padding,
   });
 
   final IconData icon;
@@ -521,54 +518,67 @@ class _ToggleRow extends StatelessWidget {
   final String? subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
+  final bool enabled;
+  final EdgeInsets? padding;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return InkWell(
-      onTap: () => onChanged(!value),
-      borderRadius: BorderRadius.circular(14),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: value ? colorScheme.primary : colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
+    return DefaultTextStyle(
+      style: TextStyle(
+        color: enabled ? context.colorScheme.onSurface : Colors.black26,
+      ),
+      child: InkWell(
+        onTap: !enabled ? null : () => onChanged(!value),
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding:
+              padding ??
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 22,
+                color: !enabled
+                    ? Colors.black26
+                    : value
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      subtitle!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colorScheme.onSurfaceVariant,
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            Switch(
-              value: value,
-              onChanged: onChanged,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-          ],
+              Switch(
+                value: enabled && value,
+                onChanged: enabled ? onChanged : null,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ],
+          ),
         ),
       ),
     );
