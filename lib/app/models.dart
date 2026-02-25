@@ -231,11 +231,11 @@ enum TextAlignOption {
 }
 
 enum HizbDisplay {
-  hidden, // لا يظهر
-  besideJuz, // بجانب الجزء
-  replaceJuz; // بدل الجزء
+  hidden,
+  replaceJuz,
+  replaceJuzWithQuarter;
 
   bool get isHidden => this == hidden;
-  bool get isReplaceJuz => this == replaceJuz;
-  bool get isBesideJuz => this == besideJuz;
+  bool get isReplaceJuz => this == replaceJuz || this == replaceJuzWithQuarter;
+  bool get withQuarter => this == replaceJuzWithQuarter;
 }

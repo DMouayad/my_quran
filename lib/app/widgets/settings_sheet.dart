@@ -261,24 +261,31 @@ class SettingsSheet extends StatelessWidget {
                     const _ThinDivider(),
                     _SegmentedRow(
                       label: 'عرض رقم الحزب',
-                      child: SegmentedButton<HizbDisplay>(
+                      child: SegmentedButton<bool>(
                         segments: const [
-                          ButtonSegment(
-                            value: HizbDisplay.hidden,
-                            label: Text('مخفي'),
-                          ),
+                          ButtonSegment(value: false, label: Text('مخفي')),
 
-                          ButtonSegment(
-                            value: HizbDisplay.replaceJuz,
-                            label: Text('بدل الجزء'),
-                          ),
+                          ButtonSegment(value: true, label: Text('بدل الجزء')),
                         ],
                         style: _segmentStyle(colorScheme),
-                        selected: {settingsController.hizbDisplay},
+                        selected: {!settingsController.hizbDisplay.isHidden},
                         onSelectionChanged: (v) =>
-                            settingsController.hizbDisplay = v.first,
+                            settingsController.hizbDisplay = v.first
+                            ? HizbDisplay.replaceJuzWithQuarter
+                            : HizbDisplay.hidden,
                       ),
                     ),
+                    if (settingsController.hizbDisplay.isReplaceJuz) ...[
+                      _ToggleRow(
+                        icon: Icons.hide_source,
+                        title: 'إخفاء رقم الربع',
+                        value: !settingsController.hizbDisplay.withQuarter,
+                        onChanged: (hidden) =>
+                            settingsController.hizbDisplay = hidden
+                            ? HizbDisplay.replaceJuz
+                            : HizbDisplay.replaceJuzWithQuarter,
+                      ),
+                    ],
                   ],
                 ),
               ],
@@ -504,14 +511,14 @@ class _ToggleRow extends StatelessWidget {
   const _ToggleRow({
     required this.icon,
     required this.title,
-    required this.subtitle,
     required this.value,
     required this.onChanged,
+    this.subtitle,
   });
 
   final IconData icon;
   final String title;
-  final String subtitle;
+  final String? subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
 
@@ -543,14 +550,16 @@ class _ToggleRow extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colorScheme.onSurfaceVariant,
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

@@ -66,13 +66,19 @@ class PinnedHeader extends StatelessWidget {
 
                         if (!hizbDisplay.isHidden) {
                           parts.add(
-                            'حزب ${getArabicNumber(position.hizbNumber)}'
-                            ' (${getArabicNumber(position.hizbQuarter)}/٤)',
+                            'حزب ${getArabicNumber(position.hizbNumber)}',
                           );
+                          if (hizbDisplay.withQuarter) {
+                            parts.add(
+                              ' (${getArabicNumber(position.hizbQuarter)}/٤)',
+                            );
+                          }
                         }
 
                         return GestureDetector(
-                          onTap: () => onJuzTapped(context),
+                          onTap: () => hizbDisplay.isReplaceJuz
+                              ? onHizbTapped(context)
+                              : onJuzTapped(context),
                           child: Text(parts.join(' - ')),
                         );
                       },
@@ -102,6 +108,108 @@ class PinnedHeader extends StatelessWidget {
             );
           },
         ),
+      ),
+    );
+  }
+
+  void onHizbTapped(BuildContext context) {
+    int? hizb;
+    int selectedQuarter = 1;
+
+    void validateAndGo(int? hizb, int quarter) {
+      if (hizb is! int || hizb < 1 || hizb > 60) return;
+
+      final (surah, verse) = Quran.instance.getHizbQuarterStart(
+        hizb,
+        quarter: quarter,
+      );
+      Navigator.pop(context);
+      goToPage(
+        Quran.instance.getPageNumber(surah, verse),
+        highlightSurah: surah,
+        highlightVerse: verse,
+      );
+    }
+
+    showAdaptiveDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          final colorScheme = Theme.of(context).colorScheme;
+
+          return SimpleDialog(
+            title: const Text('أدخل رقم الحزب'),
+            contentPadding: const EdgeInsets.all(24),
+            children: [
+              TextField(
+                maxLength: 2,
+                buildCounter:
+                    (
+                      context, {
+                      required currentLength,
+                      required isFocused,
+                      required maxLength,
+                    }) => const SizedBox.shrink(),
+                autofocus: true,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                keyboardType: TextInputType.number,
+                style: const TextStyle(fontSize: 18),
+                onChanged: (value) => hizb = int.tryParse(value),
+                onSubmitted: (_) => validateAndGo(hizb, selectedQuarter),
+              ),
+              const SizedBox(height: 16),
+
+              // Quarter selector
+              Text(
+                'الربع',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SegmentedButton<int>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment(value: 1, label: Text('الأول')),
+                  ButtonSegment(value: 2, label: Text('الثاني')),
+                  ButtonSegment(value: 3, label: Text('الثالث')),
+                ],
+                style: ButtonStyle(
+                  textStyle: const WidgetStatePropertyAll(
+                    TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                  foregroundColor: WidgetStateColor.resolveWith(
+                    (states) => states.contains(WidgetState.selected)
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                  backgroundColor: WidgetStateColor.resolveWith(
+                    (states) => states.contains(WidgetState.selected)
+                        ? colorScheme.primary
+                        : Colors.transparent,
+                  ),
+                  side: WidgetStatePropertyAll(
+                    BorderSide(
+                      color: colorScheme.outlineVariant.applyOpacity(0.5),
+                    ),
+                  ),
+                ),
+                selected: {selectedQuarter},
+                onSelectionChanged: (v) {
+                  setState(() => selectedQuarter = v.first);
+                },
+              ),
+
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: () => validateAndGo(hizb, selectedQuarter),
+                child: const Text('انتقال'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

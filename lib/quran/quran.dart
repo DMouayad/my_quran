@@ -366,19 +366,6 @@ class Quran {
     return hizbQuarterStarts.any((e) => e.$1 == surah && e.$2 == verse);
   }
 
-  /// Returns the quarter type at this verse, or null if not a quarter start.
-  /// 1 = ¼, 2 = ½, 3 = ¾, 4 = hizb start
-  int? getHizbQuarterType(int surah, int verse) {
-    for (int i = 0; i < hizbQuarterStarts.length; i++) {
-      if (hizbQuarterStarts[i].$1 == surah &&
-          hizbQuarterStarts[i].$2 == verse) {
-        final quarter = (i % 4) + 1;
-        return quarter;
-      }
-    }
-    return null;
-  }
-
   /// Hizb quarter index (0-239) for binary search.
   int _getQuarterIndex(int surah, int verse) {
     int result = 0;
@@ -390,5 +377,12 @@ class Quran {
       }
     }
     return result;
+  }
+
+  /// Returns the (surah, verse) that starts the given hizb and quarter.
+  /// [hizb] is 1-60, [quarter] is 1-4 (1=hizb start, 2=¼, 3=½, 4=¾)
+  (int surah, int verse) getHizbQuarterStart(int hizb, {int quarter = 1}) {
+    final index = ((hizb - 1) * 4) + (quarter - 1);
+    return hizbQuarterStarts[index.clamp(0, hizbQuarterStarts.length - 1)];
   }
 }
