@@ -258,6 +258,27 @@ class SettingsSheet extends StatelessWidget {
                       value: settingsController.keepScreenOn,
                       onChanged: (_) => settingsController.toggleKeepScreenOn(),
                     ),
+                    const _ThinDivider(),
+                    _SegmentedRow(
+                      label: 'عرض رقم الحزب',
+                      child: SegmentedButton<HizbDisplay>(
+                        segments: const [
+                          ButtonSegment(
+                            value: HizbDisplay.hidden,
+                            label: Text('مخفي'),
+                          ),
+
+                          ButtonSegment(
+                            value: HizbDisplay.replaceJuz,
+                            label: Text('بدل الجزء'),
+                          ),
+                        ],
+                        style: _segmentStyle(colorScheme),
+                        selected: {settingsController.hizbDisplay},
+                        onSelectionChanged: (v) =>
+                            settingsController.hizbDisplay = v.first,
+                      ),
+                    ),
                   ],
                 ),
               ],

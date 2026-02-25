@@ -71,6 +71,8 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
             surahNumber: 1,
             verseNumber: 1,
             juzNumber: 1,
+            hizbNumber: 1,
+            hizbQuarter: 1,
           ),
     );
 
@@ -160,12 +162,13 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
       final firstSurah = pageData.first;
       final surahNum = firstSurah['surah']!;
       final verseNum = firstSurah['start']!;
-      final juz = Quran.instance.getJuzNumber(surahNum, verseNum);
       _currentPositionNotifier.value = ReadingPosition(
         pageNumber: pageNumber,
         surahNumber: surahNum,
         verseNumber: verseNum,
-        juzNumber: juz,
+        juzNumber: Quran.instance.getJuzNumber(surahNum, verseNum),
+        hizbNumber: Quran.instance.getHizbNumber(surahNum, verseNum),
+        hizbQuarter: Quran.instance.getHizbQuarter(surahNum, verseNum),
       );
     }
   }
@@ -528,6 +531,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     duration: const Duration(milliseconds: 200),
                     opacity: _showHeader ? 1 : 0,
                     child: PinnedHeader(
+                      settingsController: widget.settingsController,
                       decoration: appBarDecoration,
                       currentPositionNotifier: _currentPositionNotifier,
                       goToPage: _jumpToPage,
@@ -542,6 +546,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   height: infoHeaderHeight,
                   child: PinnedHeader(
                     decoration: appBarDecoration,
+                    settingsController: widget.settingsController,
                     currentPositionNotifier: _currentPositionNotifier,
                     goToPage: _jumpToPage,
                   ),

@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SettingsService {
   static const String _appThemeKey = 'app_theme';
   static const String _trueBlackKey = 'true_black';
+  static const String _hizbDisplayKey = 'hizb_display';
+
   final _prefs = SharedPreferencesAsync();
 
   Future<void> setLanguage(String language) async {
@@ -126,5 +128,20 @@ class SettingsService {
 
   Future<bool> loadUseTrueBlackBgColor() async {
     return await _prefs.getBool(_trueBlackKey) ?? false;
+  }
+
+  Future<void> setHizbDisplay(HizbDisplay value) async {
+    await _prefs.setString(_hizbDisplayKey, value.name);
+  }
+
+  Future<HizbDisplay> loadHizbDisplay() async {
+    final name = await _prefs.getString(_hizbDisplayKey);
+    try {
+      return name == null
+          ? HizbDisplay.hidden
+          : HizbDisplay.values.byName(name);
+    } catch (e) {
+      return HizbDisplay.hidden;
+    }
   }
 }

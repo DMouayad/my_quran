@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:my_quran/app/models.dart';
+import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/quran/quran.dart';
 
 class PinnedHeader extends StatelessWidget {
   const PinnedHeader({
+    required this.settingsController,
     required this.currentPositionNotifier,
     required this.goToPage,
     required this.decoration,
@@ -16,6 +18,7 @@ class PinnedHeader extends StatelessWidget {
   final void Function(int page, {int? highlightSurah, int? highlightVerse})
   goToPage;
   final BoxDecoration decoration;
+  final SettingsController settingsController;
 
   @override
   Widget build(BuildContext context) {
@@ -48,9 +51,31 @@ class PinnedHeader extends StatelessWidget {
                         '$surahName',
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () => onJuzTapped(context),
-                      child: Text('جزء ${getArabicNumber(position.juzNumber)}'),
+                    // Juz + Hizb
+                    ListenableBuilder(
+                      listenable: settingsController,
+                      builder: (context, child) {
+                        final hizbDisplay = settingsController.hizbDisplay;
+                        final parts = <String>[];
+
+                        if (!hizbDisplay.isReplaceJuz) {
+                          parts.add(
+                            'جزء ${getArabicNumber(position.juzNumber)}',
+                          );
+                        }
+
+                        if (!hizbDisplay.isHidden) {
+                          parts.add(
+                            'حزب ${getArabicNumber(position.hizbNumber)}'
+                            ' (${getArabicNumber(position.hizbQuarter)}/٤)',
+                          );
+                        }
+
+                        return GestureDetector(
+                          onTap: () => onJuzTapped(context),
+                          child: Text(parts.join(' - ')),
+                        );
+                      },
                     ),
                   ],
                 ),

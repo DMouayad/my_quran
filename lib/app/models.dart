@@ -52,6 +52,8 @@ class PageLocation {
 
 class ReadingPosition {
   const ReadingPosition({
+    required this.hizbNumber,
+    required this.hizbQuarter,
     required this.pageNumber,
     required this.surahNumber,
     required this.verseNumber,
@@ -63,11 +65,15 @@ class ReadingPosition {
         surahNumber: json['surahNumber'] as int,
         verseNumber: json['verseNumber'] as int,
         juzNumber: json['juzNumber'] as int,
+        hizbNumber: json['hizbNumber'] as int? ?? 1,
+        hizbQuarter: json['hizbQuarter'] as int? ?? 1,
       );
   final int pageNumber;
   final int surahNumber;
   final int verseNumber;
   final int juzNumber;
+  final int hizbNumber;
+  final int hizbQuarter;
 
   @override
   String toString() =>
@@ -79,6 +85,8 @@ class ReadingPosition {
     'surahNumber': surahNumber,
     'verseNumber': verseNumber,
     'juzNumber': juzNumber,
+    'hizbNumber': hizbNumber,
+    'hizbQuarter': hizbQuarter,
   };
 }
 
@@ -220,4 +228,14 @@ enum TextAlignOption {
   justify, // ضبط
   center, // توسيط
   start, // محاذاة لليمين
+}
+
+enum HizbDisplay {
+  hidden, // لا يظهر
+  besideJuz, // بجانب الجزء
+  replaceJuz; // بدل الجزء
+
+  bool get isHidden => this == hidden;
+  bool get isReplaceJuz => this == replaceJuz;
+  bool get isBesideJuz => this == besideJuz;
 }

@@ -24,6 +24,7 @@ class SettingsController extends ChangeNotifier {
   ColorScheme? _deviceDarkScheme;
   ThemeMode _themeMode = ThemeMode.system;
   bool _useTrueBlackBgColor = false;
+  HizbDisplay _hizbDisplay = HizbDisplay.hidden;
 
   // ── Getters ──
 
@@ -41,6 +42,7 @@ class SettingsController extends ChangeNotifier {
 
   ColorScheme? get deviceLightScheme => _deviceLightScheme;
   ColorScheme? get deviceDarkScheme => _deviceDarkScheme;
+  HizbDisplay get hizbDisplay => _hizbDisplay;
 
   FontWeight get fontWeightForCurrentFamily =>
       fontFamily == FontFamily.rustam ? FontWeight.w500 : _fontWeight;
@@ -94,6 +96,12 @@ class SettingsController extends ChangeNotifier {
     notifyListeners();
     settingsService.setUseTrueBlackBgColor(value);
   }
+
+  set hizbDisplay(HizbDisplay value) {
+    _hizbDisplay = value;
+    settingsService.setHizbDisplay(value);
+    notifyListeners();
+  }
   // ── Actions ──
 
   void toggleThemeMode() {
@@ -133,7 +141,6 @@ class SettingsController extends ChangeNotifier {
 
   Future<void> init() async {
     _appTheme = await settingsService.loadAppTheme();
-
     _fontFamily = await settingsService.loadFontFamily();
     _fontWeight = await settingsService.loadFontWeight();
     _isHorizontalScrolling = await settingsService.loadIsHorizontalScroling();
@@ -141,6 +148,8 @@ class SettingsController extends ChangeNotifier {
     _keepScreenOn = await settingsService.loadKeepScreenOn();
     _textAlign = await settingsService.loadTextAlign();
     _useTrueBlackBgColor = await settingsService.loadUseTrueBlackBgColor();
+    _hizbDisplay = await settingsService.loadHizbDisplay();
+
     unawaited(_applyWakelock());
 
     debugPrint('✅ Loaded settings');
