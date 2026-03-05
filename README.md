@@ -5,12 +5,6 @@
 
   #  My Quran | قرآني
 
-  <!-- BADGES -->
-  ![Version](https://img.shields.io/github/v/release/dmouayad/my_quran?style=flat&labelColor=CCE8E4&color=0F766E&label=Latest%20Version)
-  [![Project's License](https://img.shields.io/github/license/dmouayad/my_quran?style=flat&labelColor=CCE8E4&color=0F766E)](./LICENSE)
-  ![Flutter](https://img.shields.io/badge/Built%20with-Flutter-0F766E?style=flat&labelColor=CCE8E4&logo=flutter&logoColor=0F766E)
-  [![style: very good analysis](https://img.shields.io/badge/style-very_good_analysis-0F766E.svg?labelColor=CCE8E4)](https://pub.dev/packages/very_good_analysis)
-  
   <!-- DOWNLOAD BUTTONS -->
   <div align="center">
 
