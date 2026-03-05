@@ -74,6 +74,13 @@ jobs:
                   distribution: "temurin"
                   java-version: "17"
 
+            - name: Install specific NDK
+              run: |
+                export NDK_VERSION="28.2.13676358"
+                echo "y" | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "ndk;${NDK_VERSION}"
+                echo "ANDROID_NDK_HOME=${ANDROID_HOME}/ndk/${NDK_VERSION}" >> $GITHUB_ENV
+                echo "ANDROID_NDK=${ANDROID_HOME}/ndk/${NDK_VERSION}" >> $GITHUB_ENV
+
             - name: Setup Flutter
               uses: subosito/flutter-action@v2
               with:
@@ -106,10 +113,12 @@ jobs:
               env:
                 APP_VERSION: ${{ needs.get-version-info.outputs.version }}
                 APP_BUILD: ${{ needs.get-version-info.outputs.build_number }}
+                ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
               run: |
                 flutter build apk --release --split-per-abi \
                   --dart-define=APP_VERSION="$APP_VERSION" \
-                  --dart-define=APP_BUILD="$APP_BUILD"
+                  --dart-define=APP_BUILD="$APP_BUILD"                
+
             - name: Zipalign and Resign APKs
               run: |
                   # 1. Dynamically find the latest version of apksigner
