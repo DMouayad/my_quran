@@ -1,3 +1,7 @@
+### 1.7.2
+
+FIX: app crash on web.
+
 ### 1.7.1
 
 - FIX: Fixed dynamic color theming using device's accent color as seed for proper Material 3 color scheme generation.

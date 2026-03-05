@@ -1,6 +1,6 @@
 // GENERATED — DO NOT EDIT BY HAND
 // Run: dart run scripts/update_whats_new.dart
-// Version: 1.7.1
+// Version: 1.7.2
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class WhatsNewDialog extends StatelessWidget {
   const WhatsNewDialog({super.key});
 
-  static const String _currentVersion = '1.7.1';
+  static const String _currentVersion = '1.7.2';
   static const String _seenKey = 'whats_new_seen_version';
 
   static Future<void> showIfNeeded(BuildContext context) async {
@@ -81,7 +81,7 @@ class WhatsNewDialog extends StatelessWidget {
                   child: Column(
                     children: [
                       _VersionSection(
-                        version: '1.7.1',
+                        version: '1.7.2',
                         isCurrent: true,
                         categories: [
                           _CategorySection(
@@ -89,8 +89,21 @@ class WhatsNewDialog extends StatelessWidget {
                             icon: Icons.bug_report,
                             color: Colors.red,
                             items: [
-                              'إصلاح مشكلة ظهور نتائج بدون تظليل الكلمة المطابقة.',
-                              'إصلاح الألوان عند استخدام المظهر التلقائي',
+                              'إصلاح تعطل تطبيق الويب',
+                            ],
+                          ),
+                        ],
+                      ),
+                      _VersionSection(
+                        version: '1.7.1',
+                        isCurrent: false,
+                        categories: [
+                          _CategorySection(
+                            title: 'الإصلاحات',
+                            icon: Icons.bug_report,
+                            color: Colors.red,
+                            items: [
+                              'إصلاح مشكلة ظهور نتائج البحث بدون تظليل الكلمة المطابقة.',
                               'إصلاح مشكلة في مظهر ألوان الجهاز (Dynamic) كانت تجعل معظم الأسطح تستخدم نفس لون.',
                             ],
                           ),
