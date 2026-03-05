@@ -312,7 +312,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     final newIsLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape &&
-        (Platform.isAndroid || Platform.isIOS);
+        (!kIsWeb && (Platform.isAndroid || Platform.isIOS));
     if (newIsLandscape != _isLandscape) {
       _isLandscape = newIsLandscape;
       _updateSystemUI();
@@ -1067,7 +1067,13 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
     final highlightBg = context.isDarkMode
         ? colorScheme.surfaceContainerHigh
         : colorScheme.surfaceContainerHighest;
-    final highlightStyle = TextStyle(backgroundColor: highlightBg);
+    final highlightStyle = TextStyle(
+      background: Paint()
+        ..style = PaintingStyle.fill
+        ..strokeJoin = StrokeJoin.round
+        ..strokeWidth = 24.0
+        ..color = highlightBg,
+    );
 
     final symbolFontFamily = isWarsh
         ? FontFamily.warsh.name
