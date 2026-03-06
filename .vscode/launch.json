@@ -9,8 +9,8 @@
             "request": "launch",
             "type": "dart",
             "args": [
-                "dart-define=APP_VERSION=1.7.1",
-                "dart-define=APP_BUILD=18",
+                "dart-define=APP_VERSION=1.7.4",
+                "dart-define=APP_BUILD=21",
             ]
         },
         {
