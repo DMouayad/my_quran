@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
 import 'package:my_quran/app/services/notes_service.dart';
-import 'package:my_quran/app/models.dart';
 
 enum ImportMode { merge, replace }
 
@@ -37,25 +38,32 @@ class BackupService {
 
   final BookmarkService _bookmarkService = BookmarkService();
   final NotesService _notesService = NotesService();
-  static const _appVersionDefine = String.fromEnvironment('APP_VERSION');
-  static const _appBuildDefine = String.fromEnvironment('APP_BUILD');
 
-  String get appVersionForBackup => _appVersionDefine.startsWith('v')
-      ? _appVersionDefine.substring(1)
-      : _appVersionDefine;
+  // Cache (platform channel call)
+  static Future<PackageInfo>? _cachedInfoFuture;
 
-  int? get appBuildForBackup => int.tryParse(_appBuildDefine);
+  Future<PackageInfo> _packageInfo() {
+    return _cachedInfoFuture ??= PackageInfo.fromPlatform();
+  }
+
+  int? _tryParseBuild(String buildNumber) => int.tryParse(buildNumber);
+
   // ---------- Public API ----------
 
   Future<void> exportAndShare() async {
-    final bytes = await _exportBytes();
+    final info = await _packageInfo();
+    final appVersion = info.version.trim();
+    final appBuild = _tryParseBuild(info.buildNumber);
 
-    final appVersion = appVersionForBackup;
-    final appBuild = appBuildForBackup;
+    final bytes = await _exportBytes(
+      appVersion: appVersion,
+      appBuild: appBuild,
+    );
 
     final dir = await getTemporaryDirectory();
+
     final safeVersion = appVersion.isEmpty ? 'unknown' : appVersion;
-    final safeBuild = appBuild == null ? '0' : appBuild.toString();
+    final safeBuild = (appBuild == null) ? '0' : appBuild.toString();
 
     final fileName =
         'my_quran-backup-v$schemaVersion-$safeVersion+$safeBuild-'
@@ -93,6 +101,10 @@ class BackupService {
     final bms = (data['bookmarks'] as List<dynamic>? ?? const []).length;
     final nts = (data['notes'] as List<dynamic>? ?? const []).length;
 
+    final app = doc['app'] as Map?;
+    final appVersion = app?['version'] as String?;
+    final appBuild = (app?['build'] as num?)?.toInt();
+
     return BackupPreview(
       createdAt:
           DateTime.tryParse(doc['createdAt'] as String? ?? '') ??
@@ -101,8 +113,8 @@ class BackupService {
       categoryCount: cats,
       bookmarkCount: bms,
       noteCount: nts,
-      appVersion: (doc['app'] as Map?)?['version'] as String?,
-      appBuild: ((doc['app'] as Map?)?['build'] as num?)?.toInt(),
+      appVersion: appVersion,
+      appBuild: appBuild,
     );
   }
 
@@ -169,13 +181,14 @@ class BackupService {
   }
 
   // ---------- Export implementation ----------
-  Future<List<int>> _exportBytes() async {
+
+  Future<List<int>> _exportBytes({
+    required String appVersion,
+    required int? appBuild,
+  }) async {
     final categories = await _bookmarkService.getCategories();
     final bookmarks = await _bookmarkService.getBookmarks();
     final notes = await _notesService.getAllNotes();
-
-    final appVersion = appVersionForBackup;
-    final appBuild = appBuildForBackup;
 
     final doc = <String, dynamic>{
       'schema': schema,
@@ -227,10 +240,8 @@ class BackupService {
     required List<VerseBookmark> bookmarks,
     required List<VerseNote> notes,
   }) async {
-    // Replace categories & bookmarks via existing BookmarkService API
     await _bookmarkService.replaceCategories(categories);
     await _bookmarkService.replaceBookmarks(bookmarks);
-
     await _notesService.replaceAll(notes);
   }
 
@@ -248,7 +259,7 @@ class BackupService {
     ];
     await _bookmarkService.replaceCategories(mergedCats);
 
-    // Bookmarks: merge by verse (enforce one bookmark per verse)
+    // Bookmarks: merge by verse (last-write-wins by updatedAt)
     final localBms = await _bookmarkService.getBookmarks();
     final mergedBms = _mergeBookmarksByVerse(localBms, bookmarks);
     await _bookmarkService.replaceBookmarks(mergedBms);
@@ -275,13 +286,8 @@ class BackupService {
     for (final b in incoming) {
       final key = '${b.surah}:${b.verse}';
       final existing = map[key];
-      if (existing == null) {
+      if (existing == null || b.updatedAt.isAfter(existing.updatedAt)) {
         map[key] = b;
-      } else {
-        // last-write-wins using updatedAt
-        if (b.updatedAt.isAfter(existing.updatedAt)) {
-          map[key] = b;
-        }
       }
     }
 
@@ -298,13 +304,8 @@ class BackupService {
     for (final x in incoming) {
       final id = idOf(x);
       final existing = map[id];
-      if (existing == null) {
+      if (existing == null || updatedAtOf(x).isAfter(updatedAtOf(existing))) {
         map[id] = x;
-      } else {
-        // last write wins
-        if (updatedAtOf(x).isAfter(updatedAtOf(existing))) {
-          map[id] = x;
-        }
       }
     }
     return map.values.toList();
