@@ -1,318 +1,370 @@
 name: Build & Release
 
 permissions:
-    contents: write
+  contents: write
 
 on:
-    workflow_dispatch:
-        inputs:
-            tag_name:
-                description: "The tag name for the release (e.g., v1.0.0)"
-                required: true
-                type: string
-            prerelease:
-                description: "Set to true for a pre-release"
-                required: false
-                type: boolean
-                default: false
-            draft:
-                description: "Set to true to create a draft release"
-                required: false
-                type: boolean
-                default: false
-    push:
-        tags:
-            - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "The tag name for the release (for example: v1.7.4)"
+        required: true
+        type: string
+      prerelease:
+        description: "Create as prerelease"
+        required: false
+        type: boolean
+        default: false
+      draft:
+        description: "Create as draft"
+        required: false
+        type: boolean
+        default: false
+  push:
+    tags:
+      - "v*"
 
 concurrency:
-    group: "pages"
-    cancel-in-progress: true
+  group: build-release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-    get-version-info:
-        runs-on: ubuntu-latest
-        outputs:
-            version: ${{ steps.version.outputs.version }}
-            build_number: ${{ steps.version.outputs.build_number }}
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+  get-version-info:
+    runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.info.outputs.release_tag }}
+      release_commit: ${{ steps.info.outputs.release_commit }}
+      version: ${{ steps.info.outputs.version }}
+      pubspec_build: ${{ steps.info.outputs.pubspec_build }}
+      version_code_armv7: ${{ steps.info.outputs.version_code_armv7 }}
+      version_code_arm64: ${{ steps.info.outputs.version_code_arm64 }}
+      flutter_version: ${{ steps.flutter_version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name || github.ref_name }}
+          fetch-depth: 0
 
-            - name: Get version from tag
-              id: version
-              run: |
-                  version=${GITHUB_REF#refs/tags/}
-                  echo "version=$version" >> $GITHUB_OUTPUT
-                  echo "Release version: $version"
-                  BUILD_NUMBER=$(grep '^version:' pubspec.yaml | sed 's/.*+//')
-                  BUILD_NUMBER=$((BUILD_NUMBER * 10 + 3))
-                  echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
-    build_android:
-        name: Build Release APKs
-        needs: [get-version-info]
-        runs-on: ubuntu-latest
+      - name: Read Flutter version
+        id: flutter_version
+        shell: bash
+        run: |
+          echo "version=$(tr -d '\n' < .flutter-version)" >> "$GITHUB_OUTPUT"
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-
-            - name: Checkout reproducible-apk-tools
-              uses: actions/checkout@v4
-              with:
-                  repository: obfusk/reproducible-apk-tools
-                  ref: v0.3.0
-                  path: reproducible-apk-tools
-
-            - name: Setup Python
-              uses: actions/setup-python@v5
-              with:
-                  python-version: "3.x"
-
-            - name: Setup Java
-              uses: actions/setup-java@v4
-              with:
-                  distribution: "temurin"
-                  java-version: "17"
-
-            - name: Setup Flutter
-              uses: subosito/flutter-action@v2
-              with:
-                  channel: "stable"
-                  flutter-version-file: pubspec.yaml
-                  cache: true
-
-            - name: Flutter Doctor
-              id: flutter_doctor
-              run: |
-                  flutter doctor -v
-
-            - name: Get Dependencies
-              run: flutter pub get
-
-            # --- SIGNING SETUP ---
-            - name: Decode Keystore
-              run: |
-                  echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
-
-            - name: Create key.properties
-              run: |
-                  echo "storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}" > android/key.properties
-                  echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/key.properties
-                  echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
-                  echo "storeFile=upload-keystore.jks" >> android/key.properties
-
-            # --- BUILD APKs ---
-            - name: Build Split APKs
-              env:
-                APP_VERSION: ${{ needs.get-version-info.outputs.version }}
-                APP_BUILD: ${{ needs.get-version-info.outputs.build_number }}
-              run: |
-                flutter build apk --release --split-per-abi \
-                  --dart-define=APP_VERSION="$APP_VERSION" \
-                  --dart-define=APP_BUILD="$APP_BUILD"                
-
-            - name: Zipalign and Resign APKs
-              run: |
-                  # 1. Dynamically find the latest version of apksigner
-                  # We look inside build-tools, sort in reverse to get the highest version, and pick the top one.
-                  APKSIGNER=$(find $ANDROID_HOME/build-tools -name "apksigner" | sort -r | head -n 1)
-
-                  if [ -z "$APKSIGNER" ]; then
-                    echo "Error: apksigner not found in $ANDROID_HOME/build-tools"
-                    exit 1
-                  fi
-
-                  echo "Using apksigner: $APKSIGNER"
-
-                  cd build/app/outputs/apk/release
-
-                  for apk in *.apk; do
-                    # --- Step A: Zipalign ---
-                    mv "$apk" "${apk%.apk}-unaligned.apk"
-
-                    python3 ${{ github.workspace }}/reproducible-apk-tools/zipalign.py \
-                      --page-size 16 \
-                      --pad-like-apksigner \
-                      --replace \
-                      "${apk%.apk}-unaligned.apk" \
-                      "$apk"
-
-                    rm "${apk%.apk}-unaligned.apk"
-
-                    # --- Step B: Resign the APK ---
-                    # Make sure your keystore path and secret names match your repo setup
-
-                    "$APKSIGNER" sign \
-                      --ks ${{ github.workspace }}/android/app/upload-keystore.jks \
-                      --ks-pass pass:${{ secrets.ANDROID_STORE_PASSWORD }} \
-                      --key-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} \
-                      --ks-key-alias ${{ secrets.ANDROID_KEY_ALIAS }} \
-                      "$apk"
-
-                     # Verify it
-                     "$APKSIGNER" verify --verbose "$apk"
-                  done
-
-            - name: Upload Android Artifacts
-              uses: actions/upload-artifact@v7
-              with:
-                  name: apks
-                  path: build/app/outputs/apk/release/*.apk
-
-    build_linux_x86_64:
-        name: Build Release Linux
-        needs: [get-version-info]
-        runs-on: ubuntu-22.04
+      - name: Resolve release info
+        id: info
+        shell: bash
         env:
-          WORKING_DIR: build/linux/x64/release/bundle
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name || github.ref_name }}
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          PUBSPEC_BUILD="$(sed -n 's/^version: .*+\([0-9]\+\)$/\1/p' pubspec.yaml)"
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+          test -n "$PUBSPEC_BUILD"
 
-            - name: Setup Flutter
-              uses: subosito/flutter-action@v2
-              with:
-                  channel: "stable"
-                  flutter-version-file: pubspec.yaml
-                  cache: true
-            
-            - name: Install dependencies
-              run: |
-                flutter pub get
-                sudo apt update && sudo apt install -y \
-                clang \
-                cmake \
-                ninja-build \
-                libgtk-3-dev \
-                libfuse2 \
-                appstream
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "release_commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "pubspec_build=$PUBSPEC_BUILD" >> "$GITHUB_OUTPUT"
+          echo "version_code_armv7=$((PUBSPEC_BUILD * 10 + 2))" >> "$GITHUB_OUTPUT"
+          echo "version_code_arm64=$((PUBSPEC_BUILD * 10 + 3))" >> "$GITHUB_OUTPUT"
 
-            - name: Build Linux App
-              env:
-                APP_VERSION: ${{ needs.get-version-info.outputs.version }}
-                APP_BUILD: ${{ needs.get-version-info.outputs.build_number }}
-              run: |
-                flutter build linux --release \
-                  --dart-define=APP_VERSION="${{ env.APP_VERSION }}" \
-                  --dart-define=APP_BUILD="${{ env.APP_BUILD }}"
-            
-            - name: Get version from pubspec.yaml
-              id: get_version
-              run: |
-                VERSION=$(sed -n 's/^version: \([0-9]*\.[0-9]*\.[0-9]*\).*/\1/p' pubspec.yaml)
-                echo "VERSION=$VERSION" >> $GITHUB_ENV   
+  build_android:
+    name: Build Release APKs
+    needs: get-version-info
+    runs-on: ubuntu-latest
 
-            - name: Create portable version
-              run: |
-                cp assets/icon-cricle.png ${{ env.WORKING_DIR }}/my_quran.png
-                tar -cvzf MyQuran-${VERSION}-linux-x86_64.tar.gz -C ${{ env.WORKING_DIR }} .  
-            
-            - name: Prepare AppDir for packaging as an AppImage
-              run: |
-                mkdir -p AppDir/usr/share/icons/hicolor/512x512/apps
-                
-                cp -r ${{ env.WORKING_DIR }}/* AppDir/
-                cp linux/packaging/my_quran.desktop AppDir/
-                cp linux/packaging/appimage/AppRun AppDir/
-                cp ${{ env.WORKING_DIR }}/my_quran.png AppDir/usr/share/icons/hicolor/512x512/apps
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.get-version-info.outputs.release_commit }}
+          fetch-depth: 0
 
-            - name: Install appimagetool (For packaging as an appimage)
-              run: |
-                curl -L -o appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
-                chmod +x appimagetool
-            
-            - name: Build Appimage
-              run: ./appimagetool AppDir/ MyQuran-${VERSION}-linux-x86_64.AppImage
-              
-            - name: Upload Android Artifacts
-              uses: actions/upload-artifact@v7
-              with:
-                  name: linuxBuilds_x64_86
-                  path: |
-                    *linux-x86_64.tar.gz
-                    *linux-x86_64.AppImage
-                    
-    release:
-        name: Publish Release
-        needs: [build_android, build_linux_x86_64, get-version-info]
-        runs-on: ubuntu-latest
+      - name: Checkout reproducible-apk-tools
+        uses: actions/checkout@v4
+        with:
+          repository: obfusk/reproducible-apk-tools
+          ref: v0.3.0
+          path: reproducible-apk-tools
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-              
-            - uses: actions/download-artifact@v7
-              with:
-                  name: apks
-                  path: artifacts
-            
-            - uses: actions/download-artifact@v7
-              with:
-                  name: linuxBuilds_x64_86
-                  path: artifacts
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
 
-            - name: Create GitHub Release
-              uses: ncipollo/release-action@v1
-              with:
-                  tag: ${{ github.event.inputs.tag_name }}
-                  prerelease: ${{ github.event.inputs.prerelease }}
-                  draft: ${{ github.event.inputs.draft }}
-                  bodyFile: fastlane/metadata/android/en-US/changelogs/${{ needs.get-version-info.outputs.build_number }}.txt
-                  artifacts: >
-                    artifacts/*.apk,
-                    artifacts/*.tar.gz,
-                    artifacts/*.AppImage
-                  token: ${{ secrets.GITHUB_TOKEN }}
-                 
-    build_web_artifact:
-        name: Build Web Artifact
-        needs: get-version-info
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
 
-            - name: Setup Flutter
-              uses: subosito/flutter-action@v2
-              with:
-                  channel: "stable"
-                  flutter-version-file: pubspec.yaml
-                  cache: true
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ needs.get-version-info.outputs.flutter_version }}
+          cache: true
 
-            - name: Get Dependencies
-              run: flutter pub get
+      - name: Install Android SDK components
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "ndk;29.0.14206865" "cmake;3.22.1"
 
-            - name: Configure GitHub Pages
-              id: pages
-              uses: actions/configure-pages@v4
+      - name: Flutter Doctor
+        run: flutter doctor -v
 
-            - name: Build Web App
-              env:
-                APP_VERSION: ${{ needs.get-version-info.outputs.version }}
-                APP_BUILD: ${{ needs.get-version-info.outputs.build_number }}
-              run: |
-                flutter build web --pwa-strategy=offline-first \
-                  --base-href "${{ steps.pages.outputs.base_path }}/" \
-                  --dart-define=APP_VERSION="$APP_VERSION" \
-                  --dart-define=APP_BUILD="$APP_BUILD"
+      - name: Get dependencies
+        shell: bash
+        run: flutter pub get --enforce-lockfile
 
-            - name: Upload GitHub Pages artifact
-              uses: actions/upload-pages-artifact@v3
-              with:
-                  path: "./build/web"
+      - name: Decode keystore
+        shell: bash
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
 
-    deploy_pages:
-        needs: build_web_artifact
-        name: Deploy to GitHub Pages
-        environment:
-            name: github-pages
-            url: ${{ steps.deployment.outputs.page_url }}
-        runs-on: ubuntu-latest
-        permissions:
-            pages: write
-            id-token: write
-        steps:
-            - name: Deploy to GitHub Pages
-              id: deployment
-              uses: actions/deploy-pages@v4
+      - name: Create key.properties
+        shell: bash
+        run: |
+          {
+            echo "storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}"
+            echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}"
+            echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}"
+            echo "storeFile=upload-keystore.jks"
+          } > android/key.properties
+
+      - name: Build armeabi-v7a APK
+        shell: bash
+        env:
+          ANDROID_NDK_HOME: /opt/android-sdk/ndk/29.0.14206865
+          ANDROID_NDK_ROOT: /opt/android-sdk/ndk/29.0.14206865
+        run: |
+          flutter build apk --release --split-per-abi --target-platform=android-arm
+
+      - name: Build arm64-v8a APK
+        shell: bash
+        env:
+          ANDROID_NDK_HOME: /opt/android-sdk/ndk/29.0.14206865
+          ANDROID_NDK_ROOT: /opt/android-sdk/ndk/29.0.14206865
+        run: |
+          flutter build apk --release --split-per-abi --target-platform=android-arm64
+
+      - name: Zipalign and resign APKs
+        shell: bash
+        run: |
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)"
+
+          if [ -z "$APKSIGNER" ]; then
+            echo "apksigner not found"
+            exit 1
+          fi
+
+          cd build/app/outputs/flutter-apk
+
+          for apk in app-*-release.apk; do
+            mv "$apk" "${apk%.apk}-unaligned.apk"
+
+            python3 "${{ github.workspace }}/reproducible-apk-tools/zipalign.py" \
+              --page-size 16 \
+              --pad-like-apksigner \
+              --replace \
+              "${apk%.apk}-unaligned.apk" \
+              "$apk"
+
+            rm -f "${apk%.apk}-unaligned.apk"
+
+            "$APKSIGNER" sign \
+              --ks "${{ github.workspace }}/android/app/upload-keystore.jks" \
+              --ks-pass "pass:${{ secrets.ANDROID_STORE_PASSWORD }}" \
+              --key-pass "pass:${{ secrets.ANDROID_KEY_PASSWORD }}" \
+              --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+              "$apk"
+
+            "$APKSIGNER" verify --verbose "$apk"
+          done
+
+      - name: Rename APKs for release
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.get-version-info.outputs.release_tag }}
+          ARMV7_CODE: ${{ needs.get-version-info.outputs.version_code_armv7 }}
+          ARM64_CODE: ${{ needs.get-version-info.outputs.version_code_arm64 }}
+        run: |
+          cd build/app/outputs/flutter-apk
+
+          mv app-armeabi-v7a-release.apk "MyQuran-${RELEASE_TAG}-armeabi-v7a-${ARMV7_CODE}-release.apk"
+          mv app-arm64-v8a-release.apk "MyQuran-${RELEASE_TAG}-arm64-v8a-${ARM64_CODE}-release.apk"
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: apks
+          path: build/app/outputs/flutter-apk/*.apk
+
+  build_linux_x86_64:
+    name: Build Release Linux
+    needs: get-version-info
+    runs-on: ubuntu-22.04
+    env:
+      WORKING_DIR: build/linux/x64/release/bundle
+      VERSION: ${{ needs.get-version-info.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.get-version-info.outputs.release_commit }}
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ needs.get-version-info.outputs.flutter_version }}
+          cache: true
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          flutter pub get --enforce-lockfile
+          sudo apt update
+          sudo apt install -y \
+            clang \
+            cmake \
+            ninja-build \
+            libgtk-3-dev \
+            libfuse2 \
+            appstream
+
+      - name: Build Linux app
+        shell: bash
+        run: |
+          flutter build linux --release
+
+      - name: Create portable archive
+        shell: bash
+        run: |
+          cp assets/icon-cricle.png "${{ env.WORKING_DIR }}/my_quran.png"
+          tar -czf "MyQuran-${VERSION}-linux-x86_64.tar.gz" -C "${{ env.WORKING_DIR }}" .
+
+      - name: Prepare AppDir
+        shell: bash
+        run: |
+          mkdir -p AppDir/usr/share/icons/hicolor/512x512/apps
+          cp -r "${{ env.WORKING_DIR }}"/* AppDir/
+          cp linux/packaging/my_quran.desktop AppDir/
+          cp linux/packaging/appimage/AppRun AppDir/
+          cp "${{ env.WORKING_DIR }}/my_quran.png" AppDir/usr/share/icons/hicolor/512x512/apps/
+
+      - name: Install appimagetool
+        shell: bash
+        run: |
+          curl -L -o appimagetool \
+            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool
+
+      - name: Build AppImage
+        shell: bash
+        run: |
+          ./appimagetool AppDir/ "MyQuran-${VERSION}-linux-x86_64.AppImage"
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linuxBuilds_x64_86
+          path: |
+            *linux-x86_64.tar.gz
+            *linux-x86_64.AppImage
+
+  release:
+    name: Publish Release
+    needs:
+      - build_android
+      - build_linux_x86_64
+      - get-version-info
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.get-version-info.outputs.release_commit }}
+          fetch-depth: 0
+
+      - name: Download APK artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: apks
+          path: artifacts
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linuxBuilds_x64_86
+          path: artifacts
+
+      - name: Create GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.get-version-info.outputs.release_tag }}
+          prerelease: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.prerelease == true }}
+          draft: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.draft == true }}
+          bodyFile: fastlane/metadata/android/en-US/changelogs/${{ needs.get-version-info.outputs.version_code_arm64 }}.txt
+          artifacts: |
+            artifacts/*.apk
+            artifacts/*.tar.gz
+            artifacts/*.AppImage
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  build_web_artifact:
+    name: Build Web Artifact
+    needs: get-version-info
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.get-version-info.outputs.release_commit }}
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ needs.get-version-info.outputs.flutter_version }}
+          cache: true
+
+      - name: Get dependencies
+        shell: bash
+        run: flutter pub get --enforce-lockfile
+
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build web app
+        shell: bash
+        run: |
+          flutter build web --pwa-strategy=offline-first \
+            --base-href "${{ steps.pages.outputs.base_path }}/"
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./build/web
+
+  deploy_pages:
+    name: Deploy to GitHub Pages
+    needs: build_web_artifact
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
