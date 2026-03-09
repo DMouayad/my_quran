@@ -106,12 +106,6 @@ jobs:
           flutter-version: ${{ needs.get-version-info.outputs.flutter_version }}
           cache: true
 
-      - name: Install Android SDK components
-        shell: bash
-        run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "ndk;29.0.14206865" "cmake;3.22.1"
-
       - name: Flutter Doctor
         run: flutter doctor -v
 
@@ -136,17 +130,11 @@ jobs:
 
       - name: Build armeabi-v7a APK
         shell: bash
-        env:
-          ANDROID_NDK_HOME: /opt/android-sdk/ndk/29.0.14206865
-          ANDROID_NDK_ROOT: /opt/android-sdk/ndk/29.0.14206865
         run: |
           flutter build apk --release --split-per-abi --target-platform=android-arm
 
       - name: Build arm64-v8a APK
         shell: bash
-        env:
-          ANDROID_NDK_HOME: /opt/android-sdk/ndk/29.0.14206865
-          ANDROID_NDK_ROOT: /opt/android-sdk/ndk/29.0.14206865
         run: |
           flutter build apk --release --split-per-abi --target-platform=android-arm64
 
