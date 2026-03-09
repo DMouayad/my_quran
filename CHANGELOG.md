@@ -1,3 +1,8 @@
+### 1.7.5
+
+FEAT: use package_info_plus to get the app version & build number.
+FIX: update Github release workflow to fix Reproducible Build issue.  
+
 ### 1.7.2
 
 FIX: app crash on web.
