@@ -21,7 +21,6 @@ import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/font_size_controller.dart';
 import 'package:my_quran/app/services/reading_position_service.dart';
 import 'package:my_quran/app/utils.dart';
-import 'package:my_quran/app/quran_helpers.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/widgets/navigation_sheet.dart';
 import 'package:my_quran/app/widgets/verse_menu_dialog.dart';
@@ -49,6 +48,11 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final ItemScrollController _itemScrollController = ItemScrollController();
   final ItemPositionsListener _itemPositionsListener =
       ItemPositionsListener.create();
+
+  /// Key attached to an inline sentinel [WidgetSpan] at the highlighted verse.
+  /// Used by [Scrollable.ensureVisible] to scroll to the verse's exact pixel
+  /// position, which is accurate regardless of font size.
+  final GlobalKey _highlightedBlockKey = GlobalKey();
 
   late final FontSizeController _fontSizeController = FontSizeController();
 
@@ -200,21 +204,31 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     final index = (pageNumber - 1).clamp(0, Quran.totalPagesCount - 1);
 
-    // 2. Calculate Alignment
-    double alignment = 0;
-    if (highlightSurah != null && highlightVerse != null) {
-      alignment = getVerseAlignmentOnPage(
-        pageNumber: pageNumber,
-        highlightSurah: highlightSurah,
-        highlightVerse: highlightVerse,
-      );
-    }
-
-    // 3. Jump to new page
+    // 2. Jump to the correct page first
     if (widget.settingsController.isHorizontalScrolling) {
       _pageController.jumpToPage(index);
     } else {
-      _itemScrollController.jumpTo(index: index, alignment: alignment);
+      _itemScrollController.jumpTo(index: index);
+    }
+
+    // 3. After the page renders, scroll to the highlighted verse block
+    //    using its actual pixel position (font-size independent).
+    if (highlightSurah != null && highlightVerse != null) {
+      // Double post-frame callback: first frame builds the page,
+      // second frame ensures layout is settled before ensureVisible.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final ctx = _highlightedBlockKey.currentContext;
+          if (ctx != null) {
+            Scrollable.ensureVisible(
+              ctx,
+              alignment: 0.25,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+            );
+          }
+        });
+      });
     }
   }
 
@@ -518,6 +532,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                           scaleFactor: _scaleFactor,
                           pageNumber: index + 1,
                           highlightedVerseListenable: _highlightedVerseNotifier,
+                          highlightedBlockKey: _highlightedBlockKey,
                           settingsController: widget.settingsController,
                           onVerseTap: _onVerseTapped,
                           bookmarkRevision: bookmarkRevision,
@@ -542,6 +557,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         fontSizeController: _fontSizeController,
                         scaleFactor: _scaleFactor,
                         highlightedVerseListenable: _highlightedVerseNotifier,
+                        highlightedBlockKey: _highlightedBlockKey,
                         settingsController: widget.settingsController,
                         onVerseTap: _onVerseTapped,
                         bookmarkRevision: bookmarkRevision,
@@ -603,6 +619,7 @@ class QuranPageWidget extends StatefulWidget {
     required this.pageNumber,
     required this.settingsController,
     required this.highlightedVerseListenable,
+    required this.highlightedBlockKey,
     required this.bookmarkRevision,
     this.onVerseTap,
     this.onBookmarkChanged,
@@ -611,6 +628,7 @@ class QuranPageWidget extends StatefulWidget {
 
   final int pageNumber;
   final ValueListenable<({int surah, int verse})?> highlightedVerseListenable;
+  final GlobalKey highlightedBlockKey;
   final ValueListenable<int> bookmarkRevision;
   final void Function(int surah, int verse)? onVerseTap;
   final VoidCallback? onBookmarkChanged;
@@ -759,6 +777,7 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
                 fontSize: baseFontSize,
                 symbolFontSize: symbolFontSize,
                 highlightedVerseListenable: widget.highlightedVerseListenable,
+                highlightedBlockKey: widget.highlightedBlockKey,
                 bookmarkRevision: widget.bookmarkRevision,
                 onInteraction: _onVerseInteraction,
                 settingsController: widget.settingsController,
@@ -896,6 +915,7 @@ class _SurahTextBlock extends StatefulWidget {
     required this.fontSize,
     required this.symbolFontSize,
     required this.highlightedVerseListenable,
+    required this.highlightedBlockKey,
     required this.bookmarkRevision,
     required this.onInteraction,
     required this.settingsController,
@@ -906,6 +926,7 @@ class _SurahTextBlock extends StatefulWidget {
   final double fontSize;
   final double symbolFontSize;
   final ValueListenable<({int surah, int verse})?> highlightedVerseListenable;
+  final GlobalKey highlightedBlockKey;
   final ValueListenable<int> bookmarkRevision;
   final void Function(int s, int v, {required bool isLongPress}) onInteraction;
   final SettingsController settingsController;
@@ -1107,6 +1128,19 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
       } else {
         displayText = fullText;
         displaySymbol = seg.symbolText;
+      }
+
+      // Insert a zero-size keyed sentinel inline with the highlighted verse
+      // so Scrollable.ensureVisible targets this exact position.
+      if (isSelected) {
+        children.add(
+          WidgetSpan(
+            child: KeyedSubtree(
+              key: widget.highlightedBlockKey,
+              child: const SizedBox.shrink(),
+            ),
+          ),
+        );
       }
 
       // 1. Verse text
