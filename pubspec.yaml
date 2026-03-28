@@ -6,7 +6,7 @@ version: 1.7.5+22
 
 environment:
     sdk: ">=3.10.0 <4.0.0"
-    flutter: 3.38.5
+    flutter: 3.41.4
 
 dependencies:
     collection: ^1.19.1

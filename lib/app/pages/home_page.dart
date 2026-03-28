@@ -357,15 +357,12 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 builder: (_) => QuranNavigationBottomSheet(
                   initialPage: _currentPositionNotifier.value.pageNumber,
                   onNavigate:
-                      ({
-                        required int page,
-                        required int surah,
-                        required int verse,
-                      }) => _jumpToPage(
-                        page,
-                        highlightSurah: surah,
-                        highlightVerse: verse,
-                      ),
+                      ({required page, required surah, required verse}) =>
+                          _jumpToPage(
+                            page,
+                            highlightSurah: surah,
+                            highlightVerse: verse,
+                          ),
                 ),
               ),
               child: const Icon(Icons.menu_book_outlined),
@@ -389,12 +386,11 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       showDragHandle: true,
                       builder: (_) => QuranSearchBottomSheet(
                         verseFontFamily: widget.settingsController.fontFamily,
-                        onNavigateToPage:
-                            (int page, {int? surah, int? verse}) => _jumpToPage(
-                              page,
-                              highlightSurah: surah,
-                              highlightVerse: verse,
-                            ),
+                        onNavigateToPage: (page, {surah, verse}) => _jumpToPage(
+                          page,
+                          highlightSurah: surah,
+                          highlightVerse: verse,
+                        ),
                       ),
                     ),
                   ),
@@ -409,9 +405,9 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                             settingsController: widget.settingsController,
                             onNavigateToPage:
                                 ({
-                                  required int page,
-                                  required int surah,
-                                  required int verse,
+                                  required page,
+                                  required surah,
+                                  required verse,
                                 }) => _jumpToPage(
                                   page,
                                   highlightSurah: surah,
