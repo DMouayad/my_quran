@@ -1,3 +1,0 @@
-- Add book mode to flip through pages by swiping.
-- Add a true black background color option for AMOLED screens.
-- Fix a typo in Surah Al-Araf(7) verse 46.

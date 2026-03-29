@@ -1,0 +1,11 @@
+- Fix web app crash.
+- Improved the Settings sheet.
+- Added Sepia theme.
+- Added backup export/import for bookmarks and notes.
+- Notes are now independent from bookmarks and linked directly to verses.
+- Added dedicated Warsh page metadata.
+- Fixed an issue where pages 488 - 489 is blank in Warsh narration.
+- Improved search to return more accurate results for short queries (2+ letters).
+- Added multiple search matching modes (Auto/Exact/Prefix/Contains/Flexible).
+- Fixed cases where results appeared without highlighting the matching word.
+- Fixed an issue with dynamic color theming where all surfaces were using the same color.

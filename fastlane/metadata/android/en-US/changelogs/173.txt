@@ -1,6 +1,0 @@
-- Improved the Settings sheet.
-- Added Sepia theme.
-- Added backup export/import for bookmarks and notes.
-- Notes are now independent from bookmarks and linked directly to verses.
-- Added dedicated Warsh page metadata.
-- Fixed an issue where pages 488 - 489 is blank in Warsh narration.

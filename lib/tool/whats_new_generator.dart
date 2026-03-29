@@ -78,13 +78,27 @@ String? _readVersion(String root) {
   return null;
 }
 
-int? _readBuildNumber(String root) {
+int? _readBuildNumber(String root, {String abi = 'arm64-v8a'}) {
   final file = File('$root/pubspec.yaml');
   if (!file.existsSync()) return null;
+
+  final abiVersionCode = switch (abi) {
+    'x86_64' => 1,
+    'armeabi-v7a' => 2,
+    'arm64-v8a' => 3,
+    _ => 0,
+  };
+
   for (final line in file.readAsLinesSync()) {
     final match = RegExp(r'^version:\s*\S+\+(\d+)').firstMatch(line);
-    if (match != null) return int.tryParse(match.group(1)!);
+    if (match == null) continue;
+
+    final baseBuildNumber = int.tryParse(match.group(1)!);
+    if (baseBuildNumber == null) return null;
+
+    return baseBuildNumber * 10 + abiVersionCode;
   }
+
   return null;
 }
 
@@ -375,7 +389,7 @@ List<_VersionChangelog> _readAllChangelogs(
 
   // Deterministic safety (#1)
   versions.sort((a, b) => b.buildNumber.compareTo(a.buildNumber));
-
+  print(versions.toList());
   // Safety: if nothing matched as current, mark first
   if (versions.isNotEmpty && !versions.any((v) => v.isCurrent)) {
     print(
@@ -810,4 +824,9 @@ class _VersionChangelog {
   final int buildNumber;
   final bool isCurrent;
   final List<_ChangelogEntry> entries;
+
+  @override
+  String toString() {
+    return '_VersionChangelog($version, $buildNumber)';
+  }
 }
