@@ -61,7 +61,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   late final ValueNotifier<ReadingPosition> _currentPositionNotifier;
   late final _pageController = PageController(
-    initialPage: widget.initialPosition?.pageNumber ?? 0,
+    initialPage: (widget.initialPosition?.pageNumber ?? 1) - 1,
   );
 
   /// Used to keep track of current scroll mode
@@ -73,7 +73,6 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    _highlightedVerseNotifier = ValueNotifier(null);
     Quran.instance.data.addListener(_onQuranDataChanged);
     _currentPositionNotifier = ValueNotifier(
       widget.initialPosition ??
@@ -85,6 +84,14 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
             hizbNumber: 1,
             hizbQuarter: 1,
           ),
+    );
+    _highlightedVerseNotifier = ValueNotifier(
+      widget.initialPosition != null
+          ? (
+              surah: widget.initialPosition!.surahNumber,
+              verse: widget.initialPosition!.verseNumber,
+            )
+          : null,
     );
 
     _itemPositionsListener.itemPositions.addListener(_onScrollUpdate);
@@ -462,17 +469,6 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       );
                     },
                   ),
-                  // Expanded(
-                  //   child: Text(
-                  //     'قرآني',
-                  //     textAlign: TextAlign.center,
-                  //     style: TextStyle(
-                  //       fontSize: 16,
-                  //       color: context.colorScheme.secondary,
-                  //       fontFamily: FontFamily.rustam.name,
-                  //     ),
-                  //   ),
-                  // ),
                 ],
               ),
               backgroundColor: Colors.transparent,
@@ -500,10 +496,8 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         maxHeight: MediaQuery.of(context).size.height * .6,
                       ),
                       builder: (context) {
-                        final fontController = FontSizeController();
-
                         return SettingsSheet(
-                          fontController: fontController,
+                          fontController: _fontSizeController,
                           settingsController: widget.settingsController,
                         );
                       },
