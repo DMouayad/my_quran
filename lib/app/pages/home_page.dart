@@ -211,24 +211,33 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
       _itemScrollController.jumpTo(index: index);
     }
 
-    // 3. After the page renders, scroll to the highlighted verse block
-    //    using its actual pixel position (font-size independent).
+    // 3. After the page renders, scroll to the highlighted verse block.
     if (highlightSurah != null && highlightVerse != null) {
-      // Double post-frame callback: first frame builds the page,
-      // second frame ensures layout is settled before ensureVisible.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          final ctx = _highlightedBlockKey.currentContext;
-          if (ctx != null) {
-            Scrollable.ensureVisible(
-              ctx,
-              alignment: 0.25,
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOutCubic,
-            );
-          }
-        });
-      });
+      unawaited(_scrollToHighlightedVerse(highlightVerse));
+    }
+  }
+
+  Future<void> _scrollToHighlightedVerse(int highlightVerse) async {
+    for (int i = 0; i < 2; i++) {
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+
+      final ctx = _highlightedBlockKey.currentContext;
+      if (ctx == null || !ctx.mounted) continue;
+      
+      final isFirstSurahVerse = highlightVerse == 1;
+      final double alignment = isFirstSurahVerse
+          ? widget.settingsController.isHorizontalScrolling
+                ? 1
+                : 0.6
+          : 0.25;
+      await Scrollable.ensureVisible(
+        ctx,
+        alignment: alignment,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      );
+      return;
     }
   }
 
