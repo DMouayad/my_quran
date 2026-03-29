@@ -1,6 +1,6 @@
 // GENERATED — DO NOT EDIT BY HAND
 // Run: dart run scripts/update_whats_new.dart
-// Version: 1.7.2
+// Version: 1.7.6
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class WhatsNewDialog extends StatelessWidget {
   const WhatsNewDialog({super.key});
 
-  static const String _currentVersion = '1.7.2';
+  static const String _currentVersion = '1.7.6';
   static const String _seenKey = 'whats_new_seen_version';
 
   static Future<void> showIfNeeded(BuildContext context) async {
@@ -77,36 +77,15 @@ class WhatsNewDialog extends StatelessWidget {
                   child: Column(
                     children: [
                       _VersionSection(
-                        version: '1.7.2',
+                        version: '1.7.6',
                         isCurrent: true,
                         categories: [
                           _CategorySection(
                             title: 'الإصلاحات',
                             icon: Icons.bug_report,
                             color: Colors.red,
-                            items: ['إصلاح تعطل تطبيق الويب'],
-                          ),
-                        ],
-                      ),
-                      _VersionSection(
-                        version: '1.7.1',
-                        isCurrent: false,
-                        categories: [
-                          _CategorySection(
-                            title: 'الإصلاحات',
-                            icon: Icons.bug_report,
-                            color: Colors.red,
                             items: [
-                              'إصلاح مشكلة ظهور نتائج البحث بدون تظليل الكلمة المطابقة.',
-                              'إصلاح مشكلة في مظهر ألوان الجهاز (Dynamic) كانت تجعل معظم الأسطح تستخدم نفس لون.',
-                            ],
-                          ),
-                          _CategorySection(
-                            title: 'ميزات جديدة',
-                            icon: Icons.new_releases,
-                            color: Colors.green,
-                            items: [
-                              'إضافة خيارات مطابقة متعددة للبحث (تلقائي/مطابق/بداية الكلمة/داخل الكلمة/مرن).',
+                              'إصلاح مشكلة عدم ظهور الآية بشكل كامل بعد الانتقال إليها.',
                             ],
                           ),
                           _CategorySection(
@@ -114,13 +93,19 @@ class WhatsNewDialog extends StatelessWidget {
                             icon: Icons.trending_up,
                             color: Colors.blue,
                             items: [
-                              'تحسين البحث ليعطي نتائج أكثر دقة عند كتابة حرفين أو أكثر.',
+                              'تم تحسين التبديل بين وضع الكتاب والتمرير العمودي لتجربة أكثر سلاسة.',
                             ],
+                          ),
+                          _CategorySection(
+                            title: 'أخرى',
+                            icon: Icons.auto_awesome,
+                            color: Colors.blueGrey,
+                            items: ['تظليل الآية عند استعادة آخر موضع قراءة.'],
                           ),
                         ],
                       ),
                       _VersionSection(
-                        version: '1.7.0',
+                        version: '1.7.5',
                         isCurrent: false,
                         categories: [
                           _CategorySection(
@@ -129,6 +114,9 @@ class WhatsNewDialog extends StatelessWidget {
                             color: Colors.red,
                             items: [
                               'إصلاح مشكلة الصفحتين 488 - 489 في رواية ورش',
+                              'إصلاح مشكلة ظهور نتائج البحث بدون تظليل الكلمة المطابقة.',
+                              'إصلاح مشكلة في مظهر ألوان الجهاز (Dynamic) كانت تجعل معظم الأسطح تستخدم نفس لون.',
+                              'إصلاح تعطل تطبيق الويب',
                             ],
                           ),
                           _CategorySection(
@@ -138,6 +126,7 @@ class WhatsNewDialog extends StatelessWidget {
                             items: [
                               'إضافة ميزة النسخ الاحتياطي والاستيراد للعلامات المرجعية والملاحظات.',
                               'إضافة مظهر جديد سيبيا (Sepia).',
+                              'إضافة خيارات مطابقة متعددة للبحث (تلقائي/مطابق/بداية الكلمة/داخل الكلمة/مرن).',
                             ],
                           ),
                           _CategorySection(
@@ -150,7 +139,10 @@ class WhatsNewDialog extends StatelessWidget {
                             title: 'التحسينات',
                             icon: Icons.trending_up,
                             color: Colors.blue,
-                            items: ['تحسين صفحة الإعدادات.'],
+                            items: [
+                              'تحسين صفحة الإعدادات.',
+                              'تحسين البحث ليعطي نتائج أكثر دقة عند كتابة حرفين أو أكثر.',
+                            ],
                           ),
                           _CategorySection(
                             title: 'العلامات',
@@ -273,29 +265,6 @@ class WhatsNewDialog extends StatelessWidget {
                       ),
                       _VersionSection(
                         version: '1.4.2',
-                        isCurrent: false,
-                        categories: [
-                          _CategorySection(
-                            title: 'الإصلاحات',
-                            icon: Icons.bug_report,
-                            color: Colors.red,
-                            items: [
-                              'إصلاح: خطأ إملائي في الآية 46 من سورة الأعراف.',
-                            ],
-                          ),
-                          _CategorySection(
-                            title: 'ميزات جديدة',
-                            icon: Icons.new_releases,
-                            color: Colors.green,
-                            items: [
-                              'إضافة وضع الكتاب للتنقل بين الصفحات بالسحب.',
-                              'إضافة خيار اللون الأسود الحقيقي لشاشات OLED.',
-                            ],
-                          ),
-                        ],
-                      ),
-                      _VersionSection(
-                        version: '113',
                         isCurrent: false,
                         categories: [
                           _CategorySection(
@@ -480,7 +449,7 @@ class WhatsNewDialog extends StatelessWidget {
                         ],
                       ),
                       _VersionSection(
-                        version: '1.1.0',
+                        version: '1.1.1',
                         isCurrent: false,
                         categories: [
                           _CategorySection(

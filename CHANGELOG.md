@@ -1,3 +1,9 @@
+### 1.7.6
+
+FEAT: improve changing scrolling mode.
+FIX: ensure scrolled-to verse is visible (thanks to @Hy4ri). 
+FEAT: highlight last reading-position verse.
+
 ### 1.7.5
 
 FEAT: use package_info_plus to get the app version & build number.
