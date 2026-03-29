@@ -103,25 +103,35 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void _onScrollingModeChanged() {
     final newIsHorizontalScrolling =
         widget.settingsController.isHorizontalScrolling;
-    if (!newIsHorizontalScrolling && _isHorizontalScrolling) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _itemScrollController.jumpTo(
-          index: _currentPositionNotifier.value.pageNumber - 1,
-        );
-      });
-    } else {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_pageController.hasClients) {
-          Future.delayed(const Duration(milliseconds: 200), () {
-            _pageController.jumpToPage(
-              _currentPositionNotifier.value.pageNumber - 1,
-            );
-          });
-        }
-      });
-    }
 
-    _isHorizontalScrolling = widget.settingsController.isHorizontalScrolling;
+    if (newIsHorizontalScrolling == _isHorizontalScrolling) return;
+
+    setState(() {
+      _isHorizontalScrolling = newIsHorizontalScrolling;
+    });
+
+    unawaited(_syncScrollModePosition(newIsHorizontalScrolling));
+  }
+
+  Future<void> _syncScrollModePosition(bool isHorizontal) async {
+    final targetIndex = _currentPositionNotifier.value.pageNumber - 1;
+
+    for (int i = 0; i < 3; i++) {
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+
+      if (isHorizontal) {
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(targetIndex);
+          return;
+        }
+      } else {
+        if (_itemScrollController.isAttached) {
+          _itemScrollController.jumpTo(index: targetIndex);
+          return;
+        }
+      }
+    }
   }
 
   void _onQuranDataChanged() {
@@ -224,7 +234,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
       final ctx = _highlightedBlockKey.currentContext;
       if (ctx == null || !ctx.mounted) continue;
-      
+
       final isFirstSurahVerse = highlightVerse == 1;
       final double alignment = isFirstSurahVerse
           ? widget.settingsController.isHorizontalScrolling
