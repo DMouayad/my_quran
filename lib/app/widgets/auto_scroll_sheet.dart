@@ -54,9 +54,10 @@ class _AutoScrollSheetState extends State<AutoScrollSheet> {
               Row(
                 children: [
                   Icon(
-                    Icons.auto_mode_outlined,
+                    Icons.speed_outlined,
                     color: colorScheme.primary,
                   ),
+
                   const SizedBox(width: 8),
                   Text(
                     'التمرير التلقائي',
