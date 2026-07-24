@@ -13,7 +13,9 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'package:my_quran/app/pages/bookmarks_screen.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
+import 'package:my_quran/app/widgets/auto_scroll_sheet.dart';
 import 'package:my_quran/app/widgets/settings_sheet.dart';
+
 import 'package:my_quran/app/widgets/theme_tiles_picker.dart';
 import 'package:my_quran/app/widgets/whats_new_dialog.dart';
 import 'package:my_quran/app/quran_page_text_cache.dart';
@@ -460,48 +462,30 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
           : null,
       floatingActionButton: _isLandscape
           ? null
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (!widget.settingsController.isHorizontalScrolling)
-                  FloatingActionButton(
-                    backgroundColor: context.colorScheme.surfaceContainer,
-                    foregroundColor: context.colorScheme.primary,
-                    elevation: 4,
-                    heroTag: 'autoScrollFab',
-                    onPressed: _toggleAutoScroll,
-                    child: Icon(
-                      _isAutoScrolling
-                          ? Icons.pause_outlined
-                          : Icons.play_arrow_outlined,
-                    ),
+          : FloatingActionButton(
+              backgroundColor: context.colorScheme.surfaceContainer,
+              foregroundColor: context.colorScheme.primary,
+              elevation: 4,
+              heroTag: 'navFab',
+              onPressed: () => showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                useSafeArea: true,
+                constraints: const BoxConstraints(maxHeight: 600),
+                builder: (_) => QuranNavigationBottomSheet(
+                  initialPage: _currentPositionNotifier.value.pageNumber,
+                  onNavigate:
+                      ({required page, required surah, required verse}) =>
+                          _jumpToPage(
+                    page,
+                    highlightSurah: surah,
+                    highlightVerse: verse,
                   ),
-                const SizedBox(height: 12),
-                FloatingActionButton(
-                  backgroundColor: context.colorScheme.surfaceContainer,
-                  foregroundColor: context.colorScheme.primary,
-                  elevation: 4,
-                  heroTag: 'navFab',
-                  onPressed: () => showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    useSafeArea: true,
-                    constraints: const BoxConstraints(maxHeight: 600),
-                    builder: (_) => QuranNavigationBottomSheet(
-                      initialPage: _currentPositionNotifier.value.pageNumber,
-                      onNavigate:
-                          ({required page, required surah, required verse}) =>
-                              _jumpToPage(
-                        page,
-                        highlightSurah: surah,
-                        highlightVerse: verse,
-                      ),
-                    ),
-                  ),
-                  child: const Icon(Icons.menu_book_outlined),
                 ),
-              ],
+              ),
+              child: const Icon(Icons.menu_book_outlined),
             ),
+
       // --- 1. The Glass App Bar ---
       appBar: _isLandscape
           ? null
@@ -570,8 +554,39 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
               elevation: 0,
               flexibleSpace: Container(decoration: appBarDecoration),
               actions: [
+                if (!widget.settingsController.isHorizontalScrolling)
+                  IconButton(
+                    icon: Icon(
+                      _isAutoScrolling
+                          ? Icons.pause_circle_filled_outlined
+                          : Icons.auto_mode_outlined,
+                      color: _isAutoScrolling
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
+                    ),
+                    onPressed: () {
+                      showModalBottomSheet<void>(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => StatefulBuilder(
+                          builder: (context, setSheetState) {
+                            return AutoScrollSheet(
+                              settingsController: widget.settingsController,
+                              isAutoScrolling: _isAutoScrolling,
+                              onToggleAutoScroll: () {
+                                _toggleAutoScroll();
+                                setSheetState(() {});
+                              },
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
                 IconButton(
                   onPressed: () => widget.settingsController.toggleThemeMode(),
+
                   onLongPress: () => _showThemePicker(context),
                   icon: Icon(switch (widget.settingsController.themeMode) {
                     ThemeMode.light => Icons.light_mode_outlined,

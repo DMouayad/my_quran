@@ -286,22 +286,7 @@ class SettingsSheet extends StatelessWidget {
                       onChanged: (v) =>
                           settingsController.autoScrollEnabled = v,
                     ),
-                    _SliderRow(
-                      label: 'سرعة التمرير التلقائي',
-                      value: ((65000 -
-                                  settingsController.autoScrollIntervalMs) /
-                              1000)
-                          .clamp(5, 60),
-                      min: 5,
-                      max: 60,
-                      divisions: 55,
-                      valueLabel:
-                          '${settingsController.autoScrollIntervalMs ~/ 1000}'
-                          ' ثانية / صفحة',
 
-                      onChanged: (v) => settingsController
-                          .autoScrollIntervalMs = ((65 - v) * 1000).round(),
-                    ),
 
 
 
@@ -813,89 +798,4 @@ class _ToggleRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────
-// Slider row (used for auto-scroll speed)
-// ─────────────────────────────────────────
 
-class _SliderRow extends StatelessWidget {
-  const _SliderRow({
-    required this.label,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.onChanged,
-    this.valueLabel,
-    this.divisions,
-  });
-
-  final String label;
-  final double value;
-  final double min;
-  final double max;
-  final int? divisions;
-  final String? valueLabel;
-  final ValueChanged<double> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (valueLabel != null)
-                Text(
-                  valueLabel!,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Slider(
-            value: value,
-            min: min,
-            max: max,
-            divisions: divisions,
-            onChanged: onChanged,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'بطيء جداً (60ث)',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              Text(
-                'سريع (5ث)',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-
-        ],
-      ),
-    );
-  }
-}
