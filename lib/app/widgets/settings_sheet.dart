@@ -275,6 +275,30 @@ class SettingsSheet extends StatelessWidget {
                     ),
                     const _ThinDivider(),
                     _ToggleRow(
+                      icon: Icons.auto_mode_outlined,
+                      title: 'التمرير التلقائي',
+                      subtitle: 'تمرير الصفحات تلقائياً (وضع الكتاب فقط)',
+                      value: settingsController.autoScrollEnabled,
+                      onChanged: (v) =>
+                          settingsController.autoScrollEnabled = v,
+                    ),
+                    const _ThinDivider(),
+                    _SegmentedRow(
+                      label: 'سرعة التمرير التلقائي',
+                      child: SegmentedButton<int>(
+                        segments: const [
+                          ButtonSegment(value: 5000, label: Text('بطيء')),
+                          ButtonSegment(value: 3000, label: Text('عادي')),
+                          ButtonSegment(value: 1500, label: Text('سريع')),
+                        ],
+                        style: _segmentStyle(colorScheme),
+                        selected: {settingsController.autoScrollIntervalMs},
+                        onSelectionChanged: (v) =>
+                            settingsController.autoScrollIntervalMs = v.first,
+                      ),
+                    ),
+                    const _ThinDivider(),
+                    _ToggleRow(
                       icon: Icons.numbers_outlined,
                       title: 'عرض رقم الحزب',
                       subtitle:

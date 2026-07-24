@@ -82,6 +82,26 @@ class SettingsService {
     await _prefs.setBool('keep_screen_on', value);
   }
 
+  static const String _autoScrollEnabledKey = 'auto_scroll_enabled';
+  static const String _autoScrollIntervalKey = 'auto_scroll_interval_ms';
+
+  Future<bool> loadAutoScrollEnabled() async {
+    return await _prefs.getBool(_autoScrollEnabledKey) ?? false;
+  }
+
+  Future<void> setAutoScrollEnabled(bool value) async {
+    await _prefs.setBool(_autoScrollEnabledKey, value);
+  }
+
+  /// Auto-scroll advance interval in milliseconds (smaller = faster).
+  Future<int> loadAutoScrollIntervalMs() async {
+    return await _prefs.getInt(_autoScrollIntervalKey) ?? 3000;
+  }
+
+  Future<void> setAutoScrollIntervalMs(int value) async {
+    await _prefs.setInt(_autoScrollIntervalKey, value);
+  }
+
   Future<AppTheme> loadAppTheme() async {
     final value = await _prefs.getString(_appThemeKey);
     return AppTheme.values.firstWhere(
