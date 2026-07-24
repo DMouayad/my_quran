@@ -288,17 +288,23 @@ class SettingsSheet extends StatelessWidget {
                     ),
                     _SliderRow(
                       label: 'سرعة التمرير التلقائي',
-                      value: settingsController.autoScrollIntervalMs
-                          .toDouble()
-                          .clamp(5000.0, 60000.0),
-                      min: 5000,
-                      max: 60000,
+                      value: ((65000 -
+                                  settingsController.autoScrollIntervalMs) /
+                              1000)
+                          .clamp(5, 60),
+                      min: 5,
+                      max: 60,
                       divisions: 55,
                       valueLabel:
-                          '${(settingsController.autoScrollIntervalMs / 1000).round()} ثانية / صفحة',
-                      onChanged: (v) =>
-                          settingsController.autoScrollIntervalMs = v.round(),
+                          '${settingsController.autoScrollIntervalMs ~/ 1000}'
+                          ' ثانية / صفحة',
+
+                      onChanged: (v) => settingsController
+                          .autoScrollIntervalMs = ((65 - v) * 1000).round(),
                     ),
+
+
+
 
 
                     const _ThinDivider(),
@@ -872,14 +878,14 @@ class _SliderRow extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'سريع (5ث)',
+                'بطيء جداً (60ث)',
                 style: TextStyle(
                   fontSize: 12,
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
               Text(
-                'بطيء جداً (60ث)',
+                'سريع (5ث)',
                 style: TextStyle(
                   fontSize: 12,
                   color: colorScheme.onSurfaceVariant,
@@ -887,6 +893,7 @@ class _SliderRow extends StatelessWidget {
               ),
             ],
           ),
+
         ],
       ),
     );
