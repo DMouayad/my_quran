@@ -54,9 +54,10 @@ class _AutoScrollSheetState extends State<AutoScrollSheet> {
               Row(
                 children: [
                   Icon(
-                    Icons.speed_outlined,
+                    Icons.keyboard_double_arrow_down_outlined,
                     color: colorScheme.primary,
                   ),
+
 
                   const SizedBox(width: 8),
                   Text(

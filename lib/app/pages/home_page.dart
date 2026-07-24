@@ -559,11 +559,12 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     icon: Icon(
                       _isAutoScrolling
                           ? Icons.pause_circle_filled_outlined
-                          : Icons.speed_outlined,
+                          : Icons.keyboard_double_arrow_down_outlined,
                       color: _isAutoScrolling
                           ? Theme.of(context).colorScheme.primary
                           : null,
                     ),
+
 
                     onPressed: () {
                       showModalBottomSheet<void>(
