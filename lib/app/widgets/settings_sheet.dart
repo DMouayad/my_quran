@@ -286,23 +286,21 @@ class SettingsSheet extends StatelessWidget {
                       onChanged: (v) =>
                           settingsController.autoScrollEnabled = v,
                     ),
-                    const _ThinDivider(),
-                    _SegmentedRow(
+                    _SliderRow(
                       label: 'سرعة التمرير التلقائي',
-                      child: SegmentedButton<int>(
-                        segments: const [
-                          ButtonSegment(value: 30000, label: Text('بطيء')),
-                          ButtonSegment(value: 18000, label: Text('عادي')),
-                          ButtonSegment(value: 10000, label: Text('سريع')),
-
-
-                        ],
-                        style: _segmentStyle(colorScheme),
-                        selected: {settingsController.autoScrollIntervalMs},
-                        onSelectionChanged: (v) =>
-                            settingsController.autoScrollIntervalMs = v.first,
-                      ),
+                      value: settingsController.autoScrollIntervalMs
+                          .toDouble()
+                          .clamp(5000.0, 60000.0),
+                      min: 5000,
+                      max: 60000,
+                      divisions: 55,
+                      valueLabel:
+                          '${(settingsController.autoScrollIntervalMs / 1000).round()} ثانية / صفحة',
+                      onChanged: (v) =>
+                          settingsController.autoScrollIntervalMs = v.round(),
                     ),
+
+
                     const _ThinDivider(),
                     _ToggleRow(
                       icon: Icons.numbers_outlined,
@@ -804,6 +802,92 @@ class _ToggleRow extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────
+// Slider row (used for auto-scroll speed)
+// ─────────────────────────────────────────
+
+class _SliderRow extends StatelessWidget {
+  const _SliderRow({
+    required this.label,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+    this.valueLabel,
+    this.divisions,
+  });
+
+  final String label;
+  final double value;
+  final double min;
+  final double max;
+  final int? divisions;
+  final String? valueLabel;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (valueLabel != null)
+                Text(
+                  valueLabel!,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.primary,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Slider(
+            value: value,
+            min: min,
+            max: max,
+            divisions: divisions,
+            onChanged: onChanged,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'سريع (5ث)',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              Text(
+                'بطيء جداً (60ث)',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

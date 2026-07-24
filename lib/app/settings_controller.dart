@@ -19,7 +19,8 @@ class SettingsController extends ChangeNotifier {
   bool _isHorizontalScrolling = true;
   bool _keepScreenOn = true;
   bool _autoScrollEnabled = false;
-  int _autoScrollIntervalMs = 18000;
+  int _autoScrollIntervalMs = 20000;
+
 
 
   TextAlignOption _textAlign = TextAlignOption.justify;
@@ -169,7 +170,8 @@ class SettingsController extends ChangeNotifier {
     _themeMode = await settingsService.loadThemeMode();
     _keepScreenOn = await settingsService.loadKeepScreenOn();
     final loadedInterval = await settingsService.loadAutoScrollIntervalMs();
-    _autoScrollIntervalMs = loadedInterval < 8000 ? 18000 : loadedInterval;
+    _autoScrollIntervalMs = loadedInterval.clamp(5000, 60000);
+
 
 
     _textAlign = await settingsService.loadTextAlign();
