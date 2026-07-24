@@ -165,7 +165,6 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _itemScrollController.scrollTo(
       index: nextIndex,
       duration: const Duration(milliseconds: 800),
-      alignment: 0,
     );
   }
 
