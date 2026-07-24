@@ -46,8 +46,11 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   late final ValueNotifier<({int surah, int verse})?> _highlightedVerseNotifier;
 
   final ItemScrollController _itemScrollController = ItemScrollController();
+  final ScrollOffsetController _scrollOffsetController =
+      ScrollOffsetController();
   final ItemPositionsListener _itemPositionsListener =
       ItemPositionsListener.create();
+
 
   /// Key attached to an inline sentinel [WidgetSpan] at the highlighted verse.
   /// Used by [Scrollable.ensureVisible] to scroll to the verse's exact pixel
@@ -113,59 +116,52 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _showHeader = true;
 
   // ── Auto-scroll state ──
-  // Only meaningful in vertical (book) mode; horizontal page mode flips
-  // whole pages so there is nothing to continuously scroll.
-  Timer? _autoScrollTimer;
+  // Smooth continuous line-by-line scrolling for vertical (book) mode.
   bool _isAutoScrolling = false;
-
-  /// Index of the topmost currently-visible page in the vertical list.
-  int _topVisibleIndex() {
-    final positions = _itemPositionsListener.itemPositions.value;
-    if (positions.isEmpty) return 0;
-    int minIndex = positions.first.index;
-    for (final pos in positions) {
-      if (pos.index < minIndex) minIndex = pos.index;
-    }
-    return minIndex;
-  }
+  bool _isAutoScrollingLoopRunning = false;
 
   void _startAutoScroll() {
     if (_isAutoScrolling) return;
     if (widget.settingsController.isHorizontalScrolling) return;
     if (!mounted) return;
     setState(() => _isAutoScrolling = true);
-    _autoScrollTimer?.cancel();
-    _autoScrollTimer = Timer.periodic(
-      Duration(milliseconds: widget.settingsController.autoScrollIntervalMs),
-      (_) => _autoScrollTick(),
-    );
+    _runAutoScrollLoop();
   }
 
   void _stopAutoScroll() {
-    _autoScrollTimer?.cancel();
-    _autoScrollTimer = null;
-    if (_isAutoScrolling) setState(() => _isAutoScrolling = false);
+    if (_isAutoScrolling) {
+      setState(() => _isAutoScrolling = false);
+    }
   }
 
-  void _autoScrollTick() {
-    if (!mounted) {
-      _stopAutoScroll();
-      return;
+  Future<void> _runAutoScrollLoop() async {
+    if (_isAutoScrollingLoopRunning) return;
+    _isAutoScrollingLoopRunning = true;
+
+    while (_isAutoScrolling &&
+        mounted &&
+        !widget.settingsController.isHorizontalScrolling) {
+      if (!_itemScrollController.isAttached) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        continue;
+      }
+
+      final intervalMs = widget.settingsController.autoScrollIntervalMs;
+      const stepDurationMs = 400;
+      final stepOffset = (700.0 / intervalMs) * stepDurationMs;
+
+      try {
+        await _scrollOffsetController.animateScroll(
+          offset: stepOffset,
+          duration: const Duration(milliseconds: stepDurationMs),
+        );
+      } catch (_) {
+        break;
+      }
+
     }
-    // Don't advance while in horizontal/page mode.
-    if (widget.settingsController.isHorizontalScrolling) {
-      _stopAutoScroll();
-      return;
-    }
-    final nextIndex = _topVisibleIndex() + 1;
-    if (nextIndex >= Quran.totalPagesCount) {
-      _stopAutoScroll();
-      return;
-    }
-    _itemScrollController.scrollTo(
-      index: nextIndex,
-      duration: const Duration(milliseconds: 800),
-    );
+
+    _isAutoScrollingLoopRunning = false;
   }
 
   void _toggleAutoScroll() {
@@ -180,6 +176,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void _pauseAutoScrollOnInteraction() {
     if (_isAutoScrolling) _stopAutoScroll();
   }
+
 
   void _onScrollingModeChanged() {
     final newIsHorizontalScrolling =
@@ -655,28 +652,39 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 )
               else
                 Positioned.fill(
-                  child: ScrollablePositionedList.builder(
-                    itemCount: Quran.totalPagesCount,
-                    itemScrollController: _itemScrollController,
-                    itemPositionsListener: _itemPositionsListener,
-                    initialScrollIndex:
-                        (widget.initialPosition?.pageNumber ?? 1) - 1,
-                    padding: EdgeInsets.only(top: totalTopHeaderHeight + 10),
-                    itemBuilder: (context, index) => RepaintBoundary(
-                      child: QuranPageWidget(
-                        pageNumber: index + 1,
-                        fontSizeController: _fontSizeController,
-                        scaleFactor: _scaleFactor,
-                        highlightedVerseListenable: _highlightedVerseNotifier,
-                        highlightedBlockKey: _highlightedBlockKey,
-                        settingsController: widget.settingsController,
-                        onVerseTap: _onVerseTapped,
-                        bookmarkRevision: bookmarkRevision,
-                        onBookmarkChanged: () => bookmarkRevision.value++,
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (notification) {
+                      if (notification is ScrollStartNotification &&
+                          notification.dragDetails != null) {
+                        _pauseAutoScrollOnInteraction();
+                      }
+                      return false;
+                    },
+                    child: ScrollablePositionedList.builder(
+                      itemCount: Quran.totalPagesCount,
+                      itemScrollController: _itemScrollController,
+                      itemPositionsListener: _itemPositionsListener,
+                      scrollOffsetController: _scrollOffsetController,
+                      initialScrollIndex:
+                          (widget.initialPosition?.pageNumber ?? 1) - 1,
+                      padding: EdgeInsets.only(top: totalTopHeaderHeight + 10),
+                      itemBuilder: (context, index) => RepaintBoundary(
+                        child: QuranPageWidget(
+                          pageNumber: index + 1,
+                          fontSizeController: _fontSizeController,
+                          scaleFactor: _scaleFactor,
+                          highlightedVerseListenable: _highlightedVerseNotifier,
+                          highlightedBlockKey: _highlightedBlockKey,
+                          settingsController: widget.settingsController,
+                          onVerseTap: _onVerseTapped,
+                          bookmarkRevision: bookmarkRevision,
+                          onBookmarkChanged: () => bookmarkRevision.value++,
+                        ),
                       ),
                     ),
                   ),
                 ),
+
 
               // --- Pinned Info Header (animates in/out in landscape) ---
               if (_isLandscape)

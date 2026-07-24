@@ -277,8 +277,12 @@ class SettingsSheet extends StatelessWidget {
                     _ToggleRow(
                       icon: Icons.auto_mode_outlined,
                       title: 'التمرير التلقائي',
-                      subtitle: 'تمرير الصفحات تلقائياً (وضع الكتاب فقط)',
+                      subtitle:
+                          'التمرير التلقائي السلس أثناء '
+                          'القراءة (وضع الكتاب فقط)',
                       value: settingsController.autoScrollEnabled,
+
+
                       onChanged: (v) =>
                           settingsController.autoScrollEnabled = v,
                     ),
