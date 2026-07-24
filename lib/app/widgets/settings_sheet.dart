@@ -291,9 +291,10 @@ class SettingsSheet extends StatelessWidget {
                       label: 'سرعة التمرير التلقائي',
                       child: SegmentedButton<int>(
                         segments: const [
-                          ButtonSegment(value: 5000, label: Text('بطيء')),
-                          ButtonSegment(value: 3000, label: Text('عادي')),
-                          ButtonSegment(value: 1500, label: Text('سريع')),
+                          ButtonSegment(value: 15000, label: Text('بطيء')),
+                          ButtonSegment(value: 9000, label: Text('عادي')),
+                          ButtonSegment(value: 5000, label: Text('سريع')),
+
                         ],
                         style: _segmentStyle(colorScheme),
                         selected: {settingsController.autoScrollIntervalMs},

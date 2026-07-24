@@ -95,8 +95,9 @@ class SettingsService {
 
   /// Auto-scroll advance interval in milliseconds (smaller = faster).
   Future<int> loadAutoScrollIntervalMs() async {
-    return await _prefs.getInt(_autoScrollIntervalKey) ?? 3000;
+    return await _prefs.getInt(_autoScrollIntervalKey) ?? 9000;
   }
+
 
   Future<void> setAutoScrollIntervalMs(int value) async {
     await _prefs.setInt(_autoScrollIntervalKey, value);
