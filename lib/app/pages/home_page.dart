@@ -383,7 +383,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
           isDarkMode && widget.settingsController.useTrueBlackBgColor
           ? Colors.black
           : null,
-      floatingActionButton: _isLandscape
+      floatingActionButton: (_isLandscape || isDesktop || kIsWeb)
           ? null
           : FloatingActionButton(
               backgroundColor: context.colorScheme.surfaceContainer,
