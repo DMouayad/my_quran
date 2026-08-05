@@ -93,12 +93,20 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final hits = _response.hits;
-
+    final colorScheme = ColorScheme.of(context);
+    final size = MediaQuery.of(context).size;
+    final isDesktopOrWeb = isDesktop || kIsWeb;
+    
     return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.85,
+      height: (isDesktopOrWeb && _controller.text.isEmpty)
+          ? null
+          : isDesktopOrWeb
+          ? size.height * 0.6
+          : size.height * 0.85,
+          
+      width: isDesktopOrWeb ? size.width * 0.4 : null,
       child: Column(
+        mainAxisSize: .min,
         children: [
           // --- Search Bar ---
           Padding(
@@ -134,70 +142,7 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
           ),
 
           _buildFiltersBar(context),
-
-          // --- Results List ---
-          Expanded(
-            child: hits.isEmpty && _controller.text.isNotEmpty && !_isSearching
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.search_off_rounded,
-                          size: 64,
-                          color: colorScheme.outline,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'لا توجد نتائج',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ],
-                    ),
-                  )
-                : Stack(
-                    children: [
-                      ListView.separated(
-                        itemCount: hits.length,
-                        separatorBuilder: (c, i) =>
-                            const Divider(height: 1, indent: 16, endIndent: 16),
-                        itemBuilder: (context, index) {
-                          final hit = hits[index];
-                          return SearchResultItem(
-                            verseFontFamily: widget.verseFontFamily,
-                            hit: hit,
-                            effectiveMode: _response.effectiveMode,
-                            onTap: () {
-                              Navigator.pop(context);
-
-                              final page = Quran.instance.getPageNumber(
-                                hit.surah,
-                                hit.verse,
-                              );
-
-                              widget.onNavigateToPage(
-                                page,
-                                surah: hit.surah,
-                                verse: hit.verse,
-                              );
-                            },
-                          );
-                        },
-                      ),
-                      if (_isSearching)
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          top: 0,
-                          child: LinearProgressIndicator(
-                            minHeight: 2,
-                            color: colorScheme.primary,
-                            backgroundColor: Colors.transparent,
-                          ),
-                        ),
-                    ],
-                  ),
-          ),
+          _buildResultList(colorScheme, isDesktopOrWeb),
         ],
       ),
     );
@@ -299,6 +244,80 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
             runSpacing: 8,
             children: [if (showOperator) operatorControl(), countWidget()],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResultList(ColorScheme colorScheme, bool isDesktopOrWeb) {
+    final hits = _response.hits;
+
+    if (isDesktopOrWeb && _controller.text.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    if (hits.isEmpty && _controller.text.isNotEmpty && !_isSearching) {
+      return Expanded(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.search_off_rounded,
+                size: 64,
+                color: colorScheme.outline,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'لا توجد نتائج',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return Expanded(
+      child: Stack(
+        children: [
+          ListView.separated(
+            itemCount: hits.length,
+            separatorBuilder: (c, i) =>
+                const Divider(height: 1, indent: 16, endIndent: 16),
+            itemBuilder: (context, index) {
+              final hit = hits[index];
+              return SearchResultItem(
+                verseFontFamily: widget.verseFontFamily,
+                hit: hit,
+                effectiveMode: _response.effectiveMode,
+                onTap: () {
+                  Navigator.pop(context);
+
+                  final page = Quran.instance.getPageNumber(
+                    hit.surah,
+                    hit.verse,
+                  );
+
+                  widget.onNavigateToPage(
+                    page,
+                    surah: hit.surah,
+                    verse: hit.verse,
+                  );
+                },
+              );
+            },
+          ),
+          if (_isSearching)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              child: LinearProgressIndicator(
+                minHeight: 2,
+                color: colorScheme.primary,
+                backgroundColor: Colors.transparent,
+              ),
+            ),
         ],
       ),
     );

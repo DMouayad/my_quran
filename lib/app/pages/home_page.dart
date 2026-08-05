@@ -327,6 +327,29 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
+  void showSearch() {
+    final searchWidget = QuranSearchBottomSheet(
+      verseFontFamily: widget.settingsController.fontFamily,
+      onNavigateToPage: (page, {surah, verse}) {
+        _jumpToPage(page, highlightSurah: surah, highlightVerse: verse);
+      },
+    );
+    if (isDesktop || kIsWeb) {
+      showDialog(
+        context: context,
+        builder: (_) => Dialog(child: searchWidget),
+      );
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (_) => searchWidget,
+    );
+  }
+
   @override
   void dispose() {
     // Restore system UI when leaving the screen
@@ -419,20 +442,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.search),
-                    onPressed: () => showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      useSafeArea: true,
-                      showDragHandle: true,
-                      builder: (_) => QuranSearchBottomSheet(
-                        verseFontFamily: widget.settingsController.fontFamily,
-                        onNavigateToPage: (page, {surah, verse}) => _jumpToPage(
-                          page,
-                          highlightSurah: surah,
-                          highlightVerse: verse,
-                        ),
-                      ),
-                    ),
+                    onPressed: showSearch,
                   ),
                   IconButton(
                     icon: const Icon(Icons.bookmark_border),
