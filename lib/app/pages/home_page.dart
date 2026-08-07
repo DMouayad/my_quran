@@ -705,11 +705,11 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
   void _onVerseInteraction(
     int surah,
     int verseNumber, {
-    required bool isLongPress,
+    required bool showVerseOptions,
   }) {
     widget.onVerseTap?.call(surah, verseNumber);
 
-    if (isLongPress && context.mounted) {
+    if (showVerseOptions && context.mounted) {
       showDialog<void>(
         context: context,
         builder: (_) => Dialog(
@@ -947,7 +947,7 @@ class _SurahTextBlock extends StatefulWidget {
   final ValueListenable<({int surah, int verse})?> highlightedVerseListenable;
   final GlobalKey highlightedBlockKey;
   final ValueListenable<int> bookmarkRevision;
-  final void Function(int s, int v, {required bool isLongPress}) onInteraction;
+  final void Function(int s, int v, {required bool showVerseOptions}) onInteraction;
   final SettingsController settingsController;
   final double? lineHeight;
 
@@ -1050,14 +1050,14 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
     _verseIndicators = indicators;
   }
 
-  void _handleTap(Offset localPos, bool isLongPress) {
+  void _handleTap(Offset localPos, bool showVerseOptions) {
     final renderObj = _textKey.currentContext?.findRenderObject();
     if (renderObj is! RenderParagraph) return;
 
     final index = renderObj.getPositionForOffset(localPos).offset;
     final verse = _findVerseAt(index);
     if (verse != null) {
-      widget.onInteraction(widget.surahNumber, verse, isLongPress: isLongPress);
+      widget.onInteraction(widget.surahNumber, verse, showVerseOptions: showVerseOptions);
     }
   }
 
@@ -1199,7 +1199,12 @@ class _SurahTextBlockState extends State<_SurahTextBlock> {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTapUp: (d) => _handleTap(d.localPosition, false),
-      onLongPressStart: (d) => _handleTap(d.localPosition, true),
+      onLongPressStart: isMobile
+          ? (d) => _handleTap(d.localPosition, true)
+          : null,
+      onSecondaryTapDown: (isDesktop || kIsWeb)
+          ? (d) => _handleTap(d.localPosition, true)
+          : null,
       child: RichText(
         key: _textKey,
         textAlign: _calculateAlignment(),

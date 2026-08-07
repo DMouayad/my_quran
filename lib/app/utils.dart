@@ -11,6 +11,13 @@ bool get isDesktop {
   };
 }
 
+bool get isMobile {
+  return switch (defaultTargetPlatform) {
+    TargetPlatform.android || TargetPlatform.iOS => true,
+    _ => false,
+  };
+}
+
 String getArabicNumber(int number) {
   const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
   return number

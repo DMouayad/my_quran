@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -47,6 +48,11 @@ Future<void> main() async {
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   await DataMigrationService.migrateBookmarkNotesToNotes();
+  
+  if (kIsWeb) {
+    // Needed to show verse menu dialog correctly on Web right-clicking.
+    await BrowserContextMenu.disableContextMenu();
+  }
 
   runApp(MyApp(lastPosition, settingsController));
 }
