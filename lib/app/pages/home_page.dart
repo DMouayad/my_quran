@@ -713,6 +713,9 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
       showDialog<void>(
         context: context,
         builder: (_) => Dialog(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+          ),
           child: VerseMenuDialog(
             surah: surah,
             fontSize: widget.fontSizeController.fontSize,

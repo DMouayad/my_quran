@@ -1,3 +1,6 @@
+import 'dart:async' show Timer;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:my_quran/app/widgets/bookmark_category_picker_sheet.dart';
@@ -92,33 +95,16 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final mq = MediaQuery.of(context);
     final isLandscape = mq.orientation == Orientation.landscape;
 
-    return ScaffoldMessenger(
-      child: Builder(
-        builder: (context) {
-          return ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: isLandscape ? 560 : 340,
-              maxHeight: mq.size.height * (isLandscape ? 0.9 : 0.6),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Scaffold(
-                backgroundColor: colorScheme.surface,
-                bottomNavigationBar: isLandscape
-                    ? null
-                    : _buildBottomActionsBar(context),
-                body: isLandscape
-                    ? _buildLandscapeBody(context)
-                    : _buildPortraitBody(context),
-              ),
-            ),
-          );
-        },
-      ),
+    return SizedBox(
+      width: isLandscape ? 560 : 340,
+      height: mq.size.height * (isLandscape ? 0.9 : 0.6),
+      child: switch (isLandscape) {
+        true => _buildLandscapeBody(context),
+        false => _buildPortraitBody(context),
+      },
     );
   }
 
@@ -129,6 +115,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
         _buildHeader(context),
         Flexible(child: _buildVerseText(context, isLandscape: false)),
         if (!_notesLoading && _latestNote != null) _buildNotePreview(context),
+        _buildActionButtons()
       ],
     );
   }
@@ -151,7 +138,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        _buildSideActionsColumn(context),
+                        _buildActionButtons(isLandscape: true),
                         const SizedBox(height: 12),
                         if (!_notesLoading && _latestNote != null)
                           _buildNotePreview(context, maxLines: 5),
@@ -190,81 +177,26 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     );
   }
 
-  Widget _buildBottomActionsBar(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-      child: Row(
-        children: [
-          _ActionButton(
-            icon: Icons.copy,
-            label: 'نسخ',
-            onTap: () => _copyVerse(context),
-          ),
-          _ActionButton(
-            icon: isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-            iconColor: isBookmarked
-                ? (currentCategory?.color ??
-                      Theme.of(context).colorScheme.primary)
-                : Theme.of(context).colorScheme.onSurfaceVariant,
-            label: isBookmarked ? 'تعديل' : 'علامة',
-            onTap: () => _openBookmarkPicker(context),
-          ),
-          _ActionButton(
-            iconColor: _hasNotes
-                ? colorScheme.primary
-                : colorScheme.onSurfaceVariant,
-            icon: _hasNotes ? Icons.edit_note : Icons.note_add_outlined,
-            label: 'ملاحظات',
-            onTap: () => _openNotes(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSideActionsColumn(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    Widget action({
-      required IconData icon,
-      required String label,
-      required VoidCallback onTap,
-      Color? iconColor,
-    }) {
-      return ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: Icon(icon, color: iconColor ?? colorScheme.onSurface),
-        title: Text(label),
-        onTap: onTap,
-        dense: true,
+  Widget _buildActionButtons({bool isLandscape = false}) {
+    if (isLandscape) {
+      return _ActionButtons(
+        isLandscape: true,
+        currentCategory: currentCategory,
+        isBookmarked: isBookmarked,
+        hasNotes: _hasNotes,
+        onCopyVerse: () => _copyVerse(context),
+        onOpenBookmarkPicker: () => _openBookmarkPicker(context),
+        onOpenNotes: () => _openNotes(context),
       );
     }
-
-    return Column(
-      children: [
-        action(
-          icon: Icons.copy,
-          label: 'نسخ الآية',
-          onTap: () => _copyVerse(context),
-        ),
-        action(
-          icon: isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-          label: isBookmarked ? 'تعديل العلامة' : 'إضافة علامة',
-          onTap: () => _openBookmarkPicker(context),
-        ),
-        action(
-          icon: _hasNotes ? Icons.edit_note : Icons.note_add_outlined,
-          iconColor: _hasNotes ? colorScheme.primary : null,
-          label: 'الملاحظات',
-          onTap: () => _openNotes(context),
-        ),
-      ],
+    return _ActionButtons(
+      isLandscape: false,
+      currentCategory: currentCategory,
+      isBookmarked: isBookmarked,
+      hasNotes: _hasNotes,
+      onCopyVerse: () => _copyVerse(context),
+      onOpenBookmarkPicker: () => _openBookmarkPicker(context),
+      onOpenNotes: () => _openNotes(context),
     );
   }
 
@@ -408,11 +340,6 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
         bookmark = updated;
         _syncCategory();
       });
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('تم النقل إلى "${cat.title}" ✓')),
-        );
-      }
     } else {
       final newBookmark = VerseBookmark(
         id:
@@ -434,12 +361,6 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
         bookmark = newBookmark;
         _syncCategory();
       });
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('تمت إضافة العلامة ✓')));
-      }
     }
   }
 
@@ -453,11 +374,6 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
       bookmark = null;
       currentCategory = null;
     });
-    if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('تمت إزالة العلامة')));
-    }
   }
 
   Future<void> _openNotes(BuildContext context) async {
@@ -503,54 +419,224 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
         'سورة $surahName - الآية {${getArabicNumber(widget.verse.number)}}\n'
         '"$verseInPlainText"\n';
     Clipboard.setData(ClipboardData(text: textToCopy));
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('تم النسخ إلى الحافظة')));
   }
 }
 
 // ─────────────────────────────────────────────────────────
-// Compact action button
+// Action buttons
 // ─────────────────────────────────────────────────────────
+enum _Action {
+  copy,
+  bookmark,
+  notes,
+}
 
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.iconColor,
+typedef _ActionButton = ({
+  _Action action,
+  String label,
+  IconData icon,
+  VoidCallback onTap,
+  bool isClicked
+});
+
+class _ActionButtons extends StatefulWidget {
+  const _ActionButtons({
+    required this.isLandscape,
+    required this.isBookmarked,
+    required this.hasNotes,
+    required this.onCopyVerse,
+    required this.onOpenBookmarkPicker,
+    required this.onOpenNotes,
+    required this.currentCategory,
   });
 
-  final IconData icon;
-  final Color? iconColor;
-  final String label;
-  final VoidCallback onTap;
+  final bool isLandscape;
+  final bool isBookmarked;
+  final bool hasNotes;
+  final VoidCallback onCopyVerse;
+  final VoidCallback onOpenBookmarkPicker;
+  final VoidCallback onOpenNotes;
+  final BookmarkCategory? currentCategory;
+
+  @override
+  State<_ActionButtons> createState() => _ActionButtonsState();
+}
+
+class _ActionButtonsState extends State<_ActionButtons> {
+  bool _isCopied = false;
+  Timer? _copyTimer;
+
+  List<_ActionButton> get buttons => [
+    (
+      action: _Action.copy,
+      icon: _isCopied ? Icons.check_circle : Icons.copy,
+      label: _isCopied ? 'تم النسخ' : 'نسخ الآية',
+      onTap: _handleCopyButtonTap,
+      isClicked: _isCopied,
+    ),
+    (
+      action: _Action.bookmark,
+      icon: widget.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+      label: widget.isBookmarked ? 'تعديل العلامة' : 'إضافة علامة',
+      onTap: widget.onOpenBookmarkPicker,
+      isClicked: widget.isBookmarked,
+    ),
+    (
+      action: _Action.notes,
+      icon: widget.hasNotes ? Icons.edit_note : Icons.note_add_outlined,
+      label: 'ملاحظات',
+      onTap: widget.onOpenNotes,
+      isClicked: false,
+    ),
+  ];
+
+  void _handleCopyButtonTap() {
+    _copyTimer?.cancel();
+    setState(() => _isCopied = true);
+
+    widget.onCopyVerse();
+
+    _copyTimer = Timer(const Duration(seconds: 1), () {
+      if (!mounted) return;
+      setState(() => _isCopied = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _copyTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 22, color: iconColor),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+    final colorScheme = Theme.of(context).colorScheme;
+
+    if (widget.isLandscape) {
+      return Column(
+        children: buttons
+            .map((button) => _landscapeButtonLayout(colorScheme, button))
+            .toList(),
+      );
+    } else {
+      return Row(
+        children: buttons.map((button) => Expanded(
+            child: _portraitButtonLayout(context, colorScheme, button),
+          )).toList(),
+      );
+    }
+  }
+
+  Widget _portraitButtonLayout(
+    BuildContext context,
+    ColorScheme colorScheme,
+    _ActionButton button,
+  ) {
+    final bool isClicked = button.isClicked;
+
+    return ListTile(
+      onTap: button.onTap,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadiusGeometry.only(
+          bottomRight: button == buttons.first
+              ? const Radius.circular(16)
+              : Radius.zero,
+          bottomLeft: button == buttons.last
+              ? const Radius.circular(16)
+              : Radius.zero,
         ),
+      ),
+      tileColor: colorScheme.surfaceContainerHighest,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      // Better font clarity on desktop/web.
+      dense: !(isDesktop || kIsWeb),
+      hoverColor: Colors.transparent,
+      splashColor: Colors.transparent,
+      title: Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 5,
+        children: [
+          _PopupSwitcher(
+            childKey: button.icon,
+            child: _buildIcon(
+              button: button,
+              isClicked: isClicked,
+              colorScheme: colorScheme,
+            ),
+          ),
+          Text(button.label, overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
+
+  Widget _landscapeButtonLayout(ColorScheme colorScheme, _ActionButton button) {
+    final bool isClicked = button.isClicked;
+
+    return ListTile(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadiusGeometry.all(Radius.circular(5)),
+      ),
+      contentPadding: EdgeInsets.zero,
+      leading: _PopupSwitcher(
+        childKey: button.icon,
+        child: _buildIcon(
+          button: button,
+          isClicked: isClicked,
+          colorScheme: colorScheme,
+        ),
+      ),
+      title: Text(button.label),
+      onTap: button.onTap,
+      dense: true,
+    );
+  }
+
+  Widget _buildIcon({
+    required _ActionButton button,
+    required bool isClicked,
+    required ColorScheme colorScheme,
+    double? size,
+  }) {
+    return Icon(
+      button.icon,
+      size: size,
+      color: button.action == _Action.bookmark && isClicked
+          ? widget.currentCategory?.color
+          : isClicked
+          ? colorScheme.primary
+          : null,
+    );
+  }
+}
+
+class _PopupSwitcher extends StatelessWidget {
+  const _PopupSwitcher({
+    required this.child,
+    required this.childKey,
+  });
+
+  final Widget child;
+  final Object childKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      switchInCurve: Curves.easeOutBack,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: (child, animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: animation,
+            child: child,
+          ),
+        );
+      },
+      child: KeyedSubtree(
+        key: ValueKey(childKey),
+        child: child,
       ),
     );
   }
