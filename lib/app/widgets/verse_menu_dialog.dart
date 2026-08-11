@@ -100,8 +100,8 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
 
     return SizedBox(
       width: isLandscape ? 560 : 340,
-      height: mq.size.height * (isLandscape ? 0.9 : 0.6),
-      child: switch (isLandscape) {
+      height: isMobile ? mq.size.height * (isLandscape ? 0.9 : 0.6) : null,
+      child: switch (isLandscape && isMobile) {
         true => _buildLandscapeBody(context),
         false => _buildPortraitBody(context),
       },
@@ -111,6 +111,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
   Widget _buildPortraitBody(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: isMobile ? .spaceBetween : .start,
       children: [
         _buildHeader(context),
         Flexible(child: _buildVerseText(context, isLandscape: false)),
@@ -160,18 +161,16 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     final maxFont = isLandscape ? 32.0 : 40.0;
     final height = isLandscape ? 1.8 : 2.0;
 
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Text(
-          widget.verse.text,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: widget.fontSize.clamp(16, maxFont),
-            height: height,
-            fontFamily: widget.fontFamily.name,
-            color: colorScheme.onSurface,
-          ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Text(
+        widget.verse.text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: widget.fontSize.clamp(16, maxFont),
+          height: height,
+          fontFamily: widget.fontFamily.name,
+          color: colorScheme.onSurface,
         ),
       ),
     );
@@ -276,7 +275,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.only(top: 12),
       child: Row(
         children: [
           const SizedBox(width: 18),
