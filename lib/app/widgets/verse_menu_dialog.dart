@@ -3,9 +3,10 @@ import 'dart:async' show Timer;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:my_quran/app/widgets/bookmark_category_picker_sheet.dart';
+import 'package:my_quran/app/widgets/bookmark_category_picker.dart';
 
 import 'package:my_quran/app/widgets/edit_note_dialog.dart';
+import 'package:my_quran/app/widgets/overlay.dart';
 import 'package:my_quran/app/widgets/verse_notes_sheet.dart';
 import 'package:my_quran/quran/quran.dart';
 
@@ -244,15 +245,21 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
   }
 
   Future<void> _openBookmarkPicker(BuildContext context) async {
-    final result = await showModalBottomSheet<BookmarkPickerResult>(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      showDragHandle: false, // we already show a handle
-      builder: (_) => BookmarkCategoryPickerSheet(
+    final result = await showOverlay<BookmarkPickerResult>(
+      context,
+      widget: BookmarkCategoryPicker(
         categories: categories,
         isBookmarked: isBookmarked,
         currentCategoryId: bookmark?.categoryId,
+        showDragHandle: isMobile,
+      ),
+      mobileConfig: const MobileOverlayConfig(
+        useRootNavigator: true,
+        isScrollControlled: true,
+        showDragHandle: false, // we already show a handle
+      ),
+      desktopConfig: const DesktopOverlayConfig(
+        constraints: BoxConstraints(maxWidth: 500),
       ),
     );
 
