@@ -3,7 +3,8 @@ import 'package:my_quran/app/pages/bookmark_categories_page.dart';
 import 'package:my_quran/app/services/notes_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/widgets/edit_note_dialog.dart';
-import 'package:my_quran/app/widgets/verse_notes_sheet.dart';
+import 'package:my_quran/app/widgets/overlay.dart';
+import 'package:my_quran/app/widgets/verse_notes_manager.dart';
 
 import 'package:my_quran/quran/quran.dart';
 
@@ -539,20 +540,23 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   }
 
   Future<void> _openNotesSheet(int surah, int verse) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (ctx) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: VerseNotesSheet(
-            surah: surah,
-            verse: verse,
-            onChanged: _reloadAndNotify, // refresh cache + notify parent
-          ),
-        );
-      },
+    await showOverlay<void>(
+      context,
+      widget: Directionality(
+        textDirection: TextDirection.rtl,
+        child: VerseNotesManager(
+          surah: surah,
+          verse: verse,
+          onChanged: _reloadAndNotify, // refresh cache + notify parent
+        ),
+      ),
+      mobileConfig: const MobileOverlayConfig(
+        isScrollControlled: true,
+        showDragHandle: true,
+      ),
+      desktopConfig: const DesktopOverlayConfig(
+        constraints: BoxConstraints(maxWidth: 500),
+      ),
     );
   }
 

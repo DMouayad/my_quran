@@ -7,7 +7,7 @@ import 'package:my_quran/app/widgets/bookmark_category_picker.dart';
 
 import 'package:my_quran/app/widgets/edit_note_dialog.dart';
 import 'package:my_quran/app/widgets/overlay.dart';
-import 'package:my_quran/app/widgets/verse_notes_sheet.dart';
+import 'package:my_quran/app/widgets/verse_notes_manager.dart';
 import 'package:my_quran/quran/quran.dart';
 
 import 'package:my_quran/app/models.dart';
@@ -399,18 +399,23 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     }
 
     // 1+ notes: open manager sheet (add/edit/delete)
-    await showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => Directionality(
+    await showOverlay<void>(
+      context,
+      widget: Directionality(
         textDirection: TextDirection.rtl,
-        child: VerseNotesSheet(
+        child: VerseNotesManager(
           surah: widget.surah,
           verse: widget.verse.number,
           onChanged: _loadNotes,
         ),
+      ),
+      mobileConfig: const MobileOverlayConfig(
+        useRootNavigator: true,
+        isScrollControlled: true,
+        showDragHandle: true,
+      ),
+      desktopConfig: const DesktopOverlayConfig(
+        constraints: BoxConstraints(maxWidth: 500),
       ),
     );
   }
