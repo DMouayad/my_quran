@@ -300,6 +300,13 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () => _onBookmarkTap(bookmark),
+          onSecondaryTapDown: isMobile
+              ? null
+              : (details) => _showBookmarkContextMenu(
+                  context,
+                  details.globalPosition,
+                  bookmark,
+                ),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -370,51 +377,14 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                       ),
 
                     // More options
+                    if(isMobile)
                     PopupMenuButton<String>(
                       icon: Icon(
                         Icons.more_vert,
                         size: 20,
                         color: colorScheme.onSurfaceVariant,
                       ),
-                      itemBuilder: (_) => [
-                        const PopupMenuItem(
-                          value: 'change_category',
-                          child: Row(
-                            children: [
-                              Icon(Icons.category_outlined, size: 20),
-                              SizedBox(width: 8),
-                              Text('تغيير التصنيف'),
-                            ],
-                          ),
-                        ),
-                        const PopupMenuItem(
-                          value: 'notes',
-                          child: Row(
-                            children: [
-                              Icon(Icons.edit_note_outlined, size: 20),
-                              SizedBox(width: 8),
-                              Text('الملاحظات'),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.delete_outline,
-                                size: 20,
-                                color: colorScheme.error,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'حذف',
-                                style: TextStyle(color: colorScheme.error),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                      itemBuilder: (_) => _getBookmarkMenuItems(colorScheme),
                       onSelected: (value) => _onMenuAction(value, bookmark),
                     ),
                   ],
@@ -502,6 +472,64 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _showBookmarkContextMenu(
+    BuildContext context,
+    Offset position,
+    VerseBookmark bookmark,
+  ) async {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final value = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy,
+        MediaQuery.widthOf(context) - position.dx,
+        MediaQuery.heightOf(context) - position.dy,
+      ),
+      items: _getBookmarkMenuItems(colorScheme),
+    );
+
+    if (value != null && context.mounted) {
+      _onMenuAction(value, bookmark);
+    }
+  }
+
+  List<PopupMenuEntry<String>> _getBookmarkMenuItems(ColorScheme colorScheme) {
+    return [
+      const PopupMenuItem(
+        value: 'change_category',
+        child: Row(
+          children: [
+            Icon(Icons.category_outlined, size: 20),
+            SizedBox(width: 8),
+            Text('تغيير التصنيف'),
+          ],
+        ),
+      ),
+      const PopupMenuItem(
+        value: 'notes',
+        child: Row(
+          children: [
+            Icon(Icons.edit_note_outlined, size: 20),
+            SizedBox(width: 8),
+            Text('الملاحظات'),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        value: 'delete',
+        child: Row(
+          children: [
+            Icon(Icons.delete_outline, size: 20, color: colorScheme.error),
+            const SizedBox(width: 8),
+            Text('حذف', style: TextStyle(color: colorScheme.error)),
+          ],
+        ),
+      ),
+    ];
   }
 
   // ─────────────────────────────────────────────
