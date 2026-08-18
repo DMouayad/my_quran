@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
+import 'package:my_quran/app/utils.dart';
 
 class ManageCategoriesScreen extends StatefulWidget {
   const ManageCategoriesScreen({super.key});
@@ -34,11 +35,13 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(title: const Text('إدارة التصنيفات')),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _addCategory,
-          child: const Icon(Icons.add),
+        appBar: AppBar(
+          title: const Text('إدارة التصنيفات'),
+          actions: !isMobile
+              ? <Widget>[addCategoryButton(context, showLable: true)]
+              : null,
         ),
+        floatingActionButton: isMobile ? addCategoryButton(context) : null,
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : _categories.isEmpty
@@ -81,6 +84,33 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
               ),
       ),
     );
+  }
+
+  Widget addCategoryButton(BuildContext context, {bool showLable = false}) {
+    const icon = Icon(Icons.add, size: 20);
+    if (showLable) {
+      return Padding(
+        padding: const .all(10),
+        child: TextButton.icon(
+          label: Text(
+            'إضافة تصنيف جديد',
+            style: context.textTheme.bodyLarge?.copyWith(
+              color: context.colorScheme.primary,
+            ),
+          ),
+          icon: icon,
+          style: ButtonStyle(
+            backgroundColor: .all(context.colorScheme.primaryContainer),
+            shape: .all(
+              const RoundedRectangleBorder(borderRadius: .all(.circular(10))),
+            ),
+            fixedSize: .all(const Size(.infinity, 40)),
+          ),
+          onPressed: _addCategory,
+        ),
+      );
+    }
+    return FloatingActionButton(onPressed: _addCategory, child: icon);
   }
 
   Future<void> _addCategory() async {
