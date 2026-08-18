@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:my_quran/app/pages/bookmark_categories_page.dart';
 import 'package:my_quran/app/services/notes_service.dart';
@@ -570,15 +571,31 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   }
 
   Future<void> _changeCategory(VerseBookmark bookmark) async {
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: const Text('تغيير التصنيف'),
-            content: SizedBox(
-              width: double.maxFinite,
+    final result = await showOverlay<String>(
+      context,
+      widget: Column(
+        mainAxisSize: .min,
+        children: [
+          Padding(
+            padding: const .all(12),
+            child: Row(
+              children: [
+                const Icon(Icons.bookmark, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'تغيير العلامة',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                if (isDesktop || kIsWeb) const CloseButton(),
+              ],
+            ),
+          ),
+          Flexible(
+            child: Padding(
+              padding: const .fromLTRB(16, 0, 16, 16),
               child: ListView.builder(
                 shrinkWrap: true,
                 itemCount: _categories.length,
@@ -607,15 +624,17 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                 },
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('إلغاء'),
-              ),
-            ],
           ),
-        );
-      },
+        ],
+      ),
+      mobileConfig: const MobileOverlayConfig(
+        useSafeArea: true,
+        showDragHandle: true,
+        isScrollControlled: true
+      ),
+      desktopConfig: const DesktopOverlayConfig(
+        constraints: BoxConstraints(maxWidth: 500),
+      ),
     );
 
     if (result == null || result == bookmark.categoryId) return;
