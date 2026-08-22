@@ -8,13 +8,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:my_quran/app/pages/notes_screen.dart';
+import 'package:my_quran/app/widgets/overlay.dart';
 
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'package:my_quran/app/pages/bookmarks_screen.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
-import 'package:my_quran/app/widgets/settings_sheet.dart';
-import 'package:my_quran/app/widgets/theme_tiles_picker.dart';
+import 'package:my_quran/app/widgets/settings/settings_screen.dart';
 import 'package:my_quran/app/widgets/whats_new_dialog.dart';
 import 'package:my_quran/app/quran_page_text_cache.dart';
 import 'package:my_quran/app/settings_controller.dart';
@@ -497,20 +497,28 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 IconButton(
                   icon: const Icon(Icons.settings_outlined),
                   onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      showDragHandle: false,
-                      isScrollControlled: true,
-                      barrierColor: Colors.black38,
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * .6,
+                    final height = MediaQuery.of(context).size.height;
+                    const barrierColor = Colors.black38;
+                    showOverlay(
+                      context,
+                      widget: SettingsScreen(
+                        fontController: _fontSizeController,
+                        settingsController: widget.settingsController,
                       ),
-                      builder: (context) {
-                        return SettingsSheet(
-                          fontController: _fontSizeController,
-                          settingsController: widget.settingsController,
-                        );
-                      },
+                      mobileConfig: MobileOverlayConfig(
+                        useSafeArea: true,
+                        showDragHandle: false,
+                        isScrollControlled: true,
+                        constraints: BoxConstraints(maxHeight: height * .6),
+                        barrierColor: barrierColor,
+                      ),
+                      desktopConfig: DesktopOverlayConfig(
+                        constraints: BoxConstraints(
+                          maxWidth: 700,
+                          maxHeight: height * .75,
+                        ),
+                        barrierColor: barrierColor,
+                      ),
                     );
                   },
                 ),

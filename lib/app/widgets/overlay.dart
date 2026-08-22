@@ -45,6 +45,7 @@ Future<T?> _defaultMobileOverlay<T>(
     constraints: config.constraints,
     isScrollControlled: config.isScrollControlled,
     showDragHandle: config.showDragHandle,
+    barrierColor: config.barrierColor,
   );
 }
 
@@ -57,6 +58,7 @@ Future<T?> _defaultDesktopOverlay<T>(
     context: context,
     useRootNavigator: config.useRootNavigator,
     useSafeArea: config.useSafeArea,
+    barrierColor: config.barrierColor,
     builder: (_) => Dialog(
       constraints: config.constraints,
       shape: const RoundedRectangleBorder(
@@ -74,11 +76,13 @@ abstract class OverlayConfig {
     this.useRootNavigator = false,
     this.useSafeArea = false,
     this.constraints,
+    this.barrierColor,
   });
 
   final bool useRootNavigator;
   final bool useSafeArea;
   final BoxConstraints? constraints;
+  final Color? barrierColor;
 }
 
 /// Configuration for the overlay used in the mobile [showModalBottomSheet].
@@ -86,7 +90,8 @@ class MobileOverlayConfig extends OverlayConfig {
   const MobileOverlayConfig({
     super.useRootNavigator,
     super.useSafeArea,
-    super.constraints,
+    super.constraints, 
+    super.barrierColor,
     this.isScrollControlled = false,
     this.showDragHandle,
   });
@@ -100,6 +105,7 @@ class DesktopOverlayConfig extends OverlayConfig {
   const DesktopOverlayConfig({
     super.useRootNavigator = true,
     super.useSafeArea,
-    super.constraints,
+    super.constraints, 
+    super.barrierColor,
   });
 }
