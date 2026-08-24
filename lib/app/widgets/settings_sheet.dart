@@ -275,25 +275,6 @@ class SettingsSheet extends StatelessWidget {
                     ),
                     const _ThinDivider(),
                     _ToggleRow(
-                      icon: Icons.auto_mode_outlined,
-                      title: 'التمرير التلقائي',
-                      subtitle:
-                          'التمرير التلقائي السلس أثناء '
-                          'القراءة (وضع الكتاب فقط)',
-                      value: settingsController.autoScrollEnabled,
-
-
-                      onChanged: (v) =>
-                          settingsController.autoScrollEnabled = v,
-                    ),
-
-
-
-
-
-
-                    const _ThinDivider(),
-                    _ToggleRow(
                       icon: Icons.numbers_outlined,
                       title: 'عرض رقم الحزب',
                       subtitle:
@@ -797,5 +778,3 @@ class _ToggleRow extends StatelessWidget {
     );
   }
 }
-
-

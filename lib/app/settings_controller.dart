@@ -21,8 +21,6 @@ class SettingsController extends ChangeNotifier {
   bool _autoScrollEnabled = false;
   int _autoScrollIntervalMs = 20000;
 
-
-
   TextAlignOption _textAlign = TextAlignOption.justify;
   bool _supportsDynamicColor = false;
   ColorScheme? _deviceLightScheme;
@@ -41,7 +39,6 @@ class SettingsController extends ChangeNotifier {
 
   set autoScrollEnabled(bool value) {
     _autoScrollEnabled = value;
-    settingsService.setAutoScrollEnabled(value);
     notifyListeners();
   }
 
@@ -50,6 +47,7 @@ class SettingsController extends ChangeNotifier {
     settingsService.setAutoScrollIntervalMs(value);
     notifyListeners();
   }
+
   bool get isHorizontalScrolling => _isHorizontalScrolling;
   String get language => _language;
   FontFamily get fontFamily => _fontFamily;
@@ -171,8 +169,6 @@ class SettingsController extends ChangeNotifier {
     _keepScreenOn = await settingsService.loadKeepScreenOn();
     final loadedInterval = await settingsService.loadAutoScrollIntervalMs();
     _autoScrollIntervalMs = loadedInterval.clamp(5000, 60000);
-
-
 
     _textAlign = await settingsService.loadTextAlign();
     _useTrueBlackBgColor = await settingsService.loadUseTrueBlackBgColor();

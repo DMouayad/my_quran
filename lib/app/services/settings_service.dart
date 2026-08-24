@@ -98,9 +98,6 @@ class SettingsService {
     return await _prefs.getInt(_autoScrollIntervalKey) ?? 20000;
   }
 
-
-
-
   Future<void> setAutoScrollIntervalMs(int value) async {
     await _prefs.setInt(_autoScrollIntervalKey, value);
   }

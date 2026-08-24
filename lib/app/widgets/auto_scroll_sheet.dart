@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:my_quran/app/settings_controller.dart';
 
-class AutoScrollSheet extends StatefulWidget {
+class AutoScrollSheet extends StatelessWidget {
   const AutoScrollSheet({
     required this.settingsController,
     required this.isAutoScrolling,
@@ -13,20 +14,19 @@ class AutoScrollSheet extends StatefulWidget {
   final bool isAutoScrolling;
   final VoidCallback onToggleAutoScroll;
 
-  @override
-  State<AutoScrollSheet> createState() => _AutoScrollSheetState();
-}
+  static const List<int> quickPresets = [1, 2, 4, 8, 12];
 
-class _AutoScrollSheetState extends State<AutoScrollSheet> {
+  int _ppmFor(int intervalMs) {
+    final ppm = (60000 / intervalMs).round();
+    return ppm.clamp(1, 12);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isScrolling = widget.isAutoScrolling;
-    final intervalMs = widget.settingsController.autoScrollIntervalMs;
-    final seconds = intervalMs ~/ 1000;
-
-    // Map 60s (Slow / Right) to 5 and 5s (Fast / Left) to 60
-    final sliderVal = ((65000 - intervalMs) / 1000).clamp(5.0, 60.0);
+    final isScrolling = isAutoScrolling;
+    final intervalMs = settingsController.autoScrollIntervalMs;
+    final ppm = _ppmFor(intervalMs);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -37,7 +37,6 @@ class _AutoScrollSheetState extends State<AutoScrollSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
           Container(
             width: 36,
             height: 4,
@@ -47,7 +46,6 @@ class _AutoScrollSheetState extends State<AutoScrollSheet> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          // Header title & live speed
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -57,8 +55,6 @@ class _AutoScrollSheetState extends State<AutoScrollSheet> {
                     Icons.keyboard_double_arrow_down_outlined,
                     color: colorScheme.primary,
                   ),
-
-
                   const SizedBox(width: 8),
                   Text(
                     'التمرير التلقائي',
@@ -71,14 +67,16 @@ class _AutoScrollSheetState extends State<AutoScrollSheet> {
                 ],
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '$seconds ثانية / صفحة',
+                  '$ppm ص/د',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -88,61 +86,85 @@ class _AutoScrollSheetState extends State<AutoScrollSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          // Speed Slider
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'سرعة التمرير',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: colorScheme.onSurfaceVariant,
+          const SizedBox(height: 34),
+
+          // Quick presets
+          Container(
+            height: 54,
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: ppm <= 1
+                      ? null
+                      : () {
+                          HapticFeedback.selectionClick();
+                          settingsController.autoScrollIntervalMs =
+                              60000 ~/ (ppm - 1);
+                        },
+                  icon: Icon(
+                    Icons.remove,
+                    size: 18,
+                    color: ppm <= 1
+                        ? colorScheme.onSurface.withValues(alpha: 0.25)
+                        : colorScheme.onSurface,
+                  ),
                 ),
-              ),
-              Slider(
-                value: sliderVal,
-                min: 5,
-                max: 60,
-                divisions: 55,
-                onChanged: (v) {
-                  final newMs = ((65 - v) * 1000).round();
-                  widget.settingsController.autoScrollIntervalMs = newMs;
-                  setState(() {});
-                },
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'بطيء جداً (60ث)',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colorScheme.onSurfaceVariant,
+                Expanded(
+                  child: Text(
+                    '$ppm صفحة / دقيقة',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Text(
-                    'سريع (5ث)',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                ),
+                IconButton(
+                  onPressed: ppm >= 12
+                      ? null
+                      : () {
+                          HapticFeedback.selectionClick();
+                          settingsController.autoScrollIntervalMs =
+                              60000 ~/ (ppm + 1);
+                        },
+                  icon: Icon(
+                    Icons.add,
+                    size: 18,
+                    color: ppm >= 12
+                        ? colorScheme.onSurface.withValues(alpha: 0.25)
+                        : colorScheme.onSurface,
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Stepper like font size
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final p in quickPresets)
+                ChoiceChip(
+                  label: Text('$p'),
+                  selected: ppm == p,
+                  onSelected: (_) {
+                    HapticFeedback.selectionClick();
+                    settingsController.autoScrollIntervalMs = 60000 ~/ p;
+                  },
+                ),
             ],
           ),
-          const SizedBox(height: 24),
-          // Big Play/Pause Start Button
+          const SizedBox(height: 34),
           SizedBox(
             width: double.infinity,
             height: 50,
             child: FilledButton.icon(
-              onPressed: () {
-                widget.onToggleAutoScroll();
-                setState(() {});
-              },
+              onPressed: onToggleAutoScroll,
               style: FilledButton.styleFrom(
                 backgroundColor: isScrolling
                     ? colorScheme.errorContainer
@@ -160,7 +182,7 @@ class _AutoScrollSheetState extends State<AutoScrollSheet> {
                     : Icons.play_circle_filled_outlined,
               ),
               label: Text(
-                isScrolling ? 'إيقاف التمرير' : 'بدء التمرير التلقائي',
+                isScrolling ? 'إيقاف' : 'بدء',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
