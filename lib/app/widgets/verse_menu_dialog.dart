@@ -313,6 +313,13 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
   }
 
   Future<void> _openBookmarkPicker(BuildContext context) async {
+    // If the user has exactly one tag and this verse isn't bookmarked yet,
+    // save it under that sole tag directly instead of showing the picker.
+    if (!isBookmarked && categories.length == 1) {
+      await _onCategorySelected(context, categories.first);
+      return;
+    }
+
     final result = await showModalBottomSheet<BookmarkPickerResult>(
       context: context,
       useRootNavigator: true,
