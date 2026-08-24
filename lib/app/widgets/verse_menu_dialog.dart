@@ -321,7 +321,6 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     }
 
     final result = await showModalBottomSheet<BookmarkPickerResult>(
-
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
