@@ -1,7 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart';
+import 'package:my_quran/app/utils.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -60,39 +61,50 @@ class BackupService {
       appBuild: appBuild,
     );
 
-    final dir = await getTemporaryDirectory();
+    final String? dir = isMobile
+        ? (await getTemporaryDirectory()).path
+        : isDesktop
+        ? await getDirectoryPath()
+        : null;
+    if (isDesktop && !kIsWeb && dir == null) return;
 
     final safeVersion = appVersion.isEmpty ? 'unknown' : appVersion;
     final safeBuild = (appBuild == null) ? '0' : appBuild.toString();
 
     final fileName =
         'my_quran-backup-v$schemaVersion-$safeVersion+$safeBuild-'
-        '${DateTime.now().toIso8601String().replaceAll(':', '-')}.json.gz';
+        '${DateTime.now().toIso8601String().replaceAll(':', '-')}.json';
 
-    final file = File('${dir.path}/$fileName');
-    await file.writeAsBytes(bytes, flush: true);
+    final file = XFile.fromData(
+      bytes,
+      name: fileName,
+      path: dir != null ? '$dir/$fileName' : null,
+      mimeType: 'application/json',
+    );
+    /// if [path] is null then [file.path] 
+    /// will be a Blob URL on web-browsers.
+    await file.saveTo(file.path);
 
-    await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(file.path, mimeType: 'application/gzip')],
-        subject: 'My Quran Backup',
-        text: 'Backup file (bookmarks + notes).',
-      ),
+    if (isMobile) {
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [file],
+          subject: 'My Quran Backup',
+          text: 'Backup file (bookmarks + notes).',
+        ),
+      );
+    }
+  }
+
+  Future<XFile?> pickBackupFile() async {
+    return openFile(
+      acceptedTypeGroups: [
+        const XTypeGroup(extensions: ['json']),
+      ],
     );
   }
 
-  Future<File?> pickBackupFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['gz', 'json'],
-    );
-    if (result == null || result.files.isEmpty) return null;
-    final path = result.files.single.path;
-    if (path == null) return null;
-    return File(path);
-  }
-
-  Future<BackupPreview> preview(File file) async {
+  Future<BackupPreview> preview(XFile file) async {
     final doc = await _readBackupDoc(file);
     final data = doc['data'] as Map<String, dynamic>? ?? const {};
 
@@ -118,7 +130,7 @@ class BackupService {
     );
   }
 
-  Future<void> import(File file, {required ImportMode mode}) async {
+  Future<void> import(XFile file, {required ImportMode mode}) async {
     final doc = await _readBackupDoc(file);
 
     final ver = doc['schemaVersion'] as int? ?? 0;
@@ -182,7 +194,7 @@ class BackupService {
 
   // ---------- Export implementation ----------
 
-  Future<List<int>> _exportBytes({
+  Future<Uint8List> _exportBytes({
     required String appVersion,
     required int? appBuild,
   }) async {
@@ -206,17 +218,15 @@ class BackupService {
       },
     };
 
-    final raw = utf8.encode(jsonEncode(doc));
-    return gzip.encode(raw);
+    return utf8.encode(jsonEncode(doc));
   }
 
   // ---------- Import implementation (read/validate) ----------
 
-  Future<Map<String, dynamic>> _readBackupDoc(File file) async {
+  Future<Map<String, dynamic>> _readBackupDoc(XFile file) async {
     final bytes = await file.readAsBytes();
-    final decoded = _decodeMaybeGzip(bytes);
 
-    final obj = jsonDecode(utf8.decode(decoded));
+    final obj = jsonDecode(utf8.decode(bytes));
     if (obj is! Map<String, dynamic>) {
       throw const FormatException('Backup root is not a JSON object');
     }
@@ -226,11 +236,6 @@ class BackupService {
     }
 
     return obj;
-  }
-
-  List<int> _decodeMaybeGzip(List<int> bytes) {
-    final isGz = bytes.length >= 2 && bytes[0] == 0x1F && bytes[1] == 0x8B;
-    return isGz ? gzip.decode(bytes) : bytes;
   }
 
   // ---------- Apply strategies ----------
