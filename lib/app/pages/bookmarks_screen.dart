@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:my_quran/app/pages/bookmark_categories_page.dart';
 import 'package:my_quran/app/services/notes_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/widgets/edit_note_dialog.dart';
-import 'package:my_quran/app/widgets/verse_notes_sheet.dart';
+import 'package:my_quran/app/widgets/overlay.dart';
+import 'package:my_quran/app/widgets/verse_notes_manager.dart';
 
 import 'package:my_quran/quran/quran.dart';
 
@@ -298,6 +300,13 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () => _onBookmarkTap(bookmark),
+          onSecondaryTapDown: isMobile
+              ? null
+              : (details) => _showBookmarkContextMenu(
+                  context,
+                  details.globalPosition,
+                  bookmark,
+                ),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -368,53 +377,16 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                       ),
 
                     // More options
-                    PopupMenuButton<String>(
-                      icon: Icon(
-                        Icons.more_vert,
-                        size: 20,
-                        color: colorScheme.onSurfaceVariant,
+                    if (isMobile)
+                      PopupMenuButton<String>(
+                        icon: Icon(
+                          Icons.more_vert,
+                          size: 20,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        itemBuilder: (_) => _getBookmarkMenuItems(colorScheme),
+                        onSelected: (value) => _onMenuAction(value, bookmark),
                       ),
-                      itemBuilder: (_) => [
-                        const PopupMenuItem(
-                          value: 'change_category',
-                          child: Row(
-                            children: [
-                              Icon(Icons.category_outlined, size: 20),
-                              SizedBox(width: 8),
-                              Text('تغيير التصنيف'),
-                            ],
-                          ),
-                        ),
-                        const PopupMenuItem(
-                          value: 'notes',
-                          child: Row(
-                            children: [
-                              Icon(Icons.edit_note_outlined, size: 20),
-                              SizedBox(width: 8),
-                              Text('الملاحظات'),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.delete_outline,
-                                size: 20,
-                                color: colorScheme.error,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'حذف',
-                                style: TextStyle(color: colorScheme.error),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      onSelected: (value) => _onMenuAction(value, bookmark),
-                    ),
                   ],
                 ),
 
@@ -502,6 +474,64 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     );
   }
 
+  Future<void> _showBookmarkContextMenu(
+    BuildContext context,
+    Offset position,
+    VerseBookmark bookmark,
+  ) async {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final value = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy,
+        MediaQuery.widthOf(context) - position.dx,
+        MediaQuery.heightOf(context) - position.dy,
+      ),
+      items: _getBookmarkMenuItems(colorScheme),
+    );
+
+    if (value != null && context.mounted) {
+      _onMenuAction(value, bookmark);
+    }
+  }
+
+  List<PopupMenuEntry<String>> _getBookmarkMenuItems(ColorScheme colorScheme) {
+    return [
+      const PopupMenuItem(
+        value: 'change_category',
+        child: Row(
+          children: [
+            Icon(Icons.category_outlined, size: 20),
+            SizedBox(width: 8),
+            Text('تغيير التصنيف'),
+          ],
+        ),
+      ),
+      const PopupMenuItem(
+        value: 'notes',
+        child: Row(
+          children: [
+            Icon(Icons.edit_note_outlined, size: 20),
+            SizedBox(width: 8),
+            Text('الملاحظات'),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        value: 'delete',
+        child: Row(
+          children: [
+            Icon(Icons.delete_outline, size: 20, color: colorScheme.error),
+            const SizedBox(width: 8),
+            Text('حذف', style: TextStyle(color: colorScheme.error)),
+          ],
+        ),
+      ),
+    ];
+  }
+
   // ─────────────────────────────────────────────
   // Actions
   // ─────────────────────────────────────────────
@@ -539,20 +569,23 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   }
 
   Future<void> _openNotesSheet(int surah, int verse) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (ctx) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: VerseNotesSheet(
-            surah: surah,
-            verse: verse,
-            onChanged: _reloadAndNotify, // refresh cache + notify parent
-          ),
-        );
-      },
+    await showOverlay<void>(
+      context,
+      widget: Directionality(
+        textDirection: TextDirection.rtl,
+        child: VerseNotesManager(
+          surah: surah,
+          verse: verse,
+          onChanged: _reloadAndNotify, // refresh cache + notify parent
+        ),
+      ),
+      mobileConfig: const MobileOverlayConfig(
+        isScrollControlled: true,
+        showDragHandle: true,
+      ),
+      desktopConfig: const DesktopOverlayConfig(
+        constraints: BoxConstraints(maxWidth: 500),
+      ),
     );
   }
 
@@ -566,15 +599,31 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   }
 
   Future<void> _changeCategory(VerseBookmark bookmark) async {
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: const Text('تغيير التصنيف'),
-            content: SizedBox(
-              width: double.maxFinite,
+    final result = await showOverlay<String>(
+      context,
+      widget: Column(
+        mainAxisSize: .min,
+        children: [
+          Padding(
+            padding: const .all(12),
+            child: Row(
+              children: [
+                const Icon(Icons.bookmark, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'تغيير العلامة',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                if (isDesktop || kIsWeb) const CloseButton(),
+              ],
+            ),
+          ),
+          Flexible(
+            child: Padding(
+              padding: const .fromLTRB(16, 0, 16, 16),
               child: ListView.builder(
                 shrinkWrap: true,
                 itemCount: _categories.length,
@@ -603,15 +652,17 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                 },
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('إلغاء'),
-              ),
-            ],
           ),
-        );
-      },
+        ],
+      ),
+      mobileConfig: const MobileOverlayConfig(
+        useSafeArea: true,
+        showDragHandle: true,
+        isScrollControlled: true,
+      ),
+      desktopConfig: const DesktopOverlayConfig(
+        constraints: BoxConstraints(maxWidth: 500),
+      ),
     );
 
     if (result == null || result == bookmark.categoryId) return;
