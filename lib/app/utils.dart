@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:my_quran/app/models.dart';
 
@@ -17,6 +17,16 @@ bool get isMobilePlatform {
     _ => false,
   };
 }
+
+// Legacy aliases — keep for compat with PR72 code that uses isDesktop/isMobile
+bool get isDesktop => isDesktopPlatform;
+bool get isMobile => isMobilePlatform;
+
+bool get isDesktopOrWeb => kIsWeb || isDesktopPlatform;
+
+/// Width-based layout signal (<700 = compact/phone)
+bool isCompactWidth(BuildContext context) => MediaQuery.widthOf(context) < 700;
+bool isCompactWidthFromConstraints(BoxConstraints c) => c.maxWidth < 700;
 
 String getArabicNumber(int number) {
   const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
