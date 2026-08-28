@@ -311,7 +311,9 @@ class SettingsSheet extends StatelessWidget {
                     _ActionRow(
                       icon: Icons.upload_file,
                       title: 'تصدير نسخة احتياطية',
-                      subtitle: 'مشاركة ملف النسخة أو حفظه',
+                      subtitle:
+                          'مشاركة الملف — سيتم تنزيله تلقائياً إذا '
+                          'كانت المشاركة غير مدعومة',
                       onTap: () async {
                         await BackupService().exportAndShare();
                       },

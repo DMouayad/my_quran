@@ -1,7 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
+import 'package:archive/archive.dart';
+import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart';
+import 'package:my_quran/app/utils.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -60,39 +62,68 @@ class BackupService {
       appBuild: appBuild,
     );
 
-    final dir = await getTemporaryDirectory();
-
     final safeVersion = appVersion.isEmpty ? 'unknown' : appVersion;
     final safeBuild = (appBuild == null) ? '0' : appBuild.toString();
 
     final fileName =
         'my_quran-backup-v$schemaVersion-$safeVersion+$safeBuild-'
-        '${DateTime.now().toIso8601String().replaceAll(':', '-')}.json.gz';
+        '${DateTime.now().toIso8601String().replaceAll(':', '-')}.json';
 
-    final file = File('${dir.path}/$fileName');
-    await file.writeAsBytes(bytes, flush: true);
+    // Web: trigger browser download
+    if (kIsWeb) {
+      final file = XFile.fromData(
+        bytes,
+        name: fileName,
+        mimeType: 'application/json',
+      );
+      // On web saveTo with empty path triggers download of `name`
+      await file.saveTo(fileName);
+      return;
+    }
 
-    await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(file.path, mimeType: 'application/gzip')],
-        subject: 'My Quran Backup',
-        text: 'Backup file (bookmarks + notes).',
-      ),
+    if (isMobilePlatform) {
+      final dir = await getTemporaryDirectory();
+      final path = '${dir.path}/$fileName';
+      final file = XFile.fromData(
+        bytes,
+        name: fileName,
+        path: path,
+        mimeType: 'application/json',
+      );
+      await file.saveTo(path);
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [file],
+          subject: 'My Quran Backup',
+          text: 'Backup file (bookmarks + notes).',
+        ),
+      );
+      return;
+    }
+
+    // Desktop (Windows/Linux/macOS)
+    final dir = await getDirectoryPath();
+    if (dir == null) return; // user cancelled
+    final path = '$dir/$fileName';
+    final file = XFile.fromData(
+      bytes,
+      name: fileName,
+      path: path,
+      mimeType: 'application/json',
+    );
+    await file.saveTo(path);
+  }
+
+  Future<XFile?> pickBackupFile() async {
+    return openFile(
+      acceptedTypeGroups: [
+        const XTypeGroup(label: 'JSON', extensions: ['json']),
+        const XTypeGroup(label: 'GZip JSON', extensions: ['gz', 'json.gz']),
+      ],
     );
   }
 
-  Future<File?> pickBackupFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['gz', 'json'],
-    );
-    if (result == null || result.files.isEmpty) return null;
-    final path = result.files.single.path;
-    if (path == null) return null;
-    return File(path);
-  }
-
-  Future<BackupPreview> preview(File file) async {
+  Future<BackupPreview> preview(XFile file) async {
     final doc = await _readBackupDoc(file);
     final data = doc['data'] as Map<String, dynamic>? ?? const {};
 
@@ -118,7 +149,7 @@ class BackupService {
     );
   }
 
-  Future<void> import(File file, {required ImportMode mode}) async {
+  Future<void> import(XFile file, {required ImportMode mode}) async {
     final doc = await _readBackupDoc(file);
 
     final ver = doc['schemaVersion'] as int? ?? 0;
@@ -182,7 +213,7 @@ class BackupService {
 
   // ---------- Export implementation ----------
 
-  Future<List<int>> _exportBytes({
+  Future<Uint8List> _exportBytes({
     required String appVersion,
     required int? appBuild,
   }) async {
@@ -206,13 +237,12 @@ class BackupService {
       },
     };
 
-    final raw = utf8.encode(jsonEncode(doc));
-    return gzip.encode(raw);
+    return utf8.encode(jsonEncode(doc));
   }
 
   // ---------- Import implementation (read/validate) ----------
 
-  Future<Map<String, dynamic>> _readBackupDoc(File file) async {
+  Future<Map<String, dynamic>> _readBackupDoc(XFile file) async {
     final bytes = await file.readAsBytes();
     final decoded = _decodeMaybeGzip(bytes);
 
@@ -230,7 +260,14 @@ class BackupService {
 
   List<int> _decodeMaybeGzip(List<int> bytes) {
     final isGz = bytes.length >= 2 && bytes[0] == 0x1F && bytes[1] == 0x8B;
-    return isGz ? gzip.decode(bytes) : bytes;
+    if (!isGz) return bytes;
+    try {
+      return const GZipDecoder().decodeBytes(bytes);
+    } on ArchiveException {
+      // If gzip header present but decode fails, fall back to raw bytes
+      // so jsonDecode can throw a clearer FormatException.
+      return bytes;
+    }
   }
 
   // ---------- Apply strategies ----------
