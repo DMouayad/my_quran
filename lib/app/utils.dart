@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:my_quran/app/models.dart';
 
-bool get isDesktop {
+bool get isDesktopPlatform {
   return switch (defaultTargetPlatform) {
     TargetPlatform.windows ||
     TargetPlatform.macOS ||
@@ -11,7 +11,7 @@ bool get isDesktop {
   };
 }
 
-bool get isMobile {
+bool get isMobilePlatform {
   return switch (defaultTargetPlatform) {
     TargetPlatform.android || TargetPlatform.iOS => true,
     _ => false,
