@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:my_quran/app/settings_controller.dart';
+import 'package:my_quran/app/utils.dart';
 
 class AutoScrollSheet extends StatelessWidget {
   const AutoScrollSheet({
@@ -14,19 +15,22 @@ class AutoScrollSheet extends StatelessWidget {
   final bool isAutoScrolling;
   final VoidCallback onToggleAutoScroll;
 
+  static const int minPpm = 1;
+  static const int maxPpm = 12;
   static const List<int> quickPresets = [1, 2, 4, 8, 12];
 
-  int _ppmFor(int intervalMs) {
-    final ppm = (60000 / intervalMs).round();
-    return ppm.clamp(1, 12);
+  int _ppmFor(int intervalMs) =>
+      (60000 / intervalMs).round().clamp(minPpm, maxPpm);
+
+  void _setPpm(int ppm) {
+    HapticFeedback.selectionClick();
+    settingsController.autoScrollIntervalMs = 60000 ~/ ppm;
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isScrolling = isAutoScrolling;
-    final intervalMs = settingsController.autoScrollIntervalMs;
-    final ppm = _ppmFor(intervalMs);
+    final ppm = _ppmFor(settingsController.autoScrollIntervalMs);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -42,10 +46,12 @@ class AutoScrollSheet extends StatelessWidget {
             height: 4,
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+              color: colorScheme.onSurfaceVariant.applyOpacity(0.4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
+
+          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -86,90 +92,66 @@ class AutoScrollSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 34),
+          const SizedBox(height: 28),
 
-          // Quick presets
-          Container(
-            height: 54,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainer,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: ppm <= 1
-                      ? null
-                      : () {
-                          HapticFeedback.selectionClick();
-                          settingsController.autoScrollIntervalMs =
-                              60000 ~/ (ppm - 1);
-                        },
-                  icon: Icon(
-                    Icons.remove,
-                    size: 18,
-                    color: ppm <= 1
-                        ? colorScheme.onSurface.withValues(alpha: 0.25)
-                        : colorScheme.onSurface,
+          // Primary control: slider for fast, spatial speed adjustment
+          Row(
+            children: [
+              Icon(
+                Icons.slow_motion_video_outlined,
+                size: 20,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              Expanded(
+                child: SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 6,
+                    overlayShape: SliderComponentShape.noOverlay,
+                  ),
+                  child: Slider(
+                    value: ppm.toDouble(),
+                    min: minPpm.toDouble(),
+                    max: maxPpm.toDouble(),
+                    divisions: maxPpm - minPpm,
+                    label: '$ppm',
+                    onChanged: (v) => _setPpm(v.round()),
                   ),
                 ),
-                Expanded(
-                  child: Text(
-                    '$ppm صفحة / دقيقة',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: ppm >= 12
-                      ? null
-                      : () {
-                          HapticFeedback.selectionClick();
-                          settingsController.autoScrollIntervalMs =
-                              60000 ~/ (ppm + 1);
-                        },
-                  icon: Icon(
-                    Icons.add,
-                    size: 18,
-                    color: ppm >= 12
-                        ? colorScheme.onSurface.withValues(alpha: 0.25)
-                        : colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              Icon(
+                Icons.fast_forward_outlined,
+                size: 20,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
-          // Stepper like font size
+          // Secondary control: one-tap common speeds
           Wrap(
+            alignment: WrapAlignment.center,
             spacing: 8,
             children: [
               for (final p in quickPresets)
                 ChoiceChip(
                   label: Text('$p'),
                   selected: ppm == p,
-                  onSelected: (_) {
-                    HapticFeedback.selectionClick();
-                    settingsController.autoScrollIntervalMs = 60000 ~/ p;
-                  },
+                  onSelected: (_) => _setPpm(p),
                 ),
             ],
           ),
-          const SizedBox(height: 34),
+          const SizedBox(height: 30),
+
           SizedBox(
             width: double.infinity,
             height: 50,
             child: FilledButton.icon(
               onPressed: onToggleAutoScroll,
               style: FilledButton.styleFrom(
-                backgroundColor: isScrolling
+                backgroundColor: isAutoScrolling
                     ? colorScheme.errorContainer
                     : colorScheme.primary,
-                foregroundColor: isScrolling
+                foregroundColor: isAutoScrolling
                     ? colorScheme.onErrorContainer
                     : colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(
@@ -177,12 +159,12 @@ class AutoScrollSheet extends StatelessWidget {
                 ),
               ),
               icon: Icon(
-                isScrolling
+                isAutoScrolling
                     ? Icons.pause_circle_filled_outlined
                     : Icons.play_circle_filled_outlined,
               ),
               label: Text(
-                isScrolling ? 'إيقاف' : 'بدء',
+                isAutoScrolling ? 'إيقاف' : 'بدء',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
