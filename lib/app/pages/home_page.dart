@@ -11,9 +11,11 @@ import 'package:my_quran/app/pages/notes_screen.dart';
 import 'package:my_quran/app/widgets/overlay.dart';
 
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'package:my_quran/app/pages/bookmarks_screen.dart';
 import 'package:my_quran/app/services/bookmark_service.dart';
+import 'package:my_quran/app/widgets/auto_scroll_sheet.dart';
 import 'package:my_quran/app/widgets/settings/settings_screen.dart';
 import 'package:my_quran/app/widgets/whats_new_dialog.dart';
 import 'package:my_quran/app/quran_page_text_cache.dart';
@@ -46,6 +48,8 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   late final ValueNotifier<({int surah, int verse})?> _highlightedVerseNotifier;
 
   final ItemScrollController _itemScrollController = ItemScrollController();
+  final ScrollOffsetController _scrollOffsetController =
+      ScrollOffsetController();
   final ItemPositionsListener _itemPositionsListener =
       ItemPositionsListener.create();
 
@@ -107,11 +111,154 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _isLandscape = false;
   bool _showHeader = true;
 
+  // ── Auto-scroll state ──
+  // Smooth continuous line-by-line scrolling for vertical (book) mode.
+  // Transient in-memory via SettingsController (no persistence).
+  bool get _isAutoScrolling => widget.settingsController.autoScrollEnabled;
+  bool _isAutoScrollingLoopRunning = false;
+
+  void _startAutoScroll() {
+    if (_isAutoScrolling) return;
+    if (widget.settingsController.isHorizontalScrolling) return;
+    if (!mounted) return;
+    widget.settingsController.autoScrollEnabled = true;
+    unawaited(WakelockPlus.enable().catchError((_) {}));
+    _runAutoScrollLoop();
+  }
+
+  void _stopAutoScroll() {
+    if (_isAutoScrolling) {
+      widget.settingsController.autoScrollEnabled = false;
+    }
+    unawaited(WakelockPlus.disable().catchError((_) {}));
+  }
+
+  double _viewportHeight() {
+    final mq = MediaQuery.maybeOf(context);
+    if (mq == null) return 700;
+    final statusBar = mq.padding.top;
+    const appBarHeight = kToolbarHeight;
+    const infoHeaderHeight = 35.0;
+    final top =
+        statusBar +
+        (_isLandscape ? 0 : appBarHeight) +
+        ((_showHeader || !_isLandscape) ? infoHeaderHeight : 0) +
+        10;
+    final h = mq.size.height - top;
+    return h > 200 ? h : 700;
+  }
+
+  bool _isAtEnd() {
+    final positions = _itemPositionsListener.itemPositions.value;
+    if (positions.isEmpty) return false;
+    const lastIndex = Quran.totalPagesCount - 1;
+    for (final p in positions) {
+      if (p.index == lastIndex) {
+        final atBottom =
+            p.itemTrailingEdge >= 0.98 && p.itemTrailingEdge <= 1.02;
+        final atTop = p.itemLeadingEdge <= 0.05;
+        return atBottom && atTop;
+      }
+    }
+    return false;
+  }
+
+  Future<void> _runAutoScrollLoop() async {
+    if (_isAutoScrollingLoopRunning) return;
+    _isAutoScrollingLoopRunning = true;
+
+    while (_isAutoScrolling &&
+        mounted &&
+        !widget.settingsController.isHorizontalScrolling) {
+      if (!_itemScrollController.isAttached) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        continue;
+      }
+
+      final intervalMs = widget.settingsController.autoScrollIntervalMs;
+      const stepDurationMs = 400;
+      final viewport = _viewportHeight();
+      final stepOffset = (viewport / intervalMs) * stepDurationMs;
+
+      try {
+        await _scrollOffsetController.animateScroll(
+          offset: stepOffset,
+          duration: const Duration(milliseconds: stepDurationMs),
+        );
+      } catch (_) {
+        break;
+      }
+
+      if (_isAtEnd()) {
+        _stopAutoScroll();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('وصلت إلى نهاية المصحف')),
+          );
+        }
+        break;
+      }
+    }
+
+    _isAutoScrollingLoopRunning = false;
+  }
+
+  void _toggleAutoScroll() {
+    if (_isAutoScrolling) {
+      _stopAutoScroll();
+    } else {
+      _startAutoScroll();
+    }
+  }
+
+  void _showAutoScrollRequiresVerticalDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('التمرير التلقائي'),
+        content: const Text(
+          'يعمل التمرير التلقائي في وضع القراءة العمودي فقط. '
+          'هل تريد التبديل الآن؟',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              widget.settingsController.isHorizontalScrolling = false;
+            },
+            child: const Text('التبديل إلى العمودي'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Pause auto-scroll when the user interacts; resume only via the button.
+  void _pauseAutoScrollOnInteraction() {
+    if (!_isAutoScrolling) return;
+    _stopAutoScroll();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('تم إيقاف التمرير التلقائي'),
+        action: SnackBarAction(label: 'استئناف', onPressed: _startAutoScroll),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   void _onScrollingModeChanged() {
     final newIsHorizontalScrolling =
         widget.settingsController.isHorizontalScrolling;
 
     if (newIsHorizontalScrolling == _isHorizontalScrolling) return;
+
+    // Leaving vertical mode: stop auto-scroll (it only applies there).
+    if (newIsHorizontalScrolling) _stopAutoScroll();
 
     setState(() {
       _isHorizontalScrolling = newIsHorizontalScrolling;
@@ -352,6 +499,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void dispose() {
     // Restore system UI when leaving the screen
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _stopAutoScroll();
     _highlightedVerseNotifier.dispose();
     _pageController.dispose();
     ReadingPositionService.savePosition(_currentPositionNotifier.value);
@@ -410,7 +558,8 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
               backgroundColor: context.colorScheme.surfaceContainer,
               foregroundColor: context.colorScheme.primary,
               elevation: 4,
-              onPressed: () => showModalBottomSheet(
+              heroTag: 'navFab',
+              onPressed: () => showModalBottomSheet<void>(
                 context: context,
                 isScrollControlled: true,
                 useSafeArea: true,
@@ -428,6 +577,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
               child: const Icon(Icons.menu_book_outlined),
             ),
+
       // --- 1. The Glass App Bar ---
       appBar: _isLandscape
           ? null
@@ -483,8 +633,63 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
               elevation: 0,
               flexibleSpace: Container(decoration: appBarDecoration),
               actions: [
+                ListenableBuilder(
+                  listenable: widget.settingsController,
+                  builder: (context, _) {
+                    final isHorizontal =
+                        widget.settingsController.isHorizontalScrolling;
+                    final isScrolling =
+                        widget.settingsController.autoScrollEnabled;
+                    void openSpeedSheet() {
+                      showModalBottomSheet<void>(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => ListenableBuilder(
+                          listenable: widget.settingsController,
+                          builder: (context, _) => AutoScrollSheet(
+                            settingsController: widget.settingsController,
+                            isAutoScrolling:
+                                widget.settingsController.autoScrollEnabled,
+                            onToggleAutoScroll: _toggleAutoScroll,
+                          ),
+                        ),
+                      );
+                    }
+
+                    return IconButton(
+                      tooltip: isHorizontal
+                          ? 'التمرير التلقائي (يتطلب الوضع العمودي)'
+                          : isScrolling
+                          ? 'إيقاف — اضغط مطولاً لتغيير السرعة'
+                          : 'بدء التمرير التلقائي — اضغط مطولاً لتغيير السرعة',
+                      onLongPress: isHorizontal
+                          ? () => _showAutoScrollRequiresVerticalDialog(context)
+                          : openSpeedSheet,
+                      icon: Icon(
+                        isScrolling
+                            ? Icons.pause_circle_filled_outlined
+                            : Icons.keyboard_double_arrow_down_outlined,
+                        color: isScrolling
+                            ? Theme.of(context).colorScheme.primary
+                            : isHorizontal
+                            ? Theme.of(context).colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.4)
+                            : null,
+                      ),
+                      onPressed: () {
+                        if (isHorizontal) {
+                          _showAutoScrollRequiresVerticalDialog(context);
+                          return;
+                        }
+                        _toggleAutoScroll();
+                      },
+                    );
+                  },
+                ),
                 IconButton(
                   onPressed: () => widget.settingsController.toggleThemeMode(),
+
                   onLongPress: () => _showThemePicker(context),
                   icon: Icon(switch (widget.settingsController.themeMode) {
                     ThemeMode.light => Icons.light_mode_outlined,
@@ -527,7 +732,10 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
         top: _isLandscape,
         child: GestureDetector(
           onDoubleTap: _toggleHeader,
-          onScaleStart: (_) => _baseScale = _scaleFactor,
+          onScaleStart: (_) {
+            _baseScale = _scaleFactor;
+            _pauseAutoScrollOnInteraction();
+          },
           onScaleUpdate: (d) => setState(
             () => _scaleFactor = (_baseScale * d.scale).clamp(0.8, 2.5),
           ),
@@ -536,6 +744,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
             _fontSizeController.setFontSize(newSize);
             setState(() => _scaleFactor = 1.0);
           },
+          onTapDown: (_) => _pauseAutoScrollOnInteraction(),
           excludeFromSemantics: true,
           child: Stack(
             children: [
@@ -569,24 +778,34 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 )
               else
                 Positioned.fill(
-                  child: ScrollablePositionedList.builder(
-                    itemCount: Quran.totalPagesCount,
-                    itemScrollController: _itemScrollController,
-                    itemPositionsListener: _itemPositionsListener,
-                    initialScrollIndex:
-                        (widget.initialPosition?.pageNumber ?? 1) - 1,
-                    padding: EdgeInsets.only(top: totalTopHeaderHeight + 10),
-                    itemBuilder: (context, index) => RepaintBoundary(
-                      child: QuranPageWidget(
-                        pageNumber: index + 1,
-                        fontSizeController: _fontSizeController,
-                        scaleFactor: _scaleFactor,
-                        highlightedVerseListenable: _highlightedVerseNotifier,
-                        highlightedBlockKey: _highlightedBlockKey,
-                        settingsController: widget.settingsController,
-                        onVerseTap: _onVerseTapped,
-                        bookmarkRevision: bookmarkRevision,
-                        onBookmarkChanged: () => bookmarkRevision.value++,
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (notification) {
+                      if (notification is ScrollStartNotification &&
+                          notification.dragDetails != null) {
+                        _pauseAutoScrollOnInteraction();
+                      }
+                      return false;
+                    },
+                    child: ScrollablePositionedList.builder(
+                      itemCount: Quran.totalPagesCount,
+                      itemScrollController: _itemScrollController,
+                      itemPositionsListener: _itemPositionsListener,
+                      scrollOffsetController: _scrollOffsetController,
+                      initialScrollIndex:
+                          (widget.initialPosition?.pageNumber ?? 1) - 1,
+                      padding: EdgeInsets.only(top: totalTopHeaderHeight + 10),
+                      itemBuilder: (context, index) => RepaintBoundary(
+                        child: QuranPageWidget(
+                          pageNumber: index + 1,
+                          fontSizeController: _fontSizeController,
+                          scaleFactor: _scaleFactor,
+                          highlightedVerseListenable: _highlightedVerseNotifier,
+                          highlightedBlockKey: _highlightedBlockKey,
+                          settingsController: widget.settingsController,
+                          onVerseTap: _onVerseTapped,
+                          bookmarkRevision: bookmarkRevision,
+                          onBookmarkChanged: () => bookmarkRevision.value++,
+                        ),
                       ),
                     ),
                   ),

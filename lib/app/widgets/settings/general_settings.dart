@@ -56,6 +56,54 @@ class GeneralSettings extends StatelessWidget {
             ),
           ],
         ),
+        SettingsGroup(
+          title: 'التمرير التلقائي',
+          children: [
+            ListenableBuilder(
+              listenable: settingsController,
+              builder: (context, _) {
+                final isHorizontal = settingsController.isHorizontalScrolling;
+                final isScrolling = settingsController.autoScrollEnabled;
+                return _ToggleRow(
+                  icon: isScrolling
+                      ? Icons.pause_circle_filled_outlined
+                      : Icons.keyboard_double_arrow_down_outlined,
+                  title: 'التمرير التلقائي',
+                  subtitle: isHorizontal
+                      ? 'يتطلب الوضع العمودي'
+                      : isScrolling
+                      ? 'قيد التشغيل — اضغط لإيقاف'
+                      : 'متوقف — اضغط للبدء',
+                  value: isScrolling && !isHorizontal,
+                  enabled: !isHorizontal,
+                  onChanged: (_) {
+                    settingsController.autoScrollEnabled = !isScrolling;
+                  },
+                );
+              },
+            ),
+            ListenableBuilder(
+              listenable: settingsController,
+              builder: (context, _) {
+                final interval = settingsController.autoScrollIntervalMs;
+                final ppm = (60000 / interval).round().clamp(1, 12);
+                return _StepperRow(
+                  label: 'السرعة',
+                  icon: Icons.speed_outlined,
+                  value: '$ppm ص/د',
+                  isDefault: ppm == 4,
+                  onReset: () => settingsController.autoScrollIntervalMs = 15000,
+                  onDecrease: ppm <= 1
+                      ? null
+                      : () => settingsController.autoScrollIntervalMs = 60000 ~/ (ppm - 1),
+                  onIncrease: ppm >= 12
+                      ? null
+                      : () => settingsController.autoScrollIntervalMs = 60000 ~/ (ppm + 1),
+                );
+              },
+            ),
+          ],
+        ),
       ],
     );
   }
