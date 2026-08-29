@@ -1,3 +1,10 @@
+### 1.8.0
+
+- FEAT: Vertical auto-scroll (thanks to @Hy4ri, @DMouayad)
+- FEAT: Cohesive card-based settings with adaptive desktop layout (thanks to @XxA7med66xX, @DMouayad)
+- FIX: Backup export on Linux and Web (thanks to @XxA7med66xX)
+- FEAT: Auto-bookmark when only one category exists (thanks to @M57)
+
 ### 1.7.6
 
 FEAT: improve changing scrolling mode.

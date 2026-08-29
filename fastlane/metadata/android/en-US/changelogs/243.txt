@@ -1,0 +1,4 @@
+Hands-free automatic scrolling for reading
+Fresh new settings design
+Fixed backup export on Web and Linux
+Bookmarks are now saved automatically when you have a single category
