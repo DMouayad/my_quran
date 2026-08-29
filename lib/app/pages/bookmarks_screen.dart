@@ -300,7 +300,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () => _onBookmarkTap(bookmark),
-          onSecondaryTapDown: isMobile
+          onSecondaryTapDown: (isMobilePlatform && !kIsWeb)
               ? null
               : (details) => _showBookmarkContextMenu(
                   context,
@@ -377,7 +377,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                       ),
 
                     // More options
-                    if (isMobile)
+                    if (isCompactWidth(context))
                       PopupMenuButton<String>(
                         icon: Icon(
                           Icons.more_vert,
@@ -617,7 +617,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                   ),
                 ),
                 const Spacer(),
-                if (isDesktop || kIsWeb) const CloseButton(),
+                if (!isCompactWidth(context)) const CloseButton(),
               ],
             ),
           ),

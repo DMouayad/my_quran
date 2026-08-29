@@ -20,14 +20,14 @@ class BookmarkCategoryPicker extends StatelessWidget {
     required this.categories,
     required this.isBookmarked,
     required this.currentCategoryId,
-    required this.showDragHandle,
+    required this.showHandleInside,
     super.key,
   });
 
   final List<BookmarkCategory> categories;
   final bool isBookmarked;
   final String? currentCategoryId;
-  final bool showDragHandle;
+  final bool showHandleInside;
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +128,7 @@ class BookmarkCategoryPicker extends StatelessWidget {
   }
 
   Widget closeButton(BuildContext context) {
-    if (showDragHandle) return const SizedBox.shrink();
+    if (showHandleInside) return const SizedBox.shrink();
     return IconButton(
       icon: const Icon(Icons.close, size: 20),
       onPressed: () => Navigator.pop(context),
@@ -136,7 +136,7 @@ class BookmarkCategoryPicker extends StatelessWidget {
   }
 
   Widget dragHandle(ColorScheme colorScheme) {
-    if (!showDragHandle) return const SizedBox.shrink();
+    if (!showHandleInside) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(

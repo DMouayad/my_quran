@@ -6,12 +6,8 @@ typedef OverlayPresenter<T> =
 
 /// Shows a platform-specific overlay.
 ///
-/// - On mobile: uses [showModalBottomSheet].
-/// - On desktop and web: uses [showDialog].
-///
-/// [mobilePresenter] and [desktopPresenter] allows
-/// custom presenter for each platform (e.g. use [showAdaptiveDialog]
-/// in some cases in mobile platform).
+/// Width-driven: compact (<700) → sheet, expanded → dialog.
+/// Allows per-platform presenter overrides.
 Future<T?> showOverlay<T>(
   BuildContext context, {
   required Widget widget,
@@ -20,13 +16,12 @@ Future<T?> showOverlay<T>(
   DesktopOverlayConfig desktopConfig = const DesktopOverlayConfig(),
   OverlayPresenter<T>? desktopPresenter,
 }) async {
-  if (isMobile) {
+  final compact = isCompactWidth(context);
+  if (compact) {
     return mobilePresenter != null
         ? await mobilePresenter(context, widget)
         : await _defaultMobileOverlay<T>(context, widget, mobileConfig);
   } else {
-    /// For now, we don't need a separate Web function, as dialogs work
-    /// well on both platforms.
     return desktopPresenter != null
         ? await desktopPresenter(context, widget)
         : await _defaultDesktopOverlay<T>(context, widget, desktopConfig);
@@ -55,6 +50,7 @@ Future<T?> _defaultDesktopOverlay<T>(
   Widget widget,
   DesktopOverlayConfig config,
 ) {
+  final radius = config.borderRadius;
   return showDialog<T>(
     context: context,
     useRootNavigator: config.useRootNavigator,
@@ -62,10 +58,13 @@ Future<T?> _defaultDesktopOverlay<T>(
     barrierColor: config.barrierColor,
     builder: (_) => Dialog(
       constraints: config.constraints,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(radius)),
       ),
-      child: widget,
+      child: ClipRRect(
+        borderRadius: BorderRadius.all(Radius.circular(radius)),
+        child: widget,
+      ),
     ),
   );
 }
@@ -108,5 +107,8 @@ class DesktopOverlayConfig extends OverlayConfig {
     super.useSafeArea,
     super.constraints,
     super.barrierColor,
+    this.borderRadius = 16,
   });
+
+  final double borderRadius;
 }

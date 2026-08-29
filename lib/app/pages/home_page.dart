@@ -334,19 +334,17 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
         _jumpToPage(page, highlightSurah: surah, highlightVerse: verse);
       },
     );
-    if (isDesktop || kIsWeb) {
-      showDialog(
-        context: context,
-        builder: (_) => Dialog(child: searchWidget),
-      );
-      return;
-    }
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      builder: (_) => searchWidget,
+    showOverlay(
+      context,
+      widget: searchWidget,
+      desktopConfig: const DesktopOverlayConfig(
+        constraints: BoxConstraints(maxWidth: 600),
+      ),
+      mobileConfig: const MobileOverlayConfig(
+        isScrollControlled: true,
+        useSafeArea: true,
+        showDragHandle: true,
+      ),
     );
   }
 
@@ -406,7 +404,7 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
           isDarkMode && widget.settingsController.useTrueBlackBgColor
           ? Colors.black
           : null,
-      floatingActionButton: (_isLandscape || isDesktop || kIsWeb)
+      floatingActionButton: !isCompactWidth(context)
           ? null
           : FloatingActionButton(
               backgroundColor: context.colorScheme.surfaceContainer,
@@ -758,7 +756,6 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
     if (screenWidth > 600) {
       // Landscape or tablet
       final extra = (screenWidth - 600) * 0.1;
-      debugPrint((base + extra.clamp(26, 60)).toString());
       return base + extra.clamp(26, 40);
     }
 

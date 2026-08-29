@@ -37,11 +37,13 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('إدارة التصنيفات'),
-          actions: !isMobile
+          actions: !isCompactWidth(context)
               ? <Widget>[addCategoryButton(context, showLable: true)]
               : null,
         ),
-        floatingActionButton: isMobile ? addCategoryButton(context) : null,
+        floatingActionButton: isCompactWidth(context)
+            ? addCategoryButton(context)
+            : null,
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : _categories.isEmpty

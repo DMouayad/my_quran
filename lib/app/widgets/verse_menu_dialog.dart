@@ -96,12 +96,17 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactWidth(context);
     final mq = MediaQuery.of(context);
     final isLandscape = mq.orientation == Orientation.landscape;
 
-    return SizedBox(
-      width: isLandscape ? 560 : 340,
-      height: isMobile ? mq.size.height * (isLandscape ? 0.9 : 0.6) : null,
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: isLandscape ? 560 : 340,
+        maxHeight: compact
+            ? mq.size.height * (isLandscape ? 0.9 : 0.6)
+            : mq.size.height * 0.85,
+      ),
       child: switch (isLandscape && isMobile) {
         true => _buildLandscapeBody(context),
         false => _buildPortraitBody(context),
@@ -251,13 +256,14 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
       return;
     }
 
+    final compact = isCompactWidth(context);
     final result = await showOverlay<BookmarkPickerResult>(
       context,
       widget: BookmarkCategoryPicker(
         categories: categories,
         isBookmarked: isBookmarked,
         currentCategoryId: bookmark?.categoryId,
-        showDragHandle: isMobile,
+        showHandleInside: compact,
       ),
       mobileConfig: const MobileOverlayConfig(
         useRootNavigator: true,
@@ -269,6 +275,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
       ),
     );
 
+    if (!context.mounted) return;
     if (result == null) return;
 
     if (result.action == BookmarkPickerAction.remove) {
@@ -348,6 +355,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     if (isBookmarked) {
       final updated = bookmark!.copyWith(categoryId: () => cat.id);
       await bookmarkService.updateBookmark(updated);
+      if (!mounted) return;
       setState(() {
         bookmark = updated;
         _syncCategory();
@@ -368,6 +376,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
       );
 
       await bookmarkService.addBookmark(newBookmark);
+      if (!mounted) return;
       setState(() {
         isBookmarked = true;
         bookmark = newBookmark;
@@ -381,6 +390,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
       widget.surah,
       widget.verse.number,
     );
+    if (!mounted) return;
     setState(() {
       isBookmarked = false;
       bookmark = null;
@@ -392,6 +402,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
     if (_verseNotes.isEmpty) {
       // 0 notes: quick add
       final res = await showEditNoteDialog(context);
+      if (!context.mounted) return;
       if (res == null || res.action != NoteDialogAction.save) return;
 
       await notesService.addNote(
@@ -400,6 +411,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
         text: res.text!,
       );
 
+      if (!mounted) return;
       await _loadNotes();
       return;
     }
@@ -424,6 +436,7 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
         constraints: BoxConstraints(maxWidth: 500),
       ),
     );
+    if (!mounted) return;
   }
 
   void _copyVerse(BuildContext context) {
@@ -566,7 +579,7 @@ class _ActionButtonsState extends State<_ActionButtons> {
       tileColor: colorScheme.surfaceContainerHighest,
       contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       // Better font clarity on desktop/web.
-      dense: !(isDesktop || kIsWeb),
+      dense: !isCompactWidth(context),
       hoverColor: Colors.transparent,
       splashColor: Colors.transparent,
       title: Column(

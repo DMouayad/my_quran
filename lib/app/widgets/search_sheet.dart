@@ -94,17 +94,13 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = ColorScheme.of(context);
+    final compact = isCompactWidth(context);
     final size = MediaQuery.of(context).size;
-    final isDesktopOrWeb = isDesktop || kIsWeb;
 
     return SizedBox(
-      height: (isDesktopOrWeb && _controller.text.isEmpty)
-          ? null
-          : isDesktopOrWeb
-          ? size.height * 0.6
-          : size.height * 0.85,
-
-      width: isDesktopOrWeb ? size.width * 0.4 : null,
+      height: (compact || _controller.text.isNotEmpty)
+          ? size.height * (compact ? 0.85 : 0.6)
+          : null,
       child: Column(
         mainAxisSize: .min,
         children: [
@@ -142,7 +138,7 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
           ),
 
           _buildFiltersBar(context),
-          _buildResultList(colorScheme, isDesktopOrWeb),
+          _buildResultList(colorScheme, !compact),
         ],
       ),
     );
@@ -249,10 +245,10 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
     );
   }
 
-  Widget _buildResultList(ColorScheme colorScheme, bool isDesktopOrWeb) {
+  Widget _buildResultList(ColorScheme colorScheme, bool isDesktop) {
     final hits = _response.hits;
 
-    if (isDesktopOrWeb && _controller.text.isEmpty) {
+    if (isDesktop && _controller.text.isEmpty) {
       return const SizedBox.shrink();
     }
 

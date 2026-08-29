@@ -162,7 +162,7 @@ class VerseNotesSheetState extends State<VerseNotesManager> {
   }
 
   Widget closeButton(BuildContext context) {
-    if (isMobile) return const SizedBox.shrink();
+    if (isCompactWidth(context)) return const SizedBox.shrink();
     return IconButton(
       onPressed: () => Navigator.pop(context),
       icon: const Icon(Icons.close),

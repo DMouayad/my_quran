@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart' show ChangeNotifier, debugPrint;
 import 'package:flutter/material.dart' show ColorScheme, ThemeMode;
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/settings_service.dart';
-import 'package:my_quran/app/widgets/settings/settings_screen.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class SettingsController extends ChangeNotifier {
@@ -13,7 +12,7 @@ class SettingsController extends ChangeNotifier {
 
   final SettingsService settingsService;
 
-  int _section = SettingSection.appearance.index;
+  SettingSection _section = SettingSection.appearance;
   String _language = 'ar';
   FontFamily _fontFamily = FontFamily.rustam;
   FontWeight _fontWeight = FontWeight.w500;
@@ -30,7 +29,7 @@ class SettingsController extends ChangeNotifier {
 
   // ── Getters ──
 
-  int get section => _section;
+  SettingSection get section => _section;
   bool get supportsDynamicColor => _supportsDynamicColor;
   AppTheme get appTheme => _appTheme;
   bool get keepScreenOn => _keepScreenOn;
@@ -52,7 +51,7 @@ class SettingsController extends ChangeNotifier {
 
   // ── Setters ──
 
-  set section(int value) {
+  set section(SettingSection value) {
     _section = value;
     notifyListeners();
   }
