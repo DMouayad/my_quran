@@ -12,6 +12,7 @@ class SettingsController extends ChangeNotifier {
 
   final SettingsService settingsService;
 
+  SettingSection _section = SettingSection.appearance;
   String _language = 'ar';
   FontFamily _fontFamily = FontFamily.rustam;
   FontWeight _fontWeight = FontWeight.w500;
@@ -31,6 +32,7 @@ class SettingsController extends ChangeNotifier {
 
   // ── Getters ──
 
+  SettingSection get section => _section;
   bool get supportsDynamicColor => _supportsDynamicColor;
   AppTheme get appTheme => _appTheme;
   bool get keepScreenOn => _keepScreenOn;
@@ -65,6 +67,11 @@ class SettingsController extends ChangeNotifier {
       fontFamily == FontFamily.rustam ? FontWeight.w500 : _fontWeight;
 
   // ── Setters ──
+
+  set section(SettingSection value) {
+    _section = value;
+    notifyListeners();
+  }
 
   set appTheme(AppTheme value) {
     _appTheme = value;

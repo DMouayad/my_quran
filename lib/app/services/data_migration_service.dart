@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:my_quran/app/models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -57,8 +58,7 @@ class DataMigrationService {
     await prefs.setBool(_migratedKey, true);
 
     // Optional logging
-    // ignore: avoid_print
-    print(
+    debugPrint(
       '✅ Migration complete: moved ${newNotes.length}'
       ' bookmark notes to notes service '
       '(bookmarksChanged=$changedBookmarks)',

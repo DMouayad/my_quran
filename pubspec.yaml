@@ -8,11 +8,11 @@ environment:
     sdk: ">=3.12.0 <4.0.0"
     flutter: 3.44.6
 
-
 dependencies:
+    archive: ^4.2.0
     collection: ^1.19.1
     dynamic_color: ^1.8.1
-    file_picker: ^10.3.10
+    file_selector: ^1.1.0
     flutter:
         sdk: flutter
     flutter_localizations:

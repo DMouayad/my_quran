@@ -15,17 +15,19 @@ class BookmarkPickerResult {
   final BookmarkCategory? category;
 }
 
-class BookmarkCategoryPickerSheet extends StatelessWidget {
-  const BookmarkCategoryPickerSheet({
+class BookmarkCategoryPicker extends StatelessWidget {
+  const BookmarkCategoryPicker({
     required this.categories,
     required this.isBookmarked,
     required this.currentCategoryId,
+    required this.showHandleInside,
     super.key,
   });
 
   final List<BookmarkCategory> categories;
   final bool isBookmarked;
   final String? currentCategoryId;
+  final bool showHandleInside;
 
   @override
   Widget build(BuildContext context) {
@@ -39,15 +41,7 @@ class BookmarkCategoryPickerSheet extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 12),
+              dragHandle(colorScheme),
               Row(
                 children: [
                   const Icon(Icons.bookmark, size: 20),
@@ -58,6 +52,8 @@ class BookmarkCategoryPickerSheet extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const Spacer(),
+                  closeButton(context),
                 ],
               ),
               const SizedBox(height: 12),
@@ -126,6 +122,29 @@ class BookmarkCategoryPickerSheet extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget closeButton(BuildContext context) {
+    if (showHandleInside) return const SizedBox.shrink();
+    return IconButton(
+      icon: const Icon(Icons.close, size: 20),
+      onPressed: () => Navigator.pop(context),
+    );
+  }
+
+  Widget dragHandle(ColorScheme colorScheme) {
+    if (!showHandleInside) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        width: 44,
+        height: 4,
+        decoration: BoxDecoration(
+          color: colorScheme.outlineVariant,
+          borderRadius: BorderRadius.circular(2),
         ),
       ),
     );

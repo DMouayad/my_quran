@@ -332,6 +332,8 @@ enum SearchMatchMode {
 
 enum SearchOperator { and, or }
 
+enum SettingSection { general, appearance, backup }
+
 class SearchHit {
   const SearchHit({
     required this.surah,

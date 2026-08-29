@@ -5,8 +5,8 @@ import 'package:my_quran/app/utils.dart';
 import 'package:my_quran/app/widgets/edit_note_dialog.dart';
 import 'package:my_quran/quran/quran.dart';
 
-class VerseNotesSheet extends StatefulWidget {
-  const VerseNotesSheet({
+class VerseNotesManager extends StatefulWidget {
+  const VerseNotesManager({
     required this.surah,
     required this.verse,
     required this.onChanged,
@@ -18,10 +18,10 @@ class VerseNotesSheet extends StatefulWidget {
   final Future<void> Function() onChanged;
 
   @override
-  State<VerseNotesSheet> createState() => VerseNotesSheetState();
+  State<VerseNotesManager> createState() => VerseNotesSheetState();
 }
 
-class VerseNotesSheetState extends State<VerseNotesSheet> {
+class VerseNotesSheetState extends State<VerseNotesManager> {
   final _notesService = NotesService();
   List<VerseNote> _notes = [];
   bool _loading = true;
@@ -103,10 +103,7 @@ class VerseNotesSheetState extends State<VerseNotesSheet> {
                     ),
                   ),
                 ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
+                closeButton(context),
               ],
             ),
             const SizedBox(height: 8),
@@ -161,6 +158,14 @@ class VerseNotesSheetState extends State<VerseNotesSheet> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget closeButton(BuildContext context) {
+    if (isCompactWidth(context)) return const SizedBox.shrink();
+    return IconButton(
+      onPressed: () => Navigator.pop(context),
+      icon: const Icon(Icons.close),
     );
   }
 }
