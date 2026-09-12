@@ -92,13 +92,16 @@ class GeneralSettings extends StatelessWidget {
                   icon: Icons.speed_outlined,
                   value: '$ppm ص/د',
                   isDefault: ppm == 4,
-                  onReset: () => settingsController.autoScrollIntervalMs = 15000,
+                  onReset: () =>
+                      settingsController.autoScrollIntervalMs = 15000,
                   onDecrease: ppm <= 1
                       ? null
-                      : () => settingsController.autoScrollIntervalMs = 60000 ~/ (ppm - 1),
+                      : () => settingsController.autoScrollIntervalMs =
+                            60000 ~/ (ppm - 1),
                   onIncrease: ppm >= 12
                       ? null
-                      : () => settingsController.autoScrollIntervalMs = 60000 ~/ (ppm + 1),
+                      : () => settingsController.autoScrollIntervalMs =
+                            60000 ~/ (ppm + 1),
                 );
               },
             ),

@@ -289,15 +289,17 @@ class _QuranSearchBottomSheetState extends State<QuranSearchBottomSheet> {
                 onTap: () {
                   Navigator.pop(context);
 
-                  final page = Quran.instance.getPageNumber(
+                  // The index may still be from the previous riwaya if the
+                  // switch raced the search: clamp instead of throwing.
+                  final target = Quran.instance.resolveNavigation(
                     hit.surah,
                     hit.verse,
                   );
 
                   widget.onNavigateToPage(
-                    page,
+                    target.page,
                     surah: hit.surah,
-                    verse: hit.verse,
+                    verse: target.verse,
                   );
                 },
               );
@@ -339,7 +341,9 @@ class SearchResultItem extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     final plain = Quran.instance.getVerseInPlainText(hit.surah, hit.verse);
-    final display = Quran.instance.getVerse(hit.surah, hit.verse);
+    final display =
+        Quran.instance.tryGetVerse(hit.surah, hit.verse) ??
+        '(الآية غير متوفرة في هذه الرواية)';
 
     return InkWell(
       onTap: onTap,
