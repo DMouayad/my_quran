@@ -1,0 +1,3 @@
+Fixed missing verses when switching between Hafs and Warsh recitations
+Fixed navigation sheet not updating after switching recitation
+Notice when opening a bookmark saved under another recitation

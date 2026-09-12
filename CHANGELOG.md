@@ -1,3 +1,9 @@
+### 1.8.1
+
+- FIX: Missing verses after switching between Hafs and Warsh recitations (thanks to @Aymane-Mirouah)
+- FIX: Navigation sheet not updating after switching recitation
+- FEAT: Notice when opening a bookmark saved under another recitation
+
 ### 1.8.0
 
 - FEAT: Vertical auto-scroll (thanks to @Hy4ri, @DMouayad)

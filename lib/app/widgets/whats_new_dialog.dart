@@ -1,6 +1,6 @@
 // GENERATED — DO NOT EDIT BY HAND
 // Run: dart run scripts/update_whats_new.dart
-// Version: 1.8.0
+// Version: 1.8.1
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class WhatsNewDialog extends StatelessWidget {
   const WhatsNewDialog({super.key});
 
-  static const String _currentVersion = '1.8.0';
+  static const String _currentVersion = '1.8.1';
   static const String _seenKey = 'whats_new_seen_version';
 
   static Future<void> showIfNeeded(BuildContext context) async {
@@ -77,8 +77,31 @@ class WhatsNewDialog extends StatelessWidget {
                   child: Column(
                     children: [
                       _VersionSection(
-                        version: '1.8.0',
+                        version: '1.8.1',
                         isCurrent: true,
+                        categories: [
+                          _CategorySection(
+                            title: 'الإصلاحات',
+                            icon: Icons.bug_report,
+                            color: Colors.red,
+                            items: [
+                              'إصلاح الآيات الناقصة عند التبديل بين روايتي حفص وورش',
+                              'إصلاح عدم تحديث شاشة التنقل بعد تغيير الرواية',
+                            ],
+                          ),
+                          _CategorySection(
+                            title: 'العلامات',
+                            icon: Icons.bookmarks,
+                            color: Colors.orange,
+                            items: [
+                              'تنبيه عند فتح علامة مرجعية محفوظة برواية أخرى',
+                            ],
+                          ),
+                        ],
+                      ),
+                      _VersionSection(
+                        version: '1.8.0',
+                        isCurrent: false,
                         categories: [
                           _CategorySection(
                             title: 'الإصلاحات',
