@@ -1,6 +1,6 @@
 part of 'settings_screen.dart';
 
-class AppearanceSettings extends StatelessWidget {
+class AppearanceSettings extends StatefulWidget {
   const AppearanceSettings({
     required this.fontController,
     required this.settingsController,
@@ -9,6 +9,42 @@ class AppearanceSettings extends StatelessWidget {
 
   final SettingsController settingsController;
   final FontSizeController fontController;
+
+  @override
+  State<AppearanceSettings> createState() => _AppearanceSettingsState();
+}
+
+class _AppearanceSettingsState extends State<AppearanceSettings> {
+  /// True while a riwaya/font dataset swap is in flight. Disables the
+  /// switchers so rapid taps can't stack concurrent loads (the data layer
+  /// in `Quran._applyFont` is also token-guarded; this is the UI half).
+  bool _isSwitchingDataset = false;
+
+  SettingsController get settingsController => widget.settingsController;
+  FontSizeController get fontController => widget.fontController;
+
+  /// Loads the dataset for [next] first and only then flips/persists the
+  /// font, so the selected font never points at not-yet-loaded data (not
+  /// even if the app is killed mid-switch). On failure the old font is
+  /// simply kept and a notice is shown — nothing to revert.
+  Future<void> _switchDataset(FontFamily next, {required bool isRiwaya}) async {
+    if (_isSwitchingDataset) return;
+    if (next == settingsController.fontFamily) return;
+    setState(() => _isSwitchingDataset = true);
+    try {
+      await Quran.instance.useDatasourceForFont(next);
+      settingsController.fontFamily = next;
+      if (isRiwaya) unawaited(SearchService.init(next.name));
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('تعذر تحميل الرواية')));
+      }
+    } finally {
+      if (mounted) setState(() => _isSwitchingDataset = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,14 +136,11 @@ class AppearanceSettings extends StatelessWidget {
                   ],
                   style: _segmentStyle(context.colorScheme),
                   selected: {settingsController.fontFamily},
-                  onSelectionChanged: (newSet) async {
-                    settingsController.fontFamily = newSet.first;
-                    await Future<void>.delayed(
-                      const Duration(milliseconds: 300),
-                    );
-                    if (!context.mounted) return;
-                    await Quran.instance.useDatasourceForFont(newSet.first);
-                  },
+                  onSelectionChanged: _isSwitchingDataset
+                      ? null
+                      : (newSet) => unawaited(
+                          _switchDataset(newSet.first, isRiwaya: false),
+                        ),
                 ),
               ),
           ],
@@ -149,30 +182,39 @@ class AppearanceSettings extends StatelessWidget {
             _SegmentedRow(
               label: 'اختيار الرواية',
               icon: Icons.record_voice_over_outlined,
-              child: SegmentedButton<bool>(
-                segments: [
-                  const ButtonSegment(value: false, label: Text('حفص عن عاصم')),
-                  ButtonSegment(
-                    value: true,
-                    label: Text(
-                      'ورش عن نافع',
-                      style: TextStyle(fontFamily: FontFamily.warsh.name),
-                    ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SegmentedButton<bool>(
+                    segments: [
+                      const ButtonSegment(
+                        value: false,
+                        label: Text('حفص عن عاصم'),
+                      ),
+                      ButtonSegment(
+                        value: true,
+                        label: Text(
+                          'ورش عن نافع',
+                          style: TextStyle(fontFamily: FontFamily.warsh.name),
+                        ),
+                      ),
+                    ],
+                    style: _segmentStyle(context.colorScheme),
+                    selected: {isWarsh},
+                    onSelectionChanged: _isSwitchingDataset
+                        ? null
+                        : (newSet) => unawaited(
+                            _switchDataset(
+                              newSet.first ? FontFamily.warsh : FontFamily.hafs,
+                              isRiwaya: true,
+                            ),
+                          ),
                   ),
+                  if (_isSwitchingDataset) ...[
+                    const SizedBox(height: 8),
+                    const LinearProgressIndicator(),
+                  ],
                 ],
-                style: _segmentStyle(context.colorScheme),
-                selected: {isWarsh},
-                onSelectionChanged: (newSet) async {
-                  settingsController.fontFamily = newSet.first
-                      ? FontFamily.warsh
-                      : FontFamily.hafs;
-
-                  await Future<void>.delayed(const Duration(milliseconds: 300));
-                  if (!context.mounted) return;
-                  final newFont = settingsController.fontFamily;
-                  await Quran.instance.useDatasourceForFont(newFont);
-                  unawaited(SearchService.init(newFont.name));
-                },
               ),
             ),
           ],

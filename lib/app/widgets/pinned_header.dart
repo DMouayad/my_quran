@@ -124,10 +124,12 @@ class PinnedHeader extends StatelessWidget {
         quarter: quarter,
       );
       Navigator.pop(context);
+      // hizb starts are Hafs-numbered; clamp for riwayat with fewer verses.
+      final target = Quran.instance.resolveNavigation(surah, verse);
       goToPage(
-        Quran.instance.getPageNumber(surah, verse),
+        target.page,
         highlightSurah: surah,
-        highlightVerse: verse,
+        highlightVerse: target.verse,
       );
     }
 
@@ -227,10 +229,12 @@ class PinnedHeader extends StatelessWidget {
       final surahNumber = firstSurahOfJuz.key;
       final verseNumber = firstSurahOfJuz.value.first;
       Navigator.pop(context);
+      // juzData uses Hafs numbering; clamp for riwayat with fewer verses.
+      final target = Quran.instance.resolveNavigation(surahNumber, verseNumber);
       goToPage(
-        Quran.instance.getPageNumber(surahNumber, verseNumber),
+        target.page,
         highlightSurah: surahNumber,
-        highlightVerse: verseNumber,
+        highlightVerse: target.verse,
       );
     }
 
@@ -319,8 +323,12 @@ class PinnedHeader extends StatelessWidget {
       builder: (context) => _SearchSurahDialog(
         onSurahTapped: (surahNumber) {
           Navigator.pop(context);
-          final pageNumber = Quran.instance.getPageNumber(surahNumber, 1);
-          goToPage(pageNumber, highlightSurah: surahNumber, highlightVerse: 1);
+          final target = Quran.instance.resolveNavigation(surahNumber, 1);
+          goToPage(
+            target.page,
+            highlightSurah: surahNumber,
+            highlightVerse: target.verse,
+          );
         },
       ),
     );

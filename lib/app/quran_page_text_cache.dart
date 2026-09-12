@@ -86,7 +86,20 @@ class QuranPageTextCache {
 
       final verses = <Verse>[];
       for (int v = start; v <= end; v++) {
-        verses.add((number: v, text: Quran.instance.getVerse(surahNum, v)));
+        // Defensive: never let one missing verse (e.g. Hafs-only verse
+        // requested while Warsh data is active mid-switch) kill the whole
+        // page. With the atomic publish in Quran._applyFont this should not
+        // happen, but skipping is strictly better than throwing here.
+        final text = Quran.instance.tryGetVerse(surahNum, v);
+        if (text == null) {
+          debugPrint(
+            'QuranPageTextCache: missing verse $surahNum:$v '
+            'for riwaya ${Quran.instance.loadedFont.name} '
+            '(page $pageNumber) — skipped.',
+          );
+          continue;
+        }
+        verses.add((number: v, text: text));
       }
       surahs.add(SurahInPage(surahNumber: surahNum, verses: verses));
     }

@@ -28,6 +28,18 @@ class Quran {
   late Map<(int, int), int> _verseToPageMap;
   late Map<int, List<int>> _surahToPages;
 
+  /// Monotonic token guarding concurrent riwaya switches: only the latest
+  /// `_applyFont` call is allowed to publish. Prevents a slow earlier load
+  /// from overwriting a newer one when the user taps Hafs↔Warsh rapidly.
+  int _loadToken = 0;
+
+  /// The riwaya of the currently published [data]/[pageData] pair.
+  /// Set atomically with the data so readers never see a mixed pair.
+  FontFamily _loadedFont = FontFamily.defaultFontFamily;
+
+  /// The riwaya backing the currently published data.
+  FontFamily get loadedFont => _loadedFont;
+
   // --- ASSET PATHS ---
   static const String _medinaPath = 'assets/quran.json';
   static const String _hafsPath = 'assets/kfgqpc_hafs.json';
@@ -111,22 +123,34 @@ class Quran {
           .toList(growable: false);
 
   Future<void> _applyFont(FontFamily fontFamily) async {
+    final token = ++_loadToken;
+
     final loadedData = await _loadJson(_getPathForFont(fontFamily));
+    if (token != _loadToken) return; // superseded by a newer switch
     if (loadedData == null) {
       throw StateError('Failed to load Quran data.');
     }
 
-    data.value = loadedData;
-
+    final Map<String, dynamic> plainTextData;
     if (fontFamily == FontFamily.warsh) {
-      _plainTextData = loadedData;
+      plainTextData = loadedData;
     } else {
-      _plainTextData = await _loadJson(_medinaPath) ?? {};
+      final plain = await _loadJson(_medinaPath);
+      if (token != _loadToken) return; // superseded while loading plain text
+      plainTextData = plain ?? {};
     }
 
+    // Publish atomically: pageData + lookups + font first, data.value LAST
+    // so the ValueNotifier listeners (cache invalidation + rebuild) always
+    // observe a consistent data/pageData pair. Previously data.value was set
+    // first, letting visible pages rebuild (and poison the cache) with new
+    // data + old pageData — e.g. Hafs text on Warsh pagination, dropping
+    // verse 286 of Al-Baqarah until restart. See issue #74.
     pageData = fontFamily.isWarsh ? warshPageData : hafsPageData;
-
     _buildReverseLookups();
+    _plainTextData = plainTextData;
+    _loadedFont = fontFamily;
+    data.value = loadedData;
   }
 
   List<List<Map<String, int>>> pageData = [];
@@ -264,6 +288,40 @@ class Quran {
     return page;
   }
 
+  /// Clamps [verse] into the loaded riwaya's valid range for [surah] and
+  /// resolves the mushaf page for the clamped verse. Falls back to
+  /// [fallbackPage] (clamped to 1..604) when the page cannot be resolved.
+  /// Used when navigating to a verse stored under another riwaya (e.g. a
+  /// Hafs bookmark for 2:286 while Warsh, whose Baqarah ends at 285).
+  ({int page, int verse, bool clamped}) resolveNavigation(
+    int surah,
+    int verse, {
+    int? fallbackPage,
+  }) {
+    if (surah < 1 || surah > totalSurahCount) {
+      return (
+        page: (fallbackPage ?? 1).clamp(1, totalPagesCount),
+        verse: verse,
+        clamped: true,
+      );
+    }
+    final max = getVerseCount(surah);
+    final clampedVerse = verse.clamp(1, max);
+    try {
+      return (
+        page: getPageNumber(surah, clampedVerse),
+        verse: clampedVerse,
+        clamped: clampedVerse != verse,
+      );
+    } catch (_) {
+      return (
+        page: (fallbackPage ?? 1).clamp(1, totalPagesCount),
+        verse: clampedVerse,
+        clamped: true,
+      );
+    }
+  }
+
   ///Takes [surahNumber] and returns the place of revelation (Makkah / Madinah) of the surah
   String getPlaceOfRevelation(int surahNumber) {
     if (surahNumber < 1 || surahNumber > totalSurahCount) {
@@ -273,11 +331,32 @@ class Quran {
   }
 
   ///Takes [surahNumber] and returns the count of total Verses in the Surah
+  /// for the currently loaded riwaya. Verse numbering differs per riwaya
+  /// (e.g. Al-Baqarah is 286 in Hafs but 285 in Warsh — 50 surahs differ),
+  /// so the static `surah_data` table (Hafs counts) is only a fallback for
+  /// before the first dataset finishes loading.
   int getVerseCount(int surahNumber) {
     if (surahNumber > 114 || surahNumber <= 0) {
-      throw 'No verse found with given surahNumber';
+      throw RangeError.range(surahNumber, 1, totalSurahCount, 'surahNumber');
     }
+    final loaded = data.value[surahNumber.toString()] as Map<String, dynamic>?;
+    if (loaded != null && loaded.isNotEmpty) return loaded.length;
     return surah[surahNumber - 1]['aya']! as int;
+  }
+
+  /// Non-throwing variant of [getVerse]: returns null when the verse does
+  /// not exist in the loaded dataset (e.g. Hafs-only verse 286 while Warsh
+  /// is active) instead of throwing.
+  String? tryGetVerse(
+    int surahNumber,
+    int verseNumber, {
+    bool verseEndSymbol = false,
+  }) {
+    final surahMap =
+        data.value[surahNumber.toString()] as Map<String, dynamic>?;
+    final verse = surahMap?[verseNumber.toString()] as String?;
+    if (verse == null) return null;
+    return verse + (verseEndSymbol ? getVerseEndSymbol(verseNumber) : '');
   }
 
   ///Takes [surahNumber], [verseNumber] & [verseEndSymbol] (optional) and

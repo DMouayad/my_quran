@@ -268,7 +268,11 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final category = _getCategoryFor(bookmark);
     final surahName = Quran.instance.getSurahNameArabic(bookmark.surah);
-    final verseText = Quran.instance.getVerse(bookmark.surah, bookmark.verse);
+    // Preview must not throw when the bookmark was saved under another
+    // riwaya (e.g. Hafs-only 2:286 while Warsh is active).
+    final verseText =
+        Quran.instance.tryGetVerse(bookmark.surah, bookmark.verse) ??
+        '(الآية غير متوفرة في هذه الرواية)';
 
     // Truncate verse text for preview
     final previewText = verseText.length > 100
@@ -537,12 +541,29 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   // ─────────────────────────────────────────────
 
   void _onBookmarkTap(VerseBookmark bookmark) {
-    Navigator.pop(context);
-    widget.onNavigateToPage(
-      page: bookmark.pageNumber,
-      surah: bookmark.surah,
-      verse: bookmark.verse,
+    // Bookmarks may have been saved under another riwaya (e.g. Hafs 2:286
+    // while Warsh ends Baqarah at 285): clamp + notice instead of throwing.
+    final target = Quran.instance.resolveNavigation(
+      bookmark.surah,
+      bookmark.verse,
+      fallbackPage: bookmark.pageNumber,
     );
+    widget.onNavigateToPage(
+      page: target.page,
+      surah: bookmark.surah,
+      verse: target.verse,
+    );
+    if (target.clamped) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'الآية ${getArabicNumber(bookmark.verse)} غير موجودة في هذه الرواية — '
+            'تم عرض الآية ${getArabicNumber(target.verse)}',
+          ),
+        ),
+      );
+    }
+    Navigator.pop(context);
   }
 
   void _onMenuAction(String action, VerseBookmark bookmark) {

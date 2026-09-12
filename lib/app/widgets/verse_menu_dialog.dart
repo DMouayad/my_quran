@@ -361,16 +361,17 @@ class _VerseMenuDialogState extends State<VerseMenuDialog> {
         _syncCategory();
       });
     } else {
+      final target = Quran.instance.resolveNavigation(
+        widget.surah,
+        widget.verse.number,
+      );
       final newBookmark = VerseBookmark(
         id:
             '${widget.surah}_${widget.verse.number}_'
             '${DateTime.now().millisecondsSinceEpoch}',
         surah: widget.surah,
-        verse: widget.verse.number,
-        pageNumber: Quran.instance.getPageNumber(
-          widget.surah,
-          widget.verse.number,
-        ),
+        verse: target.verse,
+        pageNumber: target.page,
         createdAt: DateTime.now(),
         categoryId: cat.id,
       );

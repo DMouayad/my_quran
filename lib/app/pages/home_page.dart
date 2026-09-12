@@ -290,7 +290,13 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   void _onQuranDataChanged() {
     QuranPageTextCache.instance.invalidateForNewQuranData();
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    // The same page number maps to a different surah/verse range per riwaya
+    // (Warsh pagination is shifted vs Hafs), so re-derive the reading
+    // position for the visible page. data.value now publishes atomically
+    // with pageData (see Quran._applyFont), so this observes a consistent pair.
+    _updateReadingPosition(_currentPositionNotifier.value.pageNumber);
+    setState(() {});
   }
 
   @override
@@ -338,11 +344,12 @@ class HomePageState extends State<HomePage> with WidgetsBindingObserver {
       final firstSurah = pageData.first;
       final surahNum = firstSurah['surah']!;
       final verseNum = firstSurah['start']!;
+      final juz = Quran.instance.getJuzNumber(surahNum, verseNum);
       _currentPositionNotifier.value = ReadingPosition(
         pageNumber: pageNumber,
         surahNumber: surahNum,
         verseNumber: verseNum,
-        juzNumber: Quran.instance.getJuzNumber(surahNum, verseNum),
+        juzNumber: juz < 1 ? 1 : juz,
         hizbNumber: Quran.instance.getHizbNumber(surahNum, verseNum),
         hizbQuarter: Quran.instance.getHizbQuarter(surahNum, verseNum),
       );
@@ -947,7 +954,9 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
             fontFamily: widget.settingsController.fontFamily,
             verse: (
               number: verseNumber,
-              text: Quran.instance.getVerse(surah, verseNumber),
+              text:
+                  Quran.instance.tryGetVerse(surah, verseNumber) ??
+                  '(الآية غير متوفرة في هذه الرواية)',
             ),
           ),
         ),

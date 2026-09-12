@@ -47,6 +47,8 @@ class _QuranNavigationBottomSheetState
     _currentPage = widget.initialPage;
     _initDataFromPage(_currentPage);
 
+    Quran.instance.data.addListener(_onQuranDataChanged);
+
     _pageController = FixedExtentScrollController(
       initialItem: _currentPage - 1,
     );
@@ -65,12 +67,27 @@ class _QuranNavigationBottomSheetState
       final firstEntry = pageData.first;
       _currentSurah = firstEntry['surah']!;
       _currentVerse = firstEntry['start']!;
-      _currentJuz = Quran.instance.getJuzNumber(_currentSurah, _currentVerse);
+      final juz = Quran.instance.getJuzNumber(_currentSurah, _currentVerse);
+      _currentJuz = juz < 1 ? 1 : juz;
     }
+  }
+
+  /// Refreshes the wheels when the riwaya dataset changes while the sheet
+  /// is open. Verse counts differ per riwaya (e.g. Baqarah 286 Hafs vs 285
+  /// Warsh), so the verse is clamped and the page re-resolved.
+  void _onQuranDataChanged() {
+    if (!mounted) return;
+    setState(() {
+      _syncVerseAndPage(_currentVerse);
+      final juz = Quran.instance.getJuzNumber(_currentSurah, _currentVerse);
+      _currentJuz = juz < 1 ? 1 : juz;
+      _animateAll();
+    });
   }
 
   @override
   void dispose() {
+    Quran.instance.data.removeListener(_onQuranDataChanged);
     _debounce?.cancel();
     _pageController.dispose();
     _surahController.dispose();
@@ -80,6 +97,19 @@ class _QuranNavigationBottomSheetState
   }
 
   // --- LOGIC (Same as before, just keeping it sync) ---
+
+  /// Clamps [verse] into the loaded riwaya and re-resolves the page,
+  /// keeping the current page as fallback. Single choke point so no wheel
+  /// handler can throw on a cross-riwaya verse number.
+  void _syncVerseAndPage(int verse) {
+    final target = Quran.instance.resolveNavigation(
+      _currentSurah,
+      verse,
+      fallbackPage: _currentPage,
+    );
+    _currentVerse = target.verse;
+    _currentPage = target.page;
+  }
 
   void _triggerUpdate(VoidCallback updateFn) {
     if (_isUpdating) return;
@@ -114,9 +144,9 @@ class _QuranNavigationBottomSheetState
     final surah = index + 1;
     _currentSurah = surah;
     _triggerUpdate(() {
-      _currentVerse = 1;
-      _currentPage = Quran.instance.getPageNumber(surah, 1);
-      _currentJuz = Quran.instance.getJuzNumber(surah, 1);
+      _syncVerseAndPage(1);
+      final juz = Quran.instance.getJuzNumber(surah, 1);
+      _currentJuz = juz < 1 ? 1 : juz;
       _animateAll();
     });
   }
@@ -127,8 +157,8 @@ class _QuranNavigationBottomSheetState
     _triggerUpdate(() {
       final surahs = Quran.instance.getSurahAndVersesFromJuz(juz);
       _currentSurah = surahs.keys.first;
-      _currentVerse = surahs[_currentSurah]!.first;
-      _currentPage = Quran.instance.getPageNumber(_currentSurah, _currentVerse);
+      // juzData uses Hafs numbering; clamp for riwayat with fewer verses.
+      _syncVerseAndPage(surahs[_currentSurah]!.first);
       _animateAll();
     });
   }
@@ -137,8 +167,11 @@ class _QuranNavigationBottomSheetState
     final verse = index + 1;
     _currentVerse = verse;
     _triggerUpdate(() {
-      _currentPage = Quran.instance.getPageNumber(_currentSurah, verse);
-      _currentJuz = Quran.instance.getJuzNumber(_currentSurah, verse);
+      // The wheel count is riwaya-aware, but a switch may land between the
+      // scroll and this debounced callback — clamp instead of throwing.
+      _syncVerseAndPage(verse);
+      _currentJuz = Quran.instance.getJuzNumber(_currentSurah, _currentVerse);
+      if (_currentJuz < 1) _currentJuz = 1;
       _animateAll(skipVerse: true);
     });
   }
@@ -270,10 +303,15 @@ class _QuranNavigationBottomSheetState
                       flex: 2,
                       child: FilledButton(
                         onPressed: () {
+                          final target = Quran.instance.resolveNavigation(
+                            _currentSurah,
+                            _currentVerse,
+                            fallbackPage: _currentPage,
+                          );
                           widget.onNavigate(
-                            page: _currentPage,
+                            page: target.page,
                             surah: _currentSurah,
-                            verse: _currentVerse,
+                            verse: target.verse,
                           );
                           Navigator.pop(context);
                         },
