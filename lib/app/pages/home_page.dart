@@ -1040,7 +1040,11 @@ class _QuranPageWidgetState extends State<QuranPageWidget> {
               ),
             ],
             if (!widget.settingsController.isHorizontalScrolling)
-              const Divider(height: 32, thickness: 2),
+              Divider(
+                height: 32,
+                thickness: 2,
+                color: context.colorScheme.secondary,
+              ),
           ],
         ),
       ),
@@ -1069,9 +1073,7 @@ class _SurahHeader extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 24, top: 4),
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        border: Border.symmetric(
-          horizontal: BorderSide(color: context.colorScheme.primary),
-        ),
+        color: context.colorScheme.surfaceContainerHigh,
       ),
       child: DefaultTextStyle(
         style: TextStyle(

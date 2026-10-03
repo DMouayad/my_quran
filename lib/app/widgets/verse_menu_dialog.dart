@@ -1,6 +1,5 @@
 import 'dart:async' show Timer;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:my_quran/app/widgets/bookmark_category_picker.dart';
