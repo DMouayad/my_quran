@@ -5,10 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:my_quran/app/font_size_controller.dart';
 import 'package:my_quran/app/models.dart';
 import 'package:my_quran/app/services/backup_service.dart';
-import 'package:my_quran/app/services/search_service.dart';
 import 'package:my_quran/app/settings_controller.dart';
 import 'package:my_quran/app/utils.dart';
-import 'package:my_quran/quran/quran.dart';
 part 'general_settings.dart';
 part 'appearance_settings.dart';
 part 'backup_settings.dart';
@@ -293,6 +291,24 @@ class SettingsGroup extends StatelessWidget {
 }
 
 // ───────────────────────── helpers ─────────────────────────
+
+/// Switches the active dataset (riwaya / script) from whichever settings tab
+/// triggered it and reports a failed load. Lives here so the in-flight guard,
+/// the message and the search re-index exist once instead of per tab.
+void _switchDataset(
+  BuildContext context,
+  SettingsController settingsController,
+  FontFamily next,
+) {
+  unawaited(() async {
+    final switched = await settingsController.switchDataset(next);
+    if (switched == false && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تعذر تحميل الرواية')));
+    }
+  }());
+}
 
 ButtonStyle _segmentStyle(ColorScheme colorScheme) {
   return ButtonStyle(

@@ -8,10 +8,53 @@ class GeneralSettings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hizbHidden = settingsController.hizbDisplay.isHidden;
+    final isWarsh = settingsController.fontFamily == FontFamily.warsh;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        SettingsGroup(
+          title: 'الرواية',
+          children: [
+            _SegmentedRow(
+              label: 'اختيار الرواية',
+              icon: Icons.record_voice_over_outlined,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SegmentedButton<bool>(
+                    segments: [
+                      const ButtonSegment(
+                        value: false,
+                        label: Text('حفص عن عاصم'),
+                      ),
+                      ButtonSegment(
+                        value: true,
+                        label: Text(
+                          'ورش عن نافع',
+                          style: TextStyle(fontFamily: FontFamily.warsh.name),
+                        ),
+                      ),
+                    ],
+                    style: _segmentStyle(context.colorScheme),
+                    selected: {isWarsh},
+                    onSelectionChanged: settingsController.isSwitchingDataset
+                        ? null
+                        : (newSet) => _switchDataset(
+                            context,
+                            settingsController,
+                            newSet.first ? FontFamily.warsh : FontFamily.hafs,
+                          ),
+                  ),
+                  if (settingsController.isSwitchingDataset) ...[
+                    const SizedBox(height: 8),
+                    const LinearProgressIndicator(),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
         SettingsGroup(
           title: 'طريقة القراءة',
           children: [

@@ -4,7 +4,9 @@ import 'dart:ui' show FontWeight;
 import 'package:flutter/foundation.dart' show ChangeNotifier, debugPrint;
 import 'package:flutter/material.dart' show ColorScheme, ThemeMode;
 import 'package:my_quran/app/models.dart';
+import 'package:my_quran/app/services/search_service.dart';
 import 'package:my_quran/app/services/settings_service.dart';
+import 'package:my_quran/quran/quran.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class SettingsController extends ChangeNotifier {
@@ -29,6 +31,7 @@ class SettingsController extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   bool _useTrueBlackBgColor = false;
   HizbDisplay _hizbDisplay = HizbDisplay.hidden;
+  bool _isSwitchingDataset = false;
 
   // ── Getters ──
 
@@ -55,6 +58,12 @@ class SettingsController extends ChangeNotifier {
   FontFamily get fontFamily => _fontFamily;
   FontWeight get fontWeight => _fontWeight;
   TextAlignOption get textAlign => _textAlign;
+
+  /// True while a riwaya/script dataset swap is in flight. Settings tabs that
+  /// can trigger one disable their switchers so rapid taps can't stack
+  /// concurrent loads (the data layer in `Quran._applyFont` is token-guarded
+  /// too; this is the UI half).
+  bool get isSwitchingDataset => _isSwitchingDataset;
 
   ThemeMode get themeMode => _themeMode;
   bool get useTrueBlackBgColor => _useTrueBlackBgColor;
@@ -127,6 +136,33 @@ class SettingsController extends ChangeNotifier {
     notifyListeners();
   }
   // ── Actions ──
+
+  /// Loads the dataset backing [next] first and only then persists the font,
+  /// so the persisted font never points at not-yet-loaded data (not even if
+  /// the app is killed mid-switch). A failed load keeps the current font —
+  /// there is nothing to revert.
+  ///
+  /// Returns `true` when the switch happened, `false` when the dataset
+  /// failed to load and `null` when the request was ignored (a switch is
+  /// already in flight, or [next] is already active).
+  Future<bool?> switchDataset(FontFamily next) async {
+    if (_isSwitchingDataset || next == _fontFamily) return null;
+    _isSwitchingDataset = true;
+    notifyListeners();
+    try {
+      await Quran.instance.useDatasourceForFont(next);
+      fontFamily = next;
+      // Idempotent per index file, so this is a no-op unless the riwaya
+      // actually changed — and it keeps the index from going stale.
+      unawaited(SearchService.init(next.name));
+      return true;
+    } catch (_) {
+      return false;
+    } finally {
+      _isSwitchingDataset = false;
+      notifyListeners();
+    }
+  }
 
   void toggleThemeMode() {
     _themeMode = switch (_themeMode) {
