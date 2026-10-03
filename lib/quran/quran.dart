@@ -147,6 +147,15 @@ class Quran {
     // data + old pageData — e.g. Hafs text on Warsh pagination, dropping
     // verse 286 of Al-Baqarah until restart. See issue #74.
     pageData = fontFamily.isWarsh ? warshPageData : hafsPageData;
+    // A page map with a different length means orphaned ranges were appended
+    // as an extra page instead of merged into their real ones — that silently
+    // skips verses on their page and makes getPageNumber return > 604, which
+    // getPageData rejects. See issue #76.
+    assert(
+      pageData.length == totalPagesCount,
+      'pageData for ${fontFamily.name} has ${pageData.length} pages, '
+      'expected $totalPagesCount',
+    );
     _buildReverseLookups();
     _plainTextData = plainTextData;
     _loadedFont = fontFamily;

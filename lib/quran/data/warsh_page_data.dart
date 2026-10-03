@@ -252,7 +252,7 @@ const List<List<Map<String, int>>> warshPageData = [
     {'surah': 4, 'start': 34, 'end': 37},
   ],
   [
-    {'surah': 4, 'start': 38, 'end': 43},
+    {'surah': 4, 'start': 38, 'end': 44},
   ],
   [
     {'surah': 4, 'start': 45, 'end': 50},
@@ -955,7 +955,7 @@ const List<List<Map<String, int>>> warshPageData = [
     {'surah': 20, 'start': 64, 'end': 75},
   ],
   [
-    {'surah': 20, 'start': 76, 'end': 85},
+    {'surah': 20, 'start': 76, 'end': 86},
   ],
   [
     {'surah': 20, 'start': 87, 'end': 96},
@@ -1069,7 +1069,7 @@ const List<List<Map<String, int>>> warshPageData = [
     {'surah': 24, 'start': 32, 'end': 35},
   ],
   [
-    {'surah': 24, 'start': 37, 'end': 41},
+    {'surah': 24, 'start': 36, 'end': 42},
   ],
   [
     {'surah': 24, 'start': 43, 'end': 51},
@@ -1874,10 +1874,5 @@ const List<List<Map<String, int>>> warshPageData = [
     {'surah': 112, 'start': 1, 'end': 4},
     {'surah': 113, 'start': 1, 'end': 5},
     {'surah': 114, 'start': 1, 'end': 6},
-  ],
-  [
-    {'surah': 4, 'start': 44, 'end': 44},
-    {'surah': 20, 'start': 86, 'end': 86},
-    {'surah': 24, 'start': 36, 'end': 42},
   ],
 ];
