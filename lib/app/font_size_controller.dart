@@ -13,7 +13,7 @@ class FontSizeController extends ChangeNotifier {
 
   static const double _defaultFontSize = 34;
   static const double minFontSize = 16;
-  static const double maxFontSize = 60;
+  static const double maxFontSize = 90;
 
   static const double minLineHeight = 1.4;
   static const double maxLineHeight = 3;
