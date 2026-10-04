@@ -501,6 +501,12 @@ bool _updateDialogFile(
   }
 
   file.writeAsStringSync(content);
+
+  final formatResult = Process.runSync('dart', ['format', filePath]);
+  if (formatResult.exitCode != 0) {
+    print('⚠️  dart format failed on whats_new_dialog.dart:');
+    print(formatResult.stderr.toString().trim());
+  }
   return true;
 }
 
