@@ -1,0 +1,2 @@
+Fixed missing verses in Warsh recitation (4:44, 20:86, 24:36-42)
+Increased max font size to 90

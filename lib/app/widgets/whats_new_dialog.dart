@@ -1,6 +1,6 @@
 // GENERATED — DO NOT EDIT BY HAND
 // Run: dart run scripts/update_whats_new.dart
-// Version: 1.8.1
+// Version: 1.8.2
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class WhatsNewDialog extends StatelessWidget {
   const WhatsNewDialog({super.key});
 
-  static const String _currentVersion = '1.8.1';
+  static const String _currentVersion = '1.8.2';
   static const String _seenKey = 'whats_new_seen_version';
 
   static Future<void> showIfNeeded(BuildContext context) async {
@@ -35,7 +35,9 @@ class WhatsNewDialog extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: 400,
@@ -64,7 +66,9 @@ class WhatsNewDialog extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text(
                       'ما الجديد؟',
-                      style: Theme.of(context).textTheme.headlineSmall
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -77,8 +81,30 @@ class WhatsNewDialog extends StatelessWidget {
                   child: Column(
                     children: [
                       _VersionSection(
-                        version: '1.8.1',
+                        version: '1.8.2',
                         isCurrent: true,
+                        categories: [
+                          _CategorySection(
+                            title: 'الإصلاحات',
+                            icon: Icons.bug_report,
+                            color: Colors.red,
+                            items: [
+                              'إصلاح الآيات المفقودة في رواية ورش (4:44 و20:86 و24:36-42)',
+                            ],
+                          ),
+                          _CategorySection(
+                            title: 'ميزات جديدة',
+                            icon: Icons.new_releases,
+                            color: Colors.green,
+                            items: [
+                              'إتاحة تكبير الخط حتى 90',
+                            ],
+                          ),
+                        ],
+                      ),
+                      _VersionSection(
+                        version: '1.8.1',
+                        isCurrent: false,
                         categories: [
                           _CategorySection(
                             title: 'الإصلاحات',
@@ -154,7 +180,9 @@ class WhatsNewDialog extends StatelessWidget {
                             title: 'أخرى',
                             icon: Icons.auto_awesome,
                             color: Colors.blueGrey,
-                            items: ['تظليل الآية عند استعادة آخر موضع قراءة.'],
+                            items: [
+                              'تظليل الآية عند استعادة آخر موضع قراءة.',
+                            ],
                           ),
                         ],
                       ),
@@ -187,7 +215,9 @@ class WhatsNewDialog extends StatelessWidget {
                             title: 'الأداء',
                             icon: Icons.speed,
                             color: Colors.indigo,
-                            items: ['تحسينات طفيفة في الأداء والاستقرار.'],
+                            items: [
+                              'تحسينات طفيفة في الأداء والاستقرار.',
+                            ],
                           ),
                           _CategorySection(
                             title: 'التحسينات',
@@ -366,7 +396,9 @@ class WhatsNewDialog extends StatelessWidget {
                             title: 'الأداء',
                             icon: Icons.speed,
                             color: Colors.indigo,
-                            items: ['تحسينات عامة على أداء التطبيق وسرعته.'],
+                            items: [
+                              'تحسينات عامة على أداء التطبيق وسرعته.',
+                            ],
                           ),
                           _CategorySection(
                             title: 'أخرى',
@@ -454,7 +486,9 @@ class WhatsNewDialog extends StatelessWidget {
                             title: 'الإصلاحات',
                             icon: Icons.bug_report,
                             color: Colors.red,
-                            items: ['إصلاح عدد الآيات في ترويسة السورة'],
+                            items: [
+                              'إصلاح عدد الآيات في ترويسة السورة',
+                            ],
                           ),
                         ],
                       ),
@@ -488,7 +522,10 @@ class WhatsNewDialog extends StatelessWidget {
                             title: 'التحسينات',
                             icon: Icons.trending_up,
                             color: Colors.blue,
-                            items: ['تحسين دقة نتائج البحث', 'تحسينات أخرى:'],
+                            items: [
+                              'تحسين دقة نتائج البحث',
+                              'تحسينات أخرى:',
+                            ],
                           ),
                           _CategorySection(
                             title: 'أخرى',
@@ -557,6 +594,7 @@ class WhatsNewDialog extends StatelessWidget {
                           ),
                         ],
                       ),
+
                     ],
                   ),
                 ),
@@ -601,7 +639,9 @@ class _VersionSection extends StatelessWidget {
         initiallyExpanded: isCurrent,
         tilePadding: const EdgeInsets.symmetric(horizontal: 8),
         childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         collapsedShape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -609,14 +649,17 @@ class _VersionSection extends StatelessWidget {
           children: [
             Text(
               'v$version',
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             if (isCurrent) ...[
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 2,
+                ),
                 decoration: BoxDecoration(
                   color: colorScheme.primary,
                   borderRadius: BorderRadius.circular(10),
@@ -624,15 +667,17 @@ class _VersionSection extends StatelessWidget {
                 child: Text(
                   'الحالي',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                        color: colorScheme.onPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ),
             ],
           ],
         ),
-        children: [for (final cat in categories) cat],
+        children: [
+          for (final cat in categories) cat,
+        ],
       ),
     );
   }
@@ -688,7 +733,12 @@ class _CategorySection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('• ', style: textTheme.bodyMedium),
-                  Expanded(child: Text(t, style: textTheme.bodyMedium)),
+                  Expanded(
+                    child: Text(
+                      t,
+                      style: textTheme.bodyMedium,
+                    ),
+                  ),
                 ],
               ),
             ),

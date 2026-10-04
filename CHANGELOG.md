@@ -1,3 +1,8 @@
+### 1.8.2
+
+- FIX: Missing verses in Warsh recitation (4:44, 20:86, 24:36-42)
+- FEAT: Increase max font size to 90
+
 ### 1.8.1
 
 - FIX: Missing verses after switching between Hafs and Warsh recitations (thanks to @Aymane-Mirouah)
